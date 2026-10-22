@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Core;
+
+use PDO;
+
+// Conexión única a PostgreSQL mediante PDO (pdo_pgsql).
+class Database
+{
+    private static ?PDO $pdo = null;
+
+    public static function connection(): PDO
+    {
+        if (self::$pdo === null) {
+            $db = App::config('db');
+            $dsn = "pgsql:host={$db['host']};port={$db['port']};dbname={$db['name']}";
+            self::$pdo = new PDO($dsn, $db['user'], $db['pass'], [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ]);
+        }
+        return self::$pdo;
+    }
+}
