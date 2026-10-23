@@ -68,6 +68,6 @@ use function App\Core\e;
             <button class="btn-primary" type="submit" name="btnIngresar">Iniciar sesión</button>
         </form>
 
-        <p class="auth-note">¿Olvidó su contraseña? Contacte al administrador.</p>
+        <p class="auth-note"><a href="<?= App::url('/recuperar') ?>">¿Olvidó su contraseña?</a></p>
     </section>
 </div>

@@ -18,7 +18,6 @@ class CtrlAutenticacion
     {
         $usuarios = new Usuario();
         $fila = $usuarios->buscarPorUsuario($usuario);
-        $ip = $_SERVER['REMOTE_ADDR'] ?? null;
 
         if ($fila === null) {
             return false;
@@ -37,7 +36,7 @@ class CtrlAutenticacion
         }
 
         if (!$usuarios->verificarClave($fila, $clave)) {
-            (new Bitacora())->registrar('LOGIN_FALLIDO', $ip, (int) $fila['id_usuario']);
+            (new Bitacora())->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
             $actual = $usuarios->buscarPorUsuario($usuario) ?? $fila;
             if (!$actual['estado']) {
                 $this->mensajeFallo = 'Su cuenta está bloqueada. Contacte al administrador.';
@@ -51,7 +50,7 @@ class CtrlAutenticacion
         }
 
         $permisos = (new Rol())->obtenerPermisos((int) $fila['id_rol']);
-        (new Bitacora())->registrar('LOGIN', $ip, (int) $fila['id_usuario']);
+        (new Bitacora())->registrar((int) $fila['id_usuario'], 'LOGIN', 'Seguridad');
 
         session_regenerate_id(true);
         Session::set('usuario', [
@@ -77,7 +76,7 @@ class CtrlAutenticacion
     {
         $usuario = Session::user();
         if ($usuario !== null) {
-            (new Bitacora())->registrar('LOGOUT', $_SERVER['REMOTE_ADDR'] ?? null, (int) $usuario['id_usuario']);
+            (new Bitacora())->registrar((int) $usuario['id_usuario'], 'LOGOUT', 'Seguridad');
         }
 
         $pantalla = new UI_IniciarSesion();
