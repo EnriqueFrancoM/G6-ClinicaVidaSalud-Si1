@@ -39,7 +39,10 @@ return [
         'pass' => (string) $valorEntorno('DB_PASS', $decodificar($partesDb['pass'] ?? '')),
     ],
     'security' => [
-        'max_intentos_login'  => 5,  // CU01 E2: al superar 5 intentos fallidos se desactiva la cuenta
+        'max_intentos_login'  => 6,  // El sexto fallo bloquea la cuenta
+        'bloqueo_login_15s'   => 4,
+        'bloqueo_login_30s'   => 5,
+        'ultimo_intento_login'=> 5,
         'inactividad_minutos' => 30, // CU02 E1: la sesión expira tras 30 minutos sin actividad
     ],
 ];

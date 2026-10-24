@@ -11,6 +11,8 @@
     const clave = form.querySelector("[name='txtContrasena']");
     const boton = form.querySelector("[name='btnIngresar']");
     const avisos = form.querySelector("[data-avisos]");
+    const esperaInicial = Number(form.dataset.loginLockSeconds || 0);
+    const ultimoIntento = form.dataset.loginLastAttempt === "1";
 
     function caja(input) {
         return input.closest(".field");
@@ -58,6 +60,24 @@
         alerta.className = "alert " + tipo;
         alerta.setAttribute("role", tipo === "error" ? "alert" : "status");
         alerta.textContent = texto;
+    }
+
+    if (esperaInicial > 0) {
+        const finEspera = Date.now() + esperaInicial * 1000;
+        boton.disabled = true;
+        const actualizarEspera = () => {
+            const restante = Math.max(0, Math.ceil((finEspera - Date.now()) / 1000));
+            if (restante === 0) {
+                boton.disabled = false;
+                boton.textContent = ultimoIntento ? "Último intento" : "Iniciar sesión";
+                return;
+            }
+            boton.textContent = `Espera ${restante}s`;
+            window.setTimeout(actualizarEspera, 250);
+        };
+        const temporizador = window.setTimeout(actualizarEspera, 0);
+    } else if (ultimoIntento) {
+        boton.textContent = "Último intento";
     }
 
     form.querySelectorAll("[data-toggle-password]").forEach((button) => {

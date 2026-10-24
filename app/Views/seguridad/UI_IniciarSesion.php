@@ -3,6 +3,9 @@
 use App\Core\App;
 use App\Core\Session;
 use function App\Core\e;
+
+$segundosBloqueo = (int) (Session::flash('login_lock_seconds') ?? 0);
+$ultimoIntento = Session::flash('login_last_attempt') === '1';
 ?>
 <div class="auth-shell">
     <section class="auth-hero-col">
@@ -34,7 +37,7 @@ use function App\Core\e;
             Vida Salud
         </div>
 
-        <form class="auth-form" data-ui="UI_IniciarSesion" method="post" action="<?= App::url('/login') ?>">
+        <form class="auth-form" data-ui="UI_IniciarSesion" data-login-lock-seconds="<?= $segundosBloqueo ?>" data-login-last-attempt="<?= $ultimoIntento ? '1' : '0' ?>" method="post" action="<?= App::url('/login') ?>">
             <h2>Iniciar sesión</h2>
             <p class="lede">Usuario o correo, y su contraseña.</p>
 

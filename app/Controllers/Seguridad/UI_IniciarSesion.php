@@ -28,8 +28,15 @@ class UI_IniciarSesion extends Controller
             $this->redirigir();
         }
 
-        if (!(new CtrlAutenticacion())->autenticar($usuario, $clave)) {
-            $this->mostrarMensaje(CtrlAutenticacion::MENSAJE_FALLO);
+        $autenticacion = new CtrlAutenticacion();
+        if (!$autenticacion->autenticar($usuario, $clave)) {
+            $this->mostrarMensaje($autenticacion->mensajeFallido);
+            if ($autenticacion->segundosBloqueo > 0) {
+                Session::flash('login_lock_seconds', (string) $autenticacion->segundosBloqueo);
+            }
+            if ($autenticacion->ultimoIntento) {
+                Session::flash('login_last_attempt', '1');
+            }
             $this->redirigir();
         }
     }

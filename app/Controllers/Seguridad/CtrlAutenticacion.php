@@ -15,6 +15,9 @@ class CtrlAutenticacion
     public const MENSAJE_FALLO = 'Usuario o contraseña incorrectos.';
 
     public ?array $usuarioSesion = null;
+    public string $mensajeFallido = self::MENSAJE_FALLO;
+    public int $segundosBloqueo = 0;
+    public bool $ultimoIntento = false;
 
     public function autenticar(string $usuario, string $clave): bool
     {
@@ -30,13 +33,32 @@ class CtrlAutenticacion
 
         // E1: la cuenta está inactiva.
         if (!$fila['estado']) {
-            $usuarios->registrarIntentoFallido((int) $fila['id_usuario']);
+            $this->mensajeFallido = 'La cuenta está bloqueada por demasiados intentos. Contacta al administrador.';
             $bitacora->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
             return false;
         }
 
-        // E1: la contraseña no coincide (verificarClave incrementa los intentos).
-        if (!$usuarios->verificarClave($fila, $clave)) {
+        $this->segundosBloqueo = $usuarios->segundosBloqueoRestante((int) $fila['id_usuario']);
+        if ($this->segundosBloqueo > 0) {
+            $this->ultimoIntento = (int) $fila['intentos_fallidos'] >= (int) \App\Core\App::config('security.ultimo_intento_login', 5);
+            $this->mensajeFallido = $this->ultimoIntento
+                ? 'Te queda un último intento. Si vuelves a fallar, la cuenta será bloqueada. Espera antes de intentarlo.'
+                : 'Por seguridad, espera antes de volver a intentar.';
+            return false;
+        }
+
+        // E1: la contraseña no coincide; el modelo incrementa y aplica la espera.
+        $resultado = $usuarios->verificarClave($fila, $clave);
+        if (!$resultado['correcta']) {
+            $this->segundosBloqueo = $resultado['segundos_bloqueo'];
+            if (!$resultado['estado']) {
+                $this->mensajeFallido = 'Cuenta bloqueada: se agotaron los intentos. Contacta al administrador.';
+            } elseif ($this->segundosBloqueo > 0 && $resultado['intentos_fallidos'] >= (int) \App\Core\App::config('security.ultimo_intento_login', 5)) {
+                $this->ultimoIntento = true;
+                $this->mensajeFallido = 'Te queda un último intento. Si vuelves a fallar, la cuenta será bloqueada. Espera 30 segundos.';
+            } elseif ($this->segundosBloqueo > 0) {
+                $this->mensajeFallido = 'Demasiados intentos. Espera 15 segundos antes de volver a intentar.';
+            }
             $bitacora->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
             return false;
         }
