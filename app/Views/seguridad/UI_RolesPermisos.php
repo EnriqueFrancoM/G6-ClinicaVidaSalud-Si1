@@ -20,7 +20,7 @@ $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
                 <p class="lede">Cada fila es un rol. El nombre se edita al pulsarlo. Los tres permisos de seguridad del administrador no se pueden quitar.</p>
             </div>
             <div class="acciones-cabecera">
-                <a class="btn-borde" href="<?= App::url('/roles?nuevo=1') ?>">Nuevo rol</a>
+                <a class="btn-borde" data-fab href="<?= App::url('/roles?nuevo=1') ?>">Nuevo rol</a>
                 <button type="submit" class="btn-primary btn-chico" data-confirmar="¿Guardar los permisos de todos los roles?">Guardar permisos</button>
             </div>
         </header>

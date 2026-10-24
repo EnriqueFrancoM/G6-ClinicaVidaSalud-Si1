@@ -17,7 +17,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 <section class="hoja" data-ui="UI_GestionarUsuarios">
     <header class="hoja-cabecera">
         <h1>Usuarios registrados</h1>
-        <a class="btn-primary btn-chico" href="<?= App::url('/usuarios?nuevo=1') ?>">Nuevo usuario</a>
+        <a class="btn-primary btn-chico" data-fab href="<?= App::url('/usuarios?nuevo=1') ?>">Nuevo usuario</a>
     </header>
 
     <form class="filtros" method="get" action="<?= App::url('/usuarios') ?>">

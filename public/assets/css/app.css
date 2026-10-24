@@ -2113,71 +2113,6 @@ body.app,
     .user-card { min-width: 0; }
 }
 
-@media (max-width: 860px) {
-    body.app { height: auto; min-height: 100dvh; overflow: visible; }
-    .shell { min-height: 100dvh; height: auto; }
-    .sidebar {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        width: 100%;
-        padding: 10px 14px;
-        border: 0;
-        border-bottom: 1px solid var(--line);
-        border-radius: 0 0 18px 18px;
-        box-shadow: 0 4px 18px rgba(17, 24, 39, 0.06);
-    }
-    .sidebar-inner {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        width: 100%;
-    }
-    .side-brand { padding: 4px 4px; font-size: 1.1rem; }
-    .nav-toggle {
-        display: inline-grid;
-        grid-column: 2;
-        grid-row: 1;
-        place-items: center;
-        width: 42px;
-        height: 42px;
-        padding: 0;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: var(--surface);
-        color: var(--ink);
-        cursor: pointer;
-    }
-    .nav-toggle svg {
-        width: 21px;
-        height: 21px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.9;
-        stroke-linecap: round;
-    }
-    .menu-search,
-    .sidebar nav { display: none; }
-    .sidebar.nav-open .menu-search {
-        display: block;
-        grid-column: 1 / -1;
-        grid-row: 2;
-        margin-top: 10px;
-    }
-    .sidebar.nav-open .menu-search input { margin-bottom: 0; }
-    .sidebar.nav-open nav {
-        display: block;
-        grid-column: 1 / -1;
-        grid-row: 3;
-        max-height: min(58dvh, 440px);
-        margin-top: 8px;
-        overflow-y: auto;
-    }
-    .sidebar nav a { margin: 3px 0; padding: 11px 12px; }
-    .workspace { overflow: visible; }
-    .workspace-bar { padding: 14px 16px 0; }
-    .content { padding: 10px 16px 24px; }
-}
 
 @media (max-width: 768px) {
     .filtros,
@@ -2235,29 +2170,7 @@ body.app,
     .modal-cabecera-titulo h2 { padding-right: 8px; }
 }
 
-/* ——— Vista de celular: barra compacta, filtros en rejilla y tablas como tarjetas ——— */
-@media (max-width: 860px) {
-    /* El tema y el perfil suben a la barra superior en vez de ocupar una fila propia. */
-    .workspace-bar {
-        position: fixed;
-        top: 10px;
-        right: 64px;
-        z-index: 25;
-        padding: 0;
-    }
-    .barra-usuario { width: auto; gap: 8px; }
-    .tema { width: 42px; height: 42px; border-radius: 12px; }
-    .user-card {
-        min-width: 0;
-        max-width: none;
-        padding: 0;
-        border-radius: 12px;
-        box-shadow: none;
-    }
-    .user-mark { width: 42px; height: 42px; }
-    .user-copy { display: none; }
-    .content { padding-top: 14px; }
-}
+/* ——— Vista de celular: filtros en rejilla y tablas como tarjetas ——— */
 
 @media (max-width: 768px) {
     .filtros,
@@ -2375,11 +2288,6 @@ body.app,
     .acciones-cabecera > button { flex-basis: 0; }
 }
 
-@media (max-width: 360px) {
-    .filtros,
-    .filtros.filtros-bitacora,
-    .filtros.filtros-medicos { grid-template-columns: 1fr; }
-}
 
 @media (max-width: 640px) {
     /* Semana de horarios: los seis días entran en pantalla sin scroll lateral. */
@@ -2388,11 +2296,283 @@ body.app,
     .semana th, .semana td { padding: 8px 2px; font-size: 0.72rem; }
     .semana td.ocupado { font-size: 0.68rem; line-height: 1.2; }
 
-    /* Matriz de roles: columna del rol más angosta para ver más permisos a la vez. */
-    .matriz-roles th:first-child,
-    .matriz-roles td:first-child,
-    .matriz-roles tbody th { min-width: 116px; }
-    .matriz-roles th.permiso-col { min-width: 88px; font-size: 0.72rem; }
-    .rol-nombre { font-size: 1rem; }
+}
+
+/* ——— Celular: menú lateral deslizable, barra superior y botón flotante ——— */
+.nav-cerrar,
+.marca-movil,
+.nav-fondo,
+.fab { display: none; }
+
+@media (max-width: 860px) {
+    body.app { height: auto; min-height: 100dvh; overflow: visible; }
+    html.nav-bloqueo,
+    html.nav-bloqueo body { overflow: hidden; }
+    .shell { display: block; height: auto; min-height: 100dvh; }
+
+    /* Barra superior: menú y marca a la izquierda, tema y perfil a la derecha. */
+    .workspace { overflow: visible; }
+    .workspace-bar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        border-radius: 0 0 18px 18px;
+        box-shadow: 0 4px 18px rgba(17, 24, 39, 0.06);
+    }
+    .nav-toggle,
+    .nav-cerrar {
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--ink);
+        cursor: pointer;
+    }
+    .nav-toggle svg,
+    .nav-cerrar svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+    }
+    .marca-movil {
+        display: block;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 1.08rem;
+        font-weight: 750;
+        letter-spacing: -0.04em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .barra-usuario { width: auto; margin-left: auto; gap: 8px; }
+    .perfil { min-width: 0; }
+    .tema { width: 42px; height: 42px; border-radius: 12px; }
+    .user-card {
+        min-width: 0;
+        max-width: none;
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+    .user-mark { width: 42px; height: 42px; }
+    .user-copy { display: none; }
+    .content { padding: 14px max(14px, env(safe-area-inset-right)) 24px max(14px, env(safe-area-inset-left)); }
+
+    /* Menú lateral fuera de pantalla hasta que se abre. */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+        display: block;
+        width: min(84vw, 300px);
+        padding: 16px 14px max(16px, env(safe-area-inset-bottom));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 0;
+        border-radius: 0 22px 22px 0;
+        box-shadow: none;
+        transform: translateX(-105%);
+        visibility: hidden;
+        transition: transform 280ms var(--ease-out), visibility 0s linear 280ms, box-shadow 280ms;
+    }
+    .sidebar.nav-open,
+    .sidebar.nav-arrastre {
+        visibility: visible;
+        transform: none;
+        box-shadow: 0 24px 60px rgba(6, 18, 20, 0.3);
+        transition: transform 280ms var(--ease-out), visibility 0s, box-shadow 280ms;
+    }
+    .sidebar.nav-arrastre { transition: none; }
+    .sidebar-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0 8px;
+    }
+    .side-brand { padding: 0 6px; font-size: 1.1rem; }
+    .sidebar .menu-search,
+    .sidebar nav { display: block; grid-column: 1 / -1; }
+    .sidebar .menu-search { margin-top: 16px; }
+    .sidebar nav { margin-top: 2px; }
+    .sidebar nav a { margin: 2px 0; padding: 12px; }
+    .nav-fondo:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        display: block;
+        background: rgba(16, 32, 38, 0.45);
+        animation: fondo-in 220ms ease both;
+    }
+    [data-theme="dark"] .workspace-bar { background: var(--surface); border-color: var(--line); }
+    [data-theme="dark"] .nav-toggle,
+    [data-theme="dark"] .nav-cerrar { background: var(--fill); border-color: var(--line); color: var(--ink); }
+    [data-theme="dark"] .marca-movil { color: var(--ink); }
+    [data-theme="dark"] .nav-fondo:not([hidden]) { background: rgba(3, 8, 10, 0.7); }
+}
+
+@keyframes fondo-in {
+    from { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    /* Los "Nuevo …" y "Agregar horario" viven en el botón flotante. */
+    [data-fab] { display: none !important; }
+    .acciones-horario:not(:has(> :not([data-fab]))) { display: none; }
+    body.con-fab .content { padding-bottom: 104px; }
+    body.con-fab .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
+
+    .fab {
+        position: fixed;
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(16px, env(safe-area-inset-bottom));
+        z-index: 35;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    .fab-principal {
+        display: grid;
+        place-items: center;
+        width: 58px;
+        height: 58px;
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        background: #102226;
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(16, 34, 38, 0.3);
+        cursor: pointer;
+        transition: transform 160ms var(--ease-press), background 180ms;
+    }
+    .fab-principal:active { transform: scale(0.94); }
+    .fab svg {
+        width: 24px;
+        height: 24px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .fab-principal svg { transition: transform 220ms var(--ease-out); }
+    .fab.abierto .fab-principal svg { transform: rotate(45deg); }
+    .fab-menu { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .fab-menu[hidden] { display: none; }
+    .fab-opcion {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        box-shadow: 0 10px 26px rgba(16, 34, 38, 0.16);
+        cursor: pointer;
+        animation: rise 200ms var(--ease-out) both;
+    }
+    .fab-opcion svg { width: 18px; height: 18px; color: var(--teal-700); }
+    .fab-opcion:nth-child(2) { animation-delay: 40ms; }
+    [data-theme="dark"] .fab-principal {
+        background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+        box-shadow: 0 10px 26px rgba(13, 148, 136, 0.4);
+    }
+    [data-theme="dark"] .fab-opcion { background: var(--surface-elevated); border-color: #283e47; }
+    [data-theme="dark"] .fab-opcion svg { color: var(--teal-300); }
+
+    /* Filtros compactos: dos columnas incluso en pantallas de 320 px. */
+    .filtros .field input:not([type="checkbox"]),
+    .filtros .field select { height: 44px; padding: 0 10px; font-size: 0.92rem; }
+    .filtros input[type="date"] { min-width: 0; }
+
+    /* Roles: sin "Nuevo rol" en la cabecera, "Guardar permisos" ocupa todo el ancho. */
+    .roles-cabecera .acciones-cabecera > * { flex: 1 1 100%; white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+    /* Matriz de roles: cada rol es una tarjeta con sus permisos en lista. */
+    .modulo-permiso .tabla-responsive { overflow: visible; }
+    .matriz-roles,
+    .matriz-roles tbody { display: block; }
     .tabla-responsive .matriz-roles { min-width: 0; }
+    .matriz-roles thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+    .matriz-roles tr {
+        display: block;
+        margin-bottom: 10px;
+        padding: 4px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+    }
+    .matriz-roles tbody th,
+    .matriz-roles th:first-child,
+    .matriz-roles td:first-child {
+        position: static;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 10px 0;
+        border: 0;
+        background: transparent;
+    }
+    .matriz-roles td,
+    [data-theme="dark"] .matriz-roles td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        min-height: 46px;
+        padding: 8px 0;
+        border: 0;
+        border-top: 1px solid var(--line);
+        text-align: left;
+        cursor: pointer;
+    }
+    .matriz-roles td::before {
+        content: attr(data-label);
+        flex: 1;
+        min-width: 0;
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    .matriz-roles td input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+    .matriz-roles td:has(input:disabled) { cursor: default; }
+    [data-theme="dark"] .matriz-roles tr { background: #121f24; border-color: var(--line); }
+    [data-theme="dark"] .matriz-roles th { background: transparent; }
+}
+
+@media (max-width: 640px) {
+    /* Varias especialidades: bajan de línea en vez de salirse de la tarjeta. */
+    .cuentas td.marcas { flex-wrap: wrap; justify-content: flex-end; gap: 6px; white-space: normal; }
+    .cuentas td.marcas::before { margin-right: auto; }
+    .marcas .marca { margin-right: 0; }
 }

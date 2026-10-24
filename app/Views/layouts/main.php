@@ -49,9 +49,8 @@ $menu = [
                 </svg>
                 Vida Salud
             </div>
-            <button type="button" class="nav-toggle" data-nav-toggle aria-controls="menu-principal" aria-expanded="false">
-                <span class="sr-only">Abrir menú de navegación</span>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            <button type="button" class="nav-cerrar" data-nav-cerrar aria-label="Cerrar menú de navegación">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
             <label class="menu-search" data-menu-search-wrap>
                 <span class="sr-only">Buscar en el menú</span>
@@ -70,8 +69,15 @@ $menu = [
             </nav>
         </div>
     </aside>
+    <div class="nav-fondo" data-nav-fondo hidden></div>
     <div class="workspace">
         <header class="workspace-bar">
+            <!-- Solo en celular: abre el menú lateral -->
+            <button type="button" class="nav-toggle" data-nav-toggle aria-controls="menu-principal" aria-expanded="false">
+                <span class="sr-only">Abrir menú de navegación</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <span class="marca-movil">Vida Salud</span>
             <div class="barra-usuario">
             <button type="button" class="tema" data-tema aria-pressed="false" aria-label="Cambiar a modo oscuro">
                 <svg class="ico ico-luna" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg>

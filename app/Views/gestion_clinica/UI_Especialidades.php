@@ -16,7 +16,7 @@ $nueva = $form === null || (int) $form['id_especialidad'] === 0;
     <section class="hoja">
         <header class="hoja-cabecera">
             <h1>Especialidades</h1>
-            <a class="btn-primary btn-chico" href="<?= App::url('/especialidades?nuevo=1') ?>">Nueva especialidad</a>
+            <a class="btn-primary btn-chico" data-fab href="<?= App::url('/especialidades?nuevo=1') ?>">Nueva especialidad</a>
         </header>
         <div class="tabla-responsive">
         <table class="cuentas" id="tablaEspecialidades">

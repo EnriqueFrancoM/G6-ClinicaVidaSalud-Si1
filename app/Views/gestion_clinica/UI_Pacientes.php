@@ -15,7 +15,7 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
 <section class="hoja" data-ui="UI_Pacientes">
     <header class="hoja-cabecera">
         <h1>Búsqueda de pacientes</h1>
-        <a class="btn-primary btn-chico" href="<?= App::url('/pacientes?nuevo=1') ?>">Nuevo paciente</a>
+        <a class="btn-primary btn-chico" data-fab href="<?= App::url('/pacientes?nuevo=1') ?>">Nuevo paciente</a>
     </header>
 
     <form class="filtros filtros-bitacora filtros-medicos" method="get" action="<?= App::url('/pacientes') ?>">

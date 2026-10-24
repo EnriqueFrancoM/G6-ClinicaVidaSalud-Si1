@@ -69,10 +69,10 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                 <p class="lede">Horario de atención de lunes a sábado. Las celdas verdes representan turnos con agenda configurada.</p>
             </div>
             <div class="acciones-horario">
-                <button type="button" class="btn-primary btn-chico" id="btnModalHorario" data-abrir-dialogo="#modalHorario">
+                <button type="button" class="btn-primary btn-chico" id="btnModalHorario" data-fab data-abrir-dialogo="#modalHorario">
                     <?= vs_icono('agregar') ?><span>Agregar horario</span>
                 </button>
-                <button type="button" class="btn-borde btn-chico" id="btnModalBloqueo" data-abrir-dialogo="#modalBloqueo">
+                <button type="button" class="btn-borde btn-chico" id="btnModalBloqueo" data-fab data-abrir-dialogo="#modalBloqueo">
                     <?= vs_icono('bloquear') ?><span>Bloqueos de agenda</span>
                 </button>
             </div>

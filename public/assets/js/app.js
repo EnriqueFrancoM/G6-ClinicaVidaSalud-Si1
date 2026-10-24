@@ -174,16 +174,41 @@
         return;
     }
 
+    // En celular el menú es un panel lateral: se abre con el botón o deslizando desde el borde
+    // izquierdo, y se cierra con la X, el fondo, Escape o deslizando hacia la izquierda.
     const menu = sidebar.querySelector("nav");
+    const cerrar = sidebar.querySelector("[data-nav-cerrar]");
+    const fondo = document.querySelector("[data-nav-fondo]");
     const media = window.matchMedia("(max-width: 860px)");
 
     function setOpen(open) {
         sidebar.classList.toggle("nav-open", open);
+        document.documentElement.classList.toggle("nav-bloqueo", open);
         toggle.setAttribute("aria-expanded", open ? "true" : "false");
-        toggle.querySelector(".sr-only").textContent = open ? "Cerrar menú de navegación" : "Abrir menú de navegación";
+        if (fondo) {
+            fondo.hidden = !open;
+        }
+        if (open && cerrar) {
+            cerrar.focus();
+        }
     }
 
-    toggle.addEventListener("click", () => setOpen(!sidebar.classList.contains("nav-open")));
+    toggle.addEventListener("click", () => setOpen(true));
+    if (cerrar) {
+        cerrar.addEventListener("click", () => {
+            setOpen(false);
+            toggle.focus();
+        });
+    }
+    if (fondo) {
+        fondo.addEventListener("click", () => setOpen(false));
+    }
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && sidebar.classList.contains("nav-open")) {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
     menu.addEventListener("click", (event) => {
         if (media.matches && event.target.closest("a")) {
             setOpen(false);
@@ -193,6 +218,79 @@
         if (!media.matches) {
             setOpen(false);
         }
+    });
+
+    // Deslizar: el panel sigue al dedo y se decide al soltar.
+    let inicioX = null;
+    let inicioY = null;
+    let desplazamiento = 0;
+    let abriendo = false;
+    let horizontal = null;
+
+    function ancho() {
+        return sidebar.getBoundingClientRect().width;
+    }
+
+    document.addEventListener("touchstart", (event) => {
+        if (!media.matches) {
+            return;
+        }
+        const toque = event.touches[0];
+        const abierto = sidebar.classList.contains("nav-open");
+        if (!abierto && toque.clientX > 24) {
+            return;
+        }
+        if (abierto && !sidebar.contains(event.target) && event.target !== fondo) {
+            return;
+        }
+        inicioX = toque.clientX;
+        inicioY = toque.clientY;
+        desplazamiento = 0;
+        abriendo = !abierto;
+        horizontal = null;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", (event) => {
+        if (inicioX === null) {
+            return;
+        }
+        const toque = event.touches[0];
+        const dx = toque.clientX - inicioX;
+        const dy = toque.clientY - inicioY;
+        if (horizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+            horizontal = Math.abs(dx) > Math.abs(dy);
+            if (horizontal) {
+                sidebar.classList.add("nav-arrastre");
+                if (fondo) {
+                    fondo.hidden = false;
+                }
+            }
+        }
+        if (!horizontal) {
+            return;
+        }
+        const w = ancho();
+        desplazamiento = abriendo ? Math.min(0, dx - w) : Math.min(0, dx);
+        sidebar.style.transform = "translateX(" + Math.max(desplazamiento, -w) + "px)";
+        if (fondo) {
+            fondo.style.opacity = String(1 + Math.max(desplazamiento, -w) / w);
+        }
+    }, { passive: true });
+
+    document.addEventListener("touchend", () => {
+        if (inicioX === null) {
+            return;
+        }
+        if (horizontal) {
+            const w = ancho();
+            sidebar.classList.remove("nav-arrastre");
+            sidebar.style.transform = "";
+            if (fondo) {
+                fondo.style.opacity = "";
+            }
+            setOpen(desplazamiento > -w * 0.6 && (abriendo || desplazamiento > -60));
+        }
+        inicioX = null;
     });
 })();
 
@@ -401,4 +499,86 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
             });
         });
     });
+})();
+
+// Vista de celular: la matriz de roles se lee como tarjetas; tocar la fila marca el permiso.
+(function () {
+    document.querySelectorAll(".matriz-roles").forEach((tabla) => {
+        const titulos = Array.from(tabla.querySelectorAll("thead th"), (th) => th.textContent.trim());
+        tabla.querySelectorAll("tbody tr").forEach((fila) => {
+            Array.from(fila.cells).forEach((celda, i) => {
+                if (celda.tagName === "TD" && titulos[i]) {
+                    celda.dataset.label = titulos[i];
+                }
+            });
+        });
+        tabla.addEventListener("click", (event) => {
+            const celda = event.target.closest("td");
+            const casilla = celda && celda.querySelector("input[type='checkbox']");
+            if (casilla && event.target !== casilla && !casilla.disabled) {
+                casilla.click();
+            }
+        });
+    });
+})();
+
+// Vista de celular: las acciones marcadas con data-fab se reúnen en un botón flotante.
+(function () {
+    const acciones = Array.from(document.querySelectorAll("[data-fab]"));
+    if (acciones.length === 0) {
+        return;
+    }
+    const svg = (trazo) => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + trazo + '"/></svg>';
+    const mas = "M12 5v14M5 12h14";
+    const texto = (el) => el.textContent.trim().replace(/\s+/g, " ");
+
+    const caja = document.createElement("div");
+    caja.className = "fab";
+    const principal = document.createElement("button");
+    principal.type = "button";
+    principal.className = "fab-principal";
+    principal.innerHTML = svg(mas);
+    caja.append(principal);
+
+    if (acciones.length === 1) {
+        principal.setAttribute("aria-label", texto(acciones[0]));
+        principal.addEventListener("click", () => acciones[0].click());
+    } else {
+        const lista = document.createElement("div");
+        lista.className = "fab-menu";
+        lista.id = "fab-menu";
+        lista.hidden = true;
+        principal.setAttribute("aria-label", "Acciones");
+        principal.setAttribute("aria-expanded", "false");
+        principal.setAttribute("aria-controls", lista.id);
+
+        const abrir = (si) => {
+            lista.hidden = !si;
+            caja.classList.toggle("abierto", si);
+            principal.setAttribute("aria-expanded", si ? "true" : "false");
+        };
+
+        acciones.forEach((accion) => {
+            const opcion = document.createElement("button");
+            opcion.type = "button";
+            opcion.className = "fab-opcion";
+            const icono = accion.querySelector("svg");
+            opcion.innerHTML = "<span>" + texto(accion) + "</span>" + (icono ? icono.outerHTML : svg(mas));
+            opcion.addEventListener("click", () => {
+                abrir(false);
+                accion.click();
+            });
+            lista.append(opcion);
+        });
+        caja.prepend(lista);
+        principal.addEventListener("click", () => abrir(lista.hidden));
+        document.addEventListener("click", (event) => {
+            if (!caja.contains(event.target)) {
+                abrir(false);
+            }
+        });
+    }
+
+    document.body.classList.add("con-fab");
+    document.body.append(caja);
 })();
