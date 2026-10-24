@@ -2234,3 +2234,165 @@ body.app,
     .modal-cabecera-titulo { align-items: flex-start; }
     .modal-cabecera-titulo h2 { padding-right: 8px; }
 }
+
+/* ——— Vista de celular: barra compacta, filtros en rejilla y tablas como tarjetas ——— */
+@media (max-width: 860px) {
+    /* El tema y el perfil suben a la barra superior en vez de ocupar una fila propia. */
+    .workspace-bar {
+        position: fixed;
+        top: 10px;
+        right: 64px;
+        z-index: 25;
+        padding: 0;
+    }
+    .barra-usuario { width: auto; gap: 8px; }
+    .tema { width: 42px; height: 42px; border-radius: 12px; }
+    .user-card {
+        min-width: 0;
+        max-width: none;
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+    .user-mark { width: 42px; height: 42px; }
+    .user-copy { display: none; }
+    .content { padding-top: 14px; }
+}
+
+@media (max-width: 768px) {
+    .filtros,
+    .filtros.filtros-bitacora,
+    .filtros.filtros-medicos {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px 10px;
+        margin-bottom: 16px;
+    }
+    .filtros .field { min-width: 0; }
+    .filtros .field > span:first-child { margin-bottom: 6px; font-size: 0.82rem; }
+    .filtros > .field:first-child,
+    .filtros > .btn-primary,
+    .filtros.filtros-medicos > .btn-primary { grid-column: 1 / -1; }
+    .filtros.filtros-bitacora:not(.filtros-medicos) > .field:first-child { grid-column: auto; }
+
+    .hoja-cabecera > .btn-primary,
+    .hoja-cabecera > .btn-borde { height: 44px; margin: 0; justify-content: center; }
+
+    .acciones-cabecera { flex-wrap: nowrap; }
+    .acciones-cabecera > a,
+    .acciones-cabecera > button { flex: 1 1 0; height: 44px; margin: 0; justify-content: center; }
+
+    .acciones-horario { display: grid; grid-template-columns: 1fr; width: 100%; gap: 8px; }
+    .acciones-horario button { flex: none; width: 100%; height: 44px; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+    .tabla-responsive { overflow: visible; margin: 0; }
+    .tabla-responsive .cuentas { min-width: 0; }
+    .cuentas,
+    .cuentas tbody { display: block; }
+    .cuentas thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+    .cuentas tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 12px;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+    }
+    .cuentas tr:has(td.vacio) { display: block; border-style: dashed; }
+    .cuentas tr.seleccionado { border-color: var(--teal-500); background: var(--teal-100); }
+    .cuentas tr.seleccionado td,
+    [data-theme="dark"] .cuentas tr td,
+    [data-theme="dark"] .cuentas tr:hover td { background: transparent; }
+    .cuentas td,
+    [data-theme="dark"] .cuentas td {
+        grid-column: 1 / -1;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        overflow-wrap: anywhere;
+    }
+    .cuentas td[data-label] {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        text-align: right;
+        font-size: 0.9rem;
+    }
+    .cuentas td[data-label]::before {
+        content: attr(data-label);
+        flex: none;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+    /* Título de la tarjeta: la celda del nombre (o la primera) y, a su lado, las acciones. */
+    .cuentas td.quien,
+    .cuentas tr:not(:has(td.quien)) td:first-child {
+        display: block;
+        order: -2;
+        grid-column: 1;
+        text-align: left;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .cuentas td.quien::before,
+    .cuentas tr:not(:has(td.quien)) td:first-child::before,
+    .cuentas td.acciones::before { content: none; }
+    .cuentas td.acciones {
+        display: flex;
+        order: -1;
+        grid-column: 2;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .cuentas td.acciones:empty { display: none; }
+    .cuentas td.vacio { display: block; text-align: center; }
+}
+
+@media (max-width: 480px) {
+    .auth-hero-col { height: clamp(210px, 32vh, 280px); }
+    .fluid-gradient-bg { min-height: 0; padding: 22px; }
+    .hero-copy h1 { font-size: 2.2rem; }
+    .hero-copy p { margin-top: 10px; font-size: 0.92rem; }
+    .auth-panel { padding: 24px 18px 28px; }
+    .auth-brand { margin-bottom: 18px; }
+    .auth-form h2 { font-size: 2.2rem; }
+    .acciones-cabecera > a,
+    .acciones-cabecera > button { flex-basis: 0; }
+}
+
+@media (max-width: 360px) {
+    .filtros,
+    .filtros.filtros-bitacora,
+    .filtros.filtros-medicos { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+    /* Semana de horarios: los seis días entran en pantalla sin scroll lateral. */
+    .semana { min-width: 0; table-layout: fixed; }
+    .semana .col-hora { width: 50px; min-width: 50px; }
+    .semana th, .semana td { padding: 8px 2px; font-size: 0.72rem; }
+    .semana td.ocupado { font-size: 0.68rem; line-height: 1.2; }
+
+    /* Matriz de roles: columna del rol más angosta para ver más permisos a la vez. */
+    .matriz-roles th:first-child,
+    .matriz-roles td:first-child,
+    .matriz-roles tbody th { min-width: 116px; }
+    .matriz-roles th.permiso-col { min-width: 88px; font-size: 0.72rem; }
+    .rol-nombre { font-size: 1rem; }
+    .tabla-responsive .matriz-roles { min-width: 0; }
+}
