@@ -1079,3 +1079,17 @@ body.app {
 @media (max-width: 900px) {
     .roles-layout, .rol-datos { grid-template-columns: 1fr; }
 }
+
+/* ——— CU05 ——— */
+.hoja-angosta { max-width: 520px; padding-bottom: 24px; }
+.hoja-angosta .field input { height: 44px; border-radius: 12px; }
+.field .ayuda { display: block; margin-top: 6px; color: var(--muted); font-size: 0.78rem; }
+.perfil-opciones a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+}
+.perfil-opciones a:hover { background: var(--teal-100); }

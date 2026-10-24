@@ -50,6 +50,8 @@ class CtrlAutenticacion
             'username'   => $fila['username'],
             'id_rol'     => $fila['id_rol'],
             'rol'        => $fila['rol'],
+            // CU05 E3: en el primer ingreso se obliga a cambiar la contraseña.
+            'primer_ingreso' => in_array($fila['primer_ingreso'], [true, 't', '1', 1], true),
         ];
         Session::set('usuario', $this->usuarioSesion);
         Session::set('permisos', $permisos);

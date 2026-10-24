@@ -221,3 +221,36 @@
         });
     }
 })();
+
+// CU05 paso 5: validación en el cliente de la política y la confirmación (el servidor vuelve a validar).
+(function () {
+    const pantalla = document.querySelector("[data-ui='UI_CambiarContrasena']");
+    if (!pantalla) {
+        return;
+    }
+
+    const form = pantalla.querySelector("form");
+    const nueva = form.querySelector("[name='txtNueva']");
+    const confirmar = form.querySelector("[name='txtConfirmar']");
+    const cumple = (clave) => clave.length >= 8 && /[A-Z]/.test(clave) && /[0-9]/.test(clave) && /[^A-Za-z0-9]/.test(clave);
+
+    function marcar(input, mensaje) {
+        const field = input.closest(".field");
+        let hint = field.querySelector(".field-error");
+        if (!hint) {
+            hint = document.createElement("p");
+            hint.className = "field-error";
+            field.append(hint);
+        }
+        hint.textContent = mensaje;
+        field.classList.toggle("is-invalid", mensaje !== "");
+    }
+
+    form.addEventListener("submit", (event) => {
+        marcar(nueva, cumple(nueva.value) ? "" : "No cumple la política de contraseñas.");
+        marcar(confirmar, nueva.value === confirmar.value ? "" : "La confirmación no coincide con la nueva contraseña.");
+        if (form.querySelector(".field.is-invalid .field-error:not(:empty)")) {
+            event.preventDefault();
+        }
+    });
+})();

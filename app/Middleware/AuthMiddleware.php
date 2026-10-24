@@ -9,7 +9,7 @@ use App\Core\View;
 // Verifica la sesión y los permisos del rol antes de ejecutar cualquier controlador (doc. 6.1.2).
 class AuthMiddleware
 {
-    public static function handle(?string $permiso): void
+    public static function handle(?string $permiso, string $path = ''): void
     {
         if ($permiso === null) {
             return;
@@ -30,6 +30,12 @@ class AuthMiddleware
             exit;
         }
         Session::tocar();
+
+        // CU05 E3: con primer ingreso solo puede cambiar la contraseña o cerrar sesión.
+        if ((Session::user()['primer_ingreso'] ?? false) && !in_array($path, ['/cambiar-contrasena', '/logout'], true)) {
+            header('Location: ' . App::url('/cambiar-contrasena'));
+            exit;
+        }
 
         if ($permiso !== 'auth' && !Session::hasPermission($permiso)) {
             http_response_code(403);

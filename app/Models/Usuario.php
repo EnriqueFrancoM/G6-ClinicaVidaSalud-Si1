@@ -50,6 +50,24 @@ class Usuario extends Model
         );
     }
 
+    // CU05 paso 5: mínimo 8 caracteres, una mayúscula, un número y un símbolo.
+    public function validarPolitica(string $nueva): bool
+    {
+        return mb_strlen($nueva) >= 8
+            && preg_match('/[A-Z]/', $nueva) === 1
+            && preg_match('/[0-9]/', $nueva) === 1
+            && preg_match('/[^A-Za-z0-9]/', $nueva) === 1;
+    }
+
+    // CU05 paso 6: guarda la contraseña cifrada y desactiva el indicador de primer ingreso.
+    public function actualizarClave(int $idUsuario, string $passwordHash): void
+    {
+        $this->execute(
+            'UPDATE usuario SET password_hash = :hash, primer_ingreso = FALSE WHERE id_usuario = :id',
+            ['hash' => $passwordHash, 'id' => $idUsuario]
+        );
+    }
+
     // CU03 paso 2: lista con rol, estado y vínculo, filtrada por nombre, rol y estado.
     public function listar(string $nombre = '', ?int $idRol = null, ?bool $estado = null): array
     {

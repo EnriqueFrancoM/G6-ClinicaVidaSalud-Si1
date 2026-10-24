@@ -25,7 +25,7 @@ class Router
                 if ($method === 'POST') {
                     $this->checkCsrf();
                 }
-                AuthMiddleware::handle($permiso);
+                AuthMiddleware::handle($permiso, $path);
                 [$class, $action] = $handler;
                 (new $class())->$action();
                 return;

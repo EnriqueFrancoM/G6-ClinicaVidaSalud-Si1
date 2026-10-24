@@ -71,6 +71,7 @@ $menu = [
                     </span>
                 </button>
                 <div class="perfil-opciones" data-perfil-opciones hidden>
+                    <a href="<?= App::url('/cambiar-contrasena') ?>">Cambiar contraseña</a>
                     <form method="post" action="<?= App::url('/logout') ?>">
                         <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
                         <button type="submit" name="btnCerrarSesion">Cerrar sesión</button>

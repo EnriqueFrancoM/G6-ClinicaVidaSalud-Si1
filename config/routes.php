@@ -2,6 +2,7 @@
 // Tabla de rutas: [método, ruta, clase@operación, permiso requerido]
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
+use App\Controllers\Seguridad\UI_CambiarContrasena;
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
 use App\Controllers\Seguridad\UI_IniciarSesion;
 use App\Controllers\Seguridad\UI_PanelPrincipal;
@@ -16,6 +17,10 @@ return [
     // CU01 mensaje 8 / CU02 mensaje 1
     ['GET',  '/dashboard', [UI_PanelPrincipal::class, 'mostrarMenuSegunRol'], 'auth'],
     ['POST', '/logout',    [UI_PanelPrincipal::class, 'seleccionarCerrarSesion'], 'auth'],
+
+    // CU05 mensaje 1 (desde el menú del perfil)
+    ['GET',  '/cambiar-contrasena', [UI_CambiarContrasena::class, 'ingresar'], 'auth'],
+    ['POST', '/cambiar-contrasena', [UI_CambiarContrasena::class, 'ingresar'], 'auth'],
 
     // CU03 mensajes 1 y 4
     ['GET',  '/usuarios', [UI_GestionarUsuarios::class, 'abrirUsuarios'],       'USU_GESTIONAR'],
