@@ -5,6 +5,8 @@ use App\Core\Session;
 use App\Models\Paciente;
 use function App\Core\e;
 
+require_once __DIR__ . '/../iconos.php';
+
 $pacientes = $pacientes ?? [];
 $campoError = $campoError ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
@@ -13,7 +15,7 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
 <section class="hoja" data-ui="UI_Pacientes">
     <header class="hoja-cabecera">
         <h1>Búsqueda de pacientes</h1>
-        <a class="btn-primary btn-chico" href="<?= App::url('/pacientes?nuevo=1') ?>">+ Nuevo paciente</a>
+        <a class="btn-primary btn-chico" href="<?= App::url('/pacientes?nuevo=1') ?>">Nuevo paciente</a>
     </header>
 
     <form class="filtros filtros-bitacora filtros-medicos" method="get" action="<?= App::url('/pacientes') ?>">
@@ -38,24 +40,26 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
 
     <table class="cuentas" id="tablaPacientes">
         <thead>
-            <tr><th>Código</th><th>CI</th><th>Paciente</th><th>Nacimiento</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+            <tr><th>Paciente</th><th>CI</th><th>Nacimiento</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
         </thead>
         <tbody>
             <?php if ($pacientes === []): ?>
-                <tr><td colspan="7" class="vacio">No se encontraron pacientes. Puede registrarlo con "Nuevo paciente".</td></tr>
+                <tr><td colspan="6" class="vacio">No se encontraron pacientes. Regístrelo con Nuevo paciente.</td></tr>
             <?php endif; ?>
             <?php foreach ($pacientes as $p): ?>
+                <?php $nombre = $p['nombres'] . ' ' . $p['apellidos']; ?>
                 <tr>
-                    <td><?= e($p['codigo']) ?></td>
+                    <td class="quien">
+                        <a href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente']) ?>"><strong><?= e($nombre) ?></strong></a>
+                        <span><?= e($p['codigo']) ?></span>
+                    </td>
                     <td><?= e((string) $p['ci']) ?></td>
-                    <td><?= e($p['nombres'] . ' ' . $p['apellidos']) ?></td>
                     <td><?= e($fecha($p['fecha_nacimiento'])) ?></td>
                     <td><?= e($p['telefono']) ?></td>
                     <td><span class="estado-pill<?= $p['estado'] ? '' : ' bloqueada' ?>"><?= $p['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
-                        <a class="btn-borde" href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente']) ?>">Ver ficha</a>
-                        <a class="btn-borde" href="<?= App::url('/pacientes?editar=' . (int) $p['id_paciente']) ?>">Editar</a>
-                        <a class="btn-borde" href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente'] . '&historial=1') ?>">Historial</a>
+                        <a class="btn-icono" href="<?= App::url('/pacientes?editar=' . (int) $p['id_paciente']) ?>" title="Editar" aria-label="Editar a <?= e($nombre) ?>"><?= vs_icono('editar') ?></a>
+                        <a class="btn-icono" href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente'] . '&historial=1') ?>" title="Historial" aria-label="Historial de <?= e($nombre) ?>"><?= vs_icono('historial') ?></a>
                     </td>
                 </tr>
             <?php endforeach; ?>

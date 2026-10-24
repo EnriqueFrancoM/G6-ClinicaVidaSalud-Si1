@@ -7,6 +7,34 @@ use App\Core\Model;
 // Entidad Cita. CU09: contarFuturasEnHorario(). CU10: historialPorPaciente().
 class Cita extends Model
 {
+    // Agenda del día para el panel. El médico ve las suyas; el paciente, las propias.
+    public function delDia(int $idUsuario, string $rol): array
+    {
+        $filtro = '';
+        $params = [];
+        if ($rol === 'Médico') {
+            $filtro = ' AND c.id_medico = (SELECT id_medico FROM medico WHERE id_usuario = :usuario)';
+            $params['usuario'] = $idUsuario;
+        } elseif ($rol === 'Paciente') {
+            $filtro = ' AND c.id_paciente = (SELECT id_paciente FROM paciente WHERE id_usuario = :usuario)';
+            $params['usuario'] = $idUsuario;
+        }
+
+        return $this->fetchAll(
+            "SELECT c.codigo, TO_CHAR(c.hora_inicio, 'HH24:MI') AS hora, c.estado, c.motivo,
+                    p.nombres || ' ' || p.apellidos AS paciente,
+                    m.nombres || ' ' || m.apellidos AS medico,
+                    e.nombre AS especialidad
+               FROM cita c
+               JOIN paciente p ON p.id_paciente = c.id_paciente
+               JOIN medico m ON m.id_medico = c.id_medico
+               JOIN especialidad e ON e.id_especialidad = c.id_especialidad
+              WHERE c.fecha = CURRENT_DATE{$filtro}
+              ORDER BY c.hora_inicio",
+            $params
+        );
+    }
+
     // CU10 paso 9: historial de citas del paciente, de la más reciente a la más antigua.
     public function historialPorPaciente(int $idPaciente): array
     {

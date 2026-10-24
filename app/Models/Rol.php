@@ -47,7 +47,13 @@ class Rol extends Model
 
     public function listar(): array
     {
-        return $this->fetchAll('SELECT id_rol, nombre, descripcion, estado FROM rol ORDER BY id_rol');
+        return $this->fetchAll(
+            'SELECT r.id_rol, r.nombre, r.descripcion, r.estado, COUNT(rp.id_permiso) AS n_permisos
+               FROM rol r
+               LEFT JOIN rol_permiso rp ON rp.id_rol = r.id_rol
+              GROUP BY r.id_rol
+              ORDER BY r.id_rol'
+        );
     }
 
     public function obtenerRol(int $idRol): ?array

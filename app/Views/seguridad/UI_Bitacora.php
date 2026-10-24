@@ -13,14 +13,28 @@ $consulta = [
     'desde'   => $filtros['desde'],
     'hasta'   => $filtros['hasta'],
 ];
+$totalGeneral = $totalGeneral ?? $total;
+$hoy = date('Y-m-d');
+$soloHoy = $filtros['desde'] === $hoy && $filtros['hasta'] === $hoy && $filtros['id_usuario'] === '' && $filtros['modulo'] === '';
 $paginas = max(1, (int) ceil($total / $porPagina));
 $urlPagina = fn (int $p) => App::url('/bitacora/filtrar?' . http_build_query($consulta + ['pagina' => $p]));
+$etiquetaModulo = static function (array $fila): string {
+    if (($fila['accion'] ?? '') === 'ROL') {
+        return 'Roles y permisos';
+    }
+    return (string) $fila['modulo'];
+};
 ?>
 <section class="hoja" data-ui="UI_Bitacora">
     <header class="hoja-cabecera">
         <h1>Registro de actividades</h1>
-        <a class="btn-borde" id="btnExportar" href="<?= App::url('/bitacora/exportar?' . http_build_query($consulta)) ?>">⬇ Exportar CSV</a>
+        <a class="btn-borde" id="btnExportar" href="<?= App::url('/bitacora/exportar?' . http_build_query($consulta)) ?>">Exportar CSV</a>
     </header>
+    <?php if ($soloHoy): ?>
+        <p class="aviso-rango">Al abrir la bitácora se muestran solo los movimientos de hoy: <?= (int) $total ?>. En la base hay <?= (int) $totalGeneral ?>.
+            <?php if ($totalGeneral > $total): ?><a href="<?= App::url('/bitacora/filtrar') ?>">Ver historial completo</a><?php endif; ?>
+        </p>
+    <?php endif; ?>
 
     <form class="filtros filtros-bitacora" id="filtros" method="get" action="<?= App::url('/bitacora/filtrar') ?>">
         <label class="field">
@@ -64,14 +78,20 @@ $urlPagina = fn (int $p) => App::url('/bitacora/filtrar?' . http_build_query($co
         </thead>
         <tbody>
             <?php if ($registros === []): ?>
-                <tr><td colspan="5" class="vacio">Sin resultados</td></tr>
+                <tr><td colspan="5" class="vacio">No hay actividades en este rango. Pruebe otras fechas o deje los filtros en Todos.</td></tr>
             <?php endif; ?>
             <?php foreach ($registros as $fila): ?>
+                <?php
+                $accion = (string) $fila['accion'];
+                $tono = str_contains($accion, 'FALLID') || str_contains($accion, 'DESACTIV') || str_contains($accion, 'BLOQU')
+                    ? ' tono-alerta'
+                    : (str_contains($accion, 'LOGIN') || str_contains($accion, 'ACTIV') ? ' tono-ok' : '');
+                ?>
                 <tr>
-                    <td><?= e(date('d/m/Y H:i:s', strtotime($fila['fecha_hora']))) ?></td>
-                    <td><?= e($fila['usuario']) ?></td>
-                    <td><?= e($fila['modulo']) ?></td>
-                    <td><?= e(trim($fila['accion'] . ' ' . ($fila['detalle'] ?? ''))) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($fila['fecha_hora']))) ?></td>
+                    <td class="quien"><strong><?= e($fila['usuario']) ?></strong></td>
+                    <td><?= e($etiquetaModulo($fila)) ?></td>
+                    <td class="accion<?= e($tono) ?>"><?= e(trim($accion . ' ' . ($fila['detalle'] ?? ''))) ?></td>
                     <td><?= e($fila['ip']) ?></td>
                 </tr>
             <?php endforeach; ?>

@@ -12,9 +12,10 @@ class UI_Especialidades extends Controller
     {
         $especialidades = (new CtrlEspecialidad())->listar();
 
-        // Formulario: reintento tras un error, "Editar" o, por defecto, "Nueva especialidad".
+        // El formulario solo se abre con Nueva especialidad, Editar o un reintento.
         $form = Session::get('_form_especialidad');
         Session::set('_form_especialidad', null);
+        $mostrarForm = $form !== null || $this->input('nuevo') !== null;
         if ($form === null && ($editar = (int) $this->input('editar', 0)) > 0) {
             foreach ($especialidades as $fila) {
                 if ((int) $fila['id_especialidad'] === $editar) {
@@ -24,14 +25,18 @@ class UI_Especialidades extends Controller
                         'descripcion'     => (string) $fila['descripcion'],
                         'estado'          => $fila['estado'] ? '1' : '0',
                     ];
+                    $mostrarForm = true;
                 }
             }
         }
-        $form ??= ['id_especialidad' => 0, 'nombre' => '', 'descripcion' => '', 'estado' => '1'];
+        if ($form === null && $mostrarForm) {
+            $form = ['id_especialidad' => 0, 'nombre' => '', 'descripcion' => '', 'estado' => '1'];
+        }
 
         $this->view('gestion_clinica/UI_Especialidades', [
             'especialidades' => $especialidades,
             'form'           => $form,
+            'mostrarForm'    => $mostrarForm,
             'campoError'     => Session::flash('campo_error'),
         ]);
     }

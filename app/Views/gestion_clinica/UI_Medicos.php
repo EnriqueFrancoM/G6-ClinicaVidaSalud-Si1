@@ -4,6 +4,8 @@ use App\Core\App;
 use App\Core\Session;
 use function App\Core\e;
 
+require_once __DIR__ . '/../iconos.php';
+
 $medicos = $medicos ?? [];
 $especialidades = $especialidades ?? [];
 $campoError = $campoError ?? null;
@@ -12,7 +14,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 <section class="hoja" data-ui="UI_Medicos">
     <header class="hoja-cabecera">
         <h1>Médicos</h1>
-        <a class="btn-primary btn-chico" href="<?= App::url('/medicos?nuevo=1') ?>">+ Nuevo médico</a>
+        <a class="btn-primary btn-chico" href="<?= App::url('/medicos?nuevo=1') ?>">Nuevo médico</a>
     </header>
 
     <form class="filtros filtros-bitacora filtros-medicos" method="get" action="<?= App::url('/medicos') ?>">
@@ -42,34 +44,37 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 
     <table class="cuentas" id="tablaMedicos">
         <thead>
-            <tr>
-                <th>Código</th>
-                <th>Reg. profesional</th>
-                <th>Nombre completo</th>
-                <th>Especialidad(es)</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
+                <tr>
+                    <th>Médico</th>
+                    <th>Reg. profesional</th>
+                    <th>Especialidad</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
         </thead>
         <tbody>
             <?php if ($medicos === []): ?>
-                <tr><td colspan="6" class="vacio">No hay médicos que coincidan con la búsqueda.</td></tr>
+                <tr><td colspan="5" class="vacio">No hay médicos que coincidan con la búsqueda.</td></tr>
             <?php endif; ?>
             <?php foreach ($medicos as $fila): ?>
+                <?php $nombre = $fila['nombres'] . ' ' . $fila['apellidos']; ?>
                 <tr>
-                    <td><?= e($fila['codigo']) ?></td>
+                    <td><?= e($nombre) ?> · <?= e($fila['codigo']) ?></td>
                     <td><?= e($fila['nro_registro_prof']) ?></td>
-                    <td><?= e($fila['nombres'] . ' ' . $fila['apellidos']) ?></td>
-                    <td><?= e((string) $fila['especialidades']) ?></td>
+                    <td class="marcas">
+                        <?php foreach (array_filter(array_map('trim', explode(',', (string) $fila['especialidades']))) as $esp): ?>
+                            <span class="marca"><?= e($esp) ?></span>
+                        <?php endforeach; ?>
+                    </td>
                     <td><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
-                        <a class="btn-borde" href="<?= App::url('/medicos?editar=' . (int) $fila['id_medico']) ?>">Editar</a>
+                        <a class="btn-icono" href="<?= App::url('/medicos?editar=' . (int) $fila['id_medico']) ?>" title="Editar" aria-label="Editar a <?= e($nombre) ?>"><?= vs_icono('editar') ?></a>
                         <form method="post" action="<?= App::url('/medicos') ?>">
                             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
                             <input type="hidden" name="accion" value="estado">
                             <input type="hidden" name="id_medico" value="<?= e((string) $fila['id_medico']) ?>">
                             <input type="hidden" name="estado" value="<?= $fila['estado'] ? '0' : '1' ?>">
-                            <button type="submit" class="btn-borde"><?= $fila['estado'] ? 'Desactivar' : 'Activar' ?></button>
+                            <button type="submit" class="btn-icono<?= $fila['estado'] ? ' btn-peligro' : '' ?>" title="<?= $fila['estado'] ? 'Desactivar' : 'Activar' ?>" aria-label="<?= ($fila['estado'] ? 'Desactivar a ' : 'Activar a ') . e($nombre) ?>" data-confirmar="<?= ($fila['estado'] ? '¿Desactivar a ' : '¿Activar a ') . e($nombre) . '?' ?>"><?= vs_icono($fila['estado'] ? 'bloquear' : 'activar') ?></button>
                         </form>
                     </td>
                 </tr>

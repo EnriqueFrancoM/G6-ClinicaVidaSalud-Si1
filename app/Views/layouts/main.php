@@ -29,6 +29,13 @@ $menu = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(App::config('app.name')) ?></title>
+    <script>
+        try {
+            if (localStorage.getItem("vs-theme") === "dark") {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        } catch (e) {}
+    </script>
     <link rel="stylesheet" href="<?= App::url('/assets/css/app.css') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/css/app.css') ?>">
 </head>
 <body class="app">
@@ -61,6 +68,11 @@ $menu = [
     </aside>
     <div class="workspace">
         <header class="workspace-bar">
+            <div class="barra-usuario">
+            <button type="button" class="tema" data-tema aria-pressed="false" aria-label="Cambiar a modo oscuro">
+                <svg class="ico ico-luna" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg>
+                <svg class="ico ico-sol" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12H5M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+            </button>
             <!-- CU02 paso 1: menú del perfil (prototipo figura 13) -->
             <div class="perfil" data-menu-perfil>
                 <button type="button" class="user-card lift-card" data-spotlight data-perfil-toggle aria-haspopup="true" aria-expanded="false">
@@ -78,14 +90,28 @@ $menu = [
                     </form>
                 </div>
             </div>
+            </div>
         </header>
         <main class="content">
-            <?php if ($msg = Session::flash('success')): ?><div class="alert success"><?= e($msg) ?></div><?php endif; ?>
-            <?php if ($msg = Session::flash('error')): ?><div class="alert error"><?= e($msg) ?></div><?php endif; ?>
             <?= $content ?>
         </main>
+        <?php if ($msg = Session::flash('success')): ?>
+            <div class="toast toast-ok" role="status"><?= e($msg) ?></div>
+        <?php elseif ($msg = Session::flash('error')): ?>
+            <div class="toast toast-error" role="alert"><?= e($msg) ?></div>
+        <?php endif; ?>
     </div>
 </div>
+<dialog class="modal modal-confirma" id="confirma">
+    <form method="dialog">
+        <h2>Confirmar</h2>
+        <p data-confirma-texto></p>
+        <div class="modal-acciones">
+            <button value="cancel" class="btn-borde">No, volver</button>
+            <button value="ok" class="btn-primary btn-chico">Sí, continuar</button>
+        </div>
+    </form>
+</dialog>
 <script src="<?= App::url('/assets/js/app.js') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/js/app.js') ?>"></script>
 </body>
 </html>

@@ -23,6 +23,11 @@ class Bitacora extends Model
         );
     }
 
+    public function contar(): int
+    {
+        return (int) $this->fetch('SELECT COUNT(*) AS total FROM bitacora')['total'];
+    }
+
     // CU06 mensaje 3. Filtros: id_usuario, modulo, desde, hasta (Y-m-d). Más reciente primero.
     // Con $porPagina = 0 devuelve todos los registros (para exportar).
     public function filtrar(array $filtros, int $pagina = 1, int $porPagina = 20): array

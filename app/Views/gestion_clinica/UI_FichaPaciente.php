@@ -8,10 +8,19 @@ $p = $paciente;
 $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '—';
 $valor = fn ($v) => ($v === null || $v === '') ? '—' : $v;
 $edad = (new DateTime($p['fecha_nacimiento']))->diff(new DateTime('today'))->y;
+$partes = preg_split('/\s+/', trim($p['nombres'] . ' ' . $p['apellidos'])) ?: [];
+$iniciales = '';
+foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
+    $iniciales .= mb_strtoupper(mb_substr($parte, 0, 1));
+}
 ?>
 <section class="hoja" data-ui="UI_Pacientes">
-    <header class="hoja-cabecera">
-        <h1>Ficha del paciente <?= e($p['codigo']) ?></h1>
+    <header class="persona">
+        <span class="persona-marca" aria-hidden="true"><?= e($iniciales !== '' ? $iniciales : 'P') ?></span>
+        <div>
+            <h1><?= e($p['nombres'] . ' ' . $p['apellidos']) ?></h1>
+            <p><?= e($p['codigo']) ?> · <?= $edad ?> años</p>
+        </div>
         <div class="acciones-cabecera">
             <a class="btn-borde" href="<?= App::url('/pacientes') ?>">Volver</a>
             <a class="btn-borde" href="<?= App::url('/pacientes?editar=' . (int) $p['id_paciente']) ?>">Editar</a>
@@ -22,7 +31,6 @@ $edad = (new DateTime($p['fecha_nacimiento']))->diff(new DateTime('today'))->y;
     </header>
 
     <dl class="ficha">
-        <div><dt>Paciente</dt><dd><?= e($p['nombres'] . ' ' . $p['apellidos']) ?></dd></div>
         <div><dt>CI</dt><dd><?= e($valor($p['ci'])) ?></dd></div>
         <div><dt>Nacimiento</dt><dd><?= e($fecha($p['fecha_nacimiento'])) ?> (<?= $edad ?> años)</dd></div>
         <div><dt>Sexo</dt><dd><?= e($sexos[$p['sexo']] ?? '—') ?></dd></div>
@@ -42,7 +50,7 @@ $edad = (new DateTime($p['fecha_nacimiento']))->diff(new DateTime('today'))->y;
             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
             <input type="hidden" name="accion" value="desactivar">
             <input type="hidden" name="id_paciente" value="<?= (int) $p['id_paciente'] ?>">
-            <button type="submit" class="btn-borde">Desactivar paciente</button>
+            <button type="submit" class="btn-borde btn-peligro" data-confirmar="¿Desactivar a <?= e($p['nombres'] . ' ' . $p['apellidos']) ?>? La ficha y el historial se conservan.">Desactivar paciente</button>
         </form>
     <?php endif; ?>
 </section>
@@ -68,7 +76,14 @@ $edad = (new DateTime($p['fecha_nacimiento']))->diff(new DateTime('today'))->y;
                         <td><?= e($c['medico']) ?></td>
                         <td><?= e($c['especialidad']) ?></td>
                         <td><?= e($valor($c['estado'] === 'CANCELADA' && $c['motivo_cancelacion'] ? $c['motivo'] . ' — cancelada: ' . $c['motivo_cancelacion'] : $c['motivo'])) ?></td>
-                        <td><span class="estado-pill<?= in_array($c['estado'], ['CANCELADA', 'INASISTENCIA'], true) ? ' bloqueada' : '' ?>"><?= e($c['estado']) ?></span></td>
+                        <td><span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(match ($c['estado']) {
+                            'PROGRAMADA' => 'Programada',
+                            'CONFIRMADA' => 'Confirmada',
+                            'ATENDIDA' => 'Atendida',
+                            'CANCELADA' => 'Cancelada',
+                            'INASISTENCIA' => 'Inasistencia',
+                            default => $c['estado'],
+                        }) ?></span></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

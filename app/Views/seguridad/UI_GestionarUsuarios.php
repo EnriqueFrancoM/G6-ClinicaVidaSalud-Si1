@@ -4,6 +4,8 @@ use App\Core\App;
 use App\Core\Session;
 use function App\Core\e;
 
+require_once __DIR__ . '/../iconos.php';
+
 $usuarios = $usuarios ?? [];
 $roles = $roles ?? [];
 $medicos = $medicos ?? [];
@@ -15,7 +17,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 <section class="hoja" data-ui="UI_GestionarUsuarios">
     <header class="hoja-cabecera">
         <h1>Usuarios registrados</h1>
-        <a class="btn-primary btn-chico" href="<?= App::url('/usuarios?nuevo=1') ?>">+ Nuevo usuario</a>
+        <a class="btn-primary btn-chico" href="<?= App::url('/usuarios?nuevo=1') ?>">Nuevo usuario</a>
     </header>
 
     <form class="filtros" method="get" action="<?= App::url('/usuarios') ?>">
@@ -57,20 +59,27 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                 <tr><td colspan="5" class="vacio">No hay usuarios que coincidan con el filtro.</td></tr>
             <?php endif; ?>
             <?php foreach ($usuarios as $fila): ?>
+                <?php $marca = match ($fila['rol']) {
+                    'Administrador' => 'admin',
+                    'Médico' => 'medico',
+                    'Recepcionista' => 'recepcion',
+                    'Paciente' => 'paciente',
+                    default => '',
+                }; ?>
                 <tr>
-                    <td><?= e($fila['username']) ?></td>
+                    <td class="quien"><strong><?= e($fila['username']) ?></strong></td>
                     <td><?= e($fila['email']) ?></td>
-                    <td><?= e($fila['rol']) ?></td>
+                    <td><span class="marca-rol <?= e($marca) ?>"><?= e($fila['rol']) ?></span></td>
                     <td><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
-                        <a class="btn-borde" href="<?= App::url('/usuarios?editar=' . (int) $fila['id_usuario']) ?>">Editar</a>
+                        <a class="btn-icono" href="<?= App::url('/usuarios?editar=' . (int) $fila['id_usuario']) ?>" title="Editar" aria-label="Editar a <?= e($fila['username']) ?>"><?= vs_icono('editar') ?></a>
                         <?php if (!($fila['estado'] && (int) $fila['id_usuario'] === $idSesion)): ?>
                             <form method="post" action="<?= App::url('/usuarios') ?>">
                                 <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
                                 <input type="hidden" name="accion" value="estado">
                                 <input type="hidden" name="id_usuario" value="<?= e((string) $fila['id_usuario']) ?>">
                                 <input type="hidden" name="estado" value="<?= $fila['estado'] ? '0' : '1' ?>">
-                                <button type="submit" class="btn-borde"><?= $fila['estado'] ? 'Desactivar' : 'Activar' ?></button>
+                                <button type="submit" class="btn-icono<?= $fila['estado'] ? ' btn-peligro' : '' ?>" title="<?= $fila['estado'] ? 'Desactivar' : 'Activar' ?>" aria-label="<?= $fila['estado'] ? 'Desactivar el acceso de ' . e($fila['username']) : 'Activar el acceso de ' . e($fila['username']) ?>" data-confirmar="<?= $fila['estado'] ? '¿Desactivar el acceso de ' . e($fila['username']) . '?' : '¿Activar el acceso de ' . e($fila['username']) . '?' ?>"><?= vs_icono($fila['estado'] ? 'bloquear' : 'activar') ?></button>
                             </form>
                         <?php endif; ?>
                     </td>
@@ -140,7 +149,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             </label>
 
             <?php if ($nuevo): ?>
-                <p class="nota">Se generará una contraseña temporal (password_hash) que deberá cambiarse en el primer ingreso.</p>
+                <p class="nota">Se generará una contraseña temporal. La persona deberá cambiarla en el primer ingreso.</p>
             <?php endif; ?>
 
             <div class="modal-acciones">

@@ -4,6 +4,7 @@ namespace App\Controllers\Seguridad;
 
 use App\Core\Controller;
 use App\Core\Session;
+use App\Models\Bitacora;
 
 // CU06 boundary. Mensajes: abrirBitacora(), aplicarFiltros(usuario, módulo, fechas),
 // exportar(), mostrarRegistros(lista).
@@ -61,6 +62,7 @@ class UI_Bitacora extends Controller
             $lista = ['registros' => [], 'total' => 0] + $opciones;
         }
 
+        $lista['totalGeneral'] = (new Bitacora())->contar();
         $this->mostrarRegistros($lista, $filtros, $pagina, $control->campoError);
     }
 

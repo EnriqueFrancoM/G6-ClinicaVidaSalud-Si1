@@ -4,6 +4,7 @@ namespace App\Controllers\Seguridad;
 
 use App\Core\Controller;
 use App\Core\Session;
+use App\Models\Cita;
 
 // CU01 boundary. Mensajes: redirigir(rol), mostrarMenuSegunRol().
 // CU02: seleccionarCerrarSesion().
@@ -19,8 +20,10 @@ class UI_PanelPrincipal extends Controller
 
     public function mostrarMenuSegunRol(): void
     {
+        $usuario = Session::user() ?? [];
         $this->view('seguridad/UI_PanelPrincipal', [
-            'usuario' => Session::user() ?? [],
+            'usuario' => $usuario,
+            'citas'   => (new Cita())->delDia((int) ($usuario['id_usuario'] ?? 0), (string) ($usuario['rol'] ?? '')),
         ]);
     }
 

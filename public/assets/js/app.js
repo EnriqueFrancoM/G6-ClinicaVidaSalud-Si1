@@ -202,6 +202,30 @@
     });
 })();
 
+document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+        if (form.dataset.confirmado === "1") {
+            return;
+        }
+        event.preventDefault();
+        const boton = form.querySelector("[data-confirmar]");
+        const dialogo = document.getElementById("confirma");
+        if (!dialogo || !boton) {
+            form.dataset.confirmado = "1";
+            form.requestSubmit();
+            return;
+        }
+        dialogo.querySelector("[data-confirma-texto]").textContent = boton.dataset.confirmar || "¿Continuar?";
+        dialogo.showModal();
+        dialogo.addEventListener("close", () => {
+            if (dialogo.returnValue === "ok") {
+                form.dataset.confirmado = "1";
+                form.requestSubmit(boton);
+            }
+        }, { once: true });
+    });
+});
+
 // CU03 / CU08: abre el formulario en ventana (formUsuario, formMedico) y aplica los filtros.
 (function () {
     document.querySelectorAll("[data-autoenviar]").forEach((select) => {
@@ -247,5 +271,43 @@
         if (form.querySelector(".field.is-invalid .field-error:not(:empty)")) {
             event.preventDefault();
         }
+    });
+})();
+
+(function () {
+    const boton = document.querySelector("[data-tema]");
+    if (!boton) {
+        return;
+    }
+
+    function aplicar(oscuro) {
+        if (oscuro) {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.removeAttribute("data-theme");
+        }
+        boton.setAttribute("aria-pressed", oscuro ? "true" : "false");
+        boton.setAttribute("aria-label", oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+        try {
+            localStorage.setItem("vs-theme", oscuro ? "dark" : "light");
+        } catch (e) {}
+    }
+
+    aplicar(document.documentElement.getAttribute("data-theme") === "dark");
+    boton.addEventListener("click", () => {
+        aplicar(document.documentElement.getAttribute("data-theme") !== "dark");
+    });
+})();
+
+(function () {
+    document.querySelectorAll(".toast").forEach((aviso) => {
+        const cerrar = () => {
+            aviso.style.opacity = "0";
+            aviso.addEventListener("transitionend", () => aviso.remove(), { once: true });
+            setTimeout(() => aviso.remove(), 240);
+        };
+        aviso.style.transition = "opacity 200ms ease";
+        setTimeout(cerrar, 4200);
+        aviso.addEventListener("click", cerrar);
     });
 })();
