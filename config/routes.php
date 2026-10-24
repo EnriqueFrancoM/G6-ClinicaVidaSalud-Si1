@@ -5,6 +5,7 @@
 use App\Controllers\GestionClinica\UI_Especialidades;
 use App\Controllers\GestionClinica\UI_Horarios;
 use App\Controllers\GestionClinica\UI_Medicos;
+use App\Controllers\GestionClinica\UI_Pacientes;
 use App\Controllers\Seguridad\UI_Bitacora;
 use App\Controllers\Seguridad\UI_CambiarContrasena;
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
@@ -54,6 +55,10 @@ return [
     ['POST', '/horarios/bloqueo',        [UI_Horarios::class, 'registrarBloqueo'], 'HOR_GESTIONAR'],
     ['POST', '/horarios/bloqueo/quitar', [UI_Horarios::class, 'quitarBloqueo'],    'HOR_GESTIONAR'],
 
-    // Próximos casos de uso (agregar aquí a medida que se implementen):
-    // ['GET', '/pacientes',      [UI_Pacientes::class, ...],         'PAC_GESTIONAR'], // CU10
+    // CU10 mensajes 1, 4 y 11
+    ['GET',  '/pacientes',       [UI_Pacientes::class, 'buscarPaciente'],      'PAC_GESTIONAR'],
+    ['POST', '/pacientes',       [UI_Pacientes::class, 'registrarOModificar'], 'PAC_GESTIONAR'],
+    ['GET',  '/pacientes/ficha', [UI_Pacientes::class, 'mostrarFicha'],        'PAC_GESTIONAR'],
+
+    // Próximos casos de uso (Ciclo 2):
 ];

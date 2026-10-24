@@ -4,9 +4,24 @@ namespace App\Models;
 
 use App\Core\Model;
 
-// Entidad Cita. CU09: contarFuturasEnHorario().
+// Entidad Cita. CU09: contarFuturasEnHorario(). CU10: historialPorPaciente().
 class Cita extends Model
 {
+    // CU10 paso 9: historial de citas del paciente, de la más reciente a la más antigua.
+    public function historialPorPaciente(int $idPaciente): array
+    {
+        return $this->fetchAll(
+            "SELECT c.codigo, c.fecha, TO_CHAR(c.hora_inicio, 'HH24:MI') AS hora_inicio, c.estado, c.motivo,
+                    c.motivo_cancelacion, m.nombres || ' ' || m.apellidos AS medico, e.nombre AS especialidad
+               FROM cita c
+               JOIN medico m ON m.id_medico = c.id_medico
+               JOIN especialidad e ON e.id_especialidad = c.id_especialidad
+              WHERE c.id_paciente = :id
+              ORDER BY c.fecha DESC, c.hora_inicio DESC",
+            ['id' => $idPaciente]
+        );
+    }
+
     // CU09 E3: citas futuras (programadas o confirmadas) dentro de un horario que se modifica o desactiva.
     // Si se indica el nuevo rango, solo cuenta las que quedan fuera de él.
     public function contarFuturasEnHorario(array $horario, ?array $nuevo = null): int
