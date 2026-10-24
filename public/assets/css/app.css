@@ -1316,6 +1316,7 @@ textarea:focus-visible {
 }
 
 .quien { display: block; }
+.cuentas td.quien { display: table-cell; }
 .quien strong { font-size: 0.98rem; letter-spacing: -0.02em; }
 .quien span,
 .quien a span { color: var(--muted); font-size: 0.78rem; font-weight: 500; }

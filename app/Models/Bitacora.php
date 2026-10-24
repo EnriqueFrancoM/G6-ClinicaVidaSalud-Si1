@@ -18,9 +18,31 @@ class Bitacora extends Model
                 'accion'     => $accion,
                 'modulo'     => $modulo,
                 'detalle'    => $detalle,
-                'ip'         => $_SERVER['REMOTE_ADDR'] ?? null,
+                'ip'         => self::ipCliente(),
             ]
         );
+    }
+
+    private static function ipCliente(): ?string
+    {
+        $remota = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ipRemota = filter_var($remota, FILTER_VALIDATE_IP);
+
+        if (in_array($ipRemota, ['127.0.0.1', '::1'], true)) {
+            $reenviadas = explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+            foreach ($reenviadas as $candidata) {
+                $candidata = trim($candidata);
+                if (filter_var(
+                    $candidata,
+                    FILTER_VALIDATE_IP,
+                    FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                )) {
+                    return $candidata;
+                }
+            }
+        }
+
+        return $ipRemota ?: null;
     }
 
     public function contar(): int
