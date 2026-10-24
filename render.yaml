@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: clinica-vida-salud
+    runtime: docker
+    region: virginia
+    plan: free
+    healthCheckPath: /
+    initialDeployHook: ./scripts/inicializar-db.sh
+    envVars:
+      - key: APP_NAME
+        value: Clínica Vida Salud
+      - key: APP_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clinica-vida-salud-db
+          property: connectionString
+      - key: SEED_INITIAL_PASSWORD
+        sync: false
+
+databases:
+  - name: clinica-vida-salud-db
+    databaseName: vida_salud
+    user: vida_salud
+    region: virginia
+    plan: free
+    postgresMajorVersion: "16"
+    ipAllowList: []

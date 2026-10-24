@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+.vscode
+.idea
+storage/logs/*
+!storage/logs/.gitkeep
+docs
+README.md

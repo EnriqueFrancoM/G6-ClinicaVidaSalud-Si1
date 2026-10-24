@@ -1,8 +1,8 @@
 -- =========================================================
 -- Datos iniciales (documento G6, sección 6.3.2 - Insert())
--- NOTA: los password_hash del documento son ilustrativos y NO permiten iniciar sesión.
--- Genera uno real con:  php -r "echo password_hash('TuClave', PASSWORD_DEFAULT);"
--- y aplícalo con:       UPDATE usuario SET password_hash = '<hash>' WHERE username = 'carla.rojas';
+-- La variable :seed_password_hash se recibe desde scripts/inicializar-db.sh.
+-- Todas las cuentas arrancan con la contraseña temporal indicada en
+-- SEED_INITIAL_PASSWORD y se obliga a cambiarla en el primer acceso.
 -- =========================================================
 INSERT INTO rol (nombre, descripcion) VALUES
  ('Administrador','Configura y supervisa el sistema'),
@@ -31,12 +31,12 @@ INSERT INTO rol_permiso (id_rol, id_permiso) SELECT 3, id_permiso FROM permiso W
 INSERT INTO rol_permiso (id_rol, id_permiso) SELECT 4, id_permiso FROM permiso WHERE codigo = 'POR_PACIENTE';
 
 INSERT INTO usuario (id_rol, username, email, password_hash, primer_ingreso, ultimo_acceso) VALUES
- (1,'carla.rojas','carla.rojas@vidasalud.bo','$2y$10$Qe7n1kq8wJ0yYzS3QxS8Me1u5b7c9dXo2V4l6TzP8rK0aB1cD2eF3',FALSE,'2026-10-21 08:20:00'),
- (2,'recepcion1','recepcion1@vidasalud.bo','$2y$10$Hk2m9Lw4xT6pQ1rS5uV7WeY3z8A0bC2dE4fG6hI8jK0lM2nO4pQ6r',FALSE,'2026-10-21 08:01:12'),
- (2,'recepcion2','recepcion2@vidasalud.bo','$2y$10$Zx9c8V7b6N5m4L3k2J1hGfD0sA9pO8iU7yT6rE5wQ4aS3dF2gH1jK',TRUE,NULL),
- (3,'dr.jperez','jperez@vidasalud.bo','$2y$10$Pq1W2e3R4t5Y6u7I8o9P0aS1d2F3g4H5j6K7l8Z9x0C1v2B3n4M5q',FALSE,'2026-10-21 08:31:40'),
- (3,'dra.agutierrez','agutierrez@vidasalud.bo','$2y$10$Lm0Nb9Vc8Xz7As6Sd5Df4Fg3Gh2Hj1Jk0Kl9Lq8Qw7We6Er5Rt4Ty',FALSE,'2026-10-20 14:02:00'),
- (4,'maria.lopez','maria.lopez@gmail.com','$2y$10$Aa1Bb2Cc3Dd4Ee5Ff6Gg7Hh8Ii9Jj0Kk1Ll2Mm3Nn4Oo5Pp6Qq7Rr',FALSE,'2026-10-19 21:15:00');
+ (1,'carla.rojas','carla.rojas@vidasalud.bo',:'seed_password_hash',TRUE,NULL),
+ (2,'recepcion1','recepcion1@vidasalud.bo',:'seed_password_hash',TRUE,NULL),
+ (2,'recepcion2','recepcion2@vidasalud.bo',:'seed_password_hash',TRUE,NULL),
+ (3,'dr.jperez','jperez@vidasalud.bo',:'seed_password_hash',TRUE,NULL),
+ (3,'dra.agutierrez','agutierrez@vidasalud.bo',:'seed_password_hash',TRUE,NULL),
+ (4,'maria.lopez','maria.lopez@gmail.com',:'seed_password_hash',TRUE,NULL);
 
 INSERT INTO especialidad (nombre, descripcion) VALUES
  ('Medicina general','Atención primaria y consulta general'),

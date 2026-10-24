@@ -47,12 +47,16 @@ Grupo #06 · INF342 SC · UAGRM – FICCT · Gestión 2-2026
 3. Crear la base de datos y cargar los scripts:
    ```bash
    createdb -U postgres bd_vidasalud
-   psql -U postgres -d bd_vidasalud -f database/01_schema.sql
-   psql -U postgres -d bd_vidasalud -f database/02_seed.sql
+   export DATABASE_URL='postgresql://postgres:clave@127.0.0.1:5432/bd_vidasalud'
+   export SEED_INITIAL_PASSWORD='UnaClaveTemporal2026!'
+   ./scripts/inicializar-db.sh
    ```
+   Todas las cuentas semilla utilizan inicialmente `SEED_INITIAL_PASSWORD` y se les exige cambiarla al ingresar.
 4. Copiar `.env.example` a `.env` y completar los datos de conexión.
 5. Los hashes del seed son ilustrativos: generar una contraseña real para probar (ver comentario en `02_seed.sql`).
 6. Abrir `http://localhost/G6-ClinicaVidaSalud-Si1/public`.
+
+Para publicar en Render, consulte [docs/deploy-render.md](docs/deploy-render.md). El archivo `render.yaml` crea y enlaza el Web Service y PostgreSQL automáticamente.
 
 ## Cómo agregar un caso de uso
 
