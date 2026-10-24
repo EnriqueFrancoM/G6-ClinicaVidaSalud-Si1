@@ -6,6 +6,7 @@ use App\Core\Controller;
 use App\Core\Session;
 
 // CU09 boundary. Mensajes: seleccionarMedico(id), definirHorario(día, inicio, fin, duración), mostrarAgendaSemanal().
+// «extend» Registrar bloqueo de agenda: registrarBloqueo(fecha, motivo), quitarBloqueo(id).
 class UI_Horarios extends Controller
 {
     public function seleccionarMedico(): void
@@ -34,7 +35,15 @@ class UI_Horarios extends Controller
             'form'         => $form,
             'campoError'   => Session::flash('campo_error'),
             'confirmacion' => Session::flash('confirmacion'),
+            'formBloqueo'  => $this->formularioBloqueo(),
         ]);
+    }
+
+    private function formularioBloqueo(): array
+    {
+        $form = Session::get('_form_bloqueo');
+        Session::set('_form_bloqueo', null);
+        return $form ?? ['alcance' => 'medico', 'fecha' => date('Y-m-d'), 'motivo' => ''];
     }
 
     public function definirHorario(): void
@@ -61,6 +70,33 @@ class UI_Horarios extends Controller
 
         Session::flash('success', $control->mensaje);
         $this->redirect($volver);
+    }
+
+    // «extend» Registrar bloqueo de agenda (feriado general o ausencia del médico).
+    public function registrarBloqueo(): void
+    {
+        $datos = [
+            'id_medico' => (int) $this->input('id_medico', 0),
+            'alcance'   => (string) $this->input('alcance', 'medico'),
+            'fecha'     => (string) $this->input('fecha', ''),
+            'motivo'    => (string) $this->input('motivo', ''),
+        ];
+        $control = new CtrlHorario();
+        if (!$control->registrarBloqueo($datos)) {
+            Session::flash('error', $control->mensaje);
+            Session::set('_form_bloqueo', $datos);
+            Session::flash('campo_error', 'bloqueo_' . $control->campoError);
+        } else {
+            Session::flash('success', $control->mensaje);
+        }
+        $this->redirect('/horarios?medico=' . $datos['id_medico']);
+    }
+
+    public function quitarBloqueo(): void
+    {
+        $control = new CtrlHorario();
+        Session::flash($control->quitarBloqueo((int) $this->input('id_bloqueo', 0)) ? 'success' : 'error', $control->mensaje);
+        $this->redirect('/horarios?medico=' . (int) $this->input('id_medico', 0));
     }
 
     public function mostrarAgendaSemanal(array $datos): void

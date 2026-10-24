@@ -4,11 +4,13 @@ namespace App\Controllers\GestionClinica;
 
 use App\Core\Session;
 use App\Models\Bitacora;
+use App\Models\BloqueoAgenda;
 use App\Models\Cita;
 use App\Models\HorarioAtencion;
 use App\Models\Medico;
 
 // CU09 control. Mensajes: obtenerHorarios(id_medico), guardarHorario(datos).
+// «extend» Registrar bloqueo de agenda: registrarBloqueo(datos), quitarBloqueo(id).
 class CtrlHorario
 {
     public const DIAS = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
@@ -32,9 +34,73 @@ class CtrlHorario
     public function obtenerHorarios(int $idMedico): array
     {
         return [
-            'medicos'  => (new Medico())->buscar(),
-            'horarios' => $idMedico > 0 ? (new HorarioAtencion())->listarPorMedico($idMedico) : [],
+            'medicos'   => (new Medico())->buscar(),
+            'horarios'  => $idMedico > 0 ? (new HorarioAtencion())->listarPorMedico($idMedico) : [],
+            'bloqueos'  => $idMedico > 0 ? (new BloqueoAgenda())->listarPorMedico($idMedico) : [],
         ];
+    }
+
+    // «extend» Registrar bloqueo de agenda: feriado general (todos los médicos) o ausencia de un médico.
+    public function registrarBloqueo(array $datos): bool
+    {
+        $idMedico = ($datos['alcance'] ?? 'medico') === 'general' ? null : (int) ($datos['id_medico'] ?? 0);
+        $fecha = (string) ($datos['fecha'] ?? '');
+        $motivo = preg_replace('/\s+/u', ' ', trim((string) ($datos['motivo'] ?? '')));
+
+        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha) {
+            $this->invalido('fecha', 'Ingrese una fecha válida.');
+            return false;
+        }
+        if ($fecha < date('Y-m-d')) {
+            $this->invalido('fecha', 'No se pueden registrar bloqueos en fechas pasadas.');
+            return false;
+        }
+        if ($motivo === '' || mb_strlen($motivo) > 120) {
+            $this->invalido('motivo', 'Ingrese el motivo (máximo 120 caracteres).');
+            return false;
+        }
+        if ($idMedico !== null && $idMedico <= 0) {
+            $this->mensaje = 'Seleccione un médico.';
+            return false;
+        }
+
+        $bloqueos = new BloqueoAgenda();
+        if ($bloqueos->existeBloqueo($idMedico, $fecha)) {
+            $this->invalido('fecha', $idMedico === null ? 'Ya existe un bloqueo registrado para esa fecha.' : 'Esa fecha ya está bloqueada para el médico.');
+            return false;
+        }
+
+        $bloqueos->insertar($idMedico, $fecha, $motivo);
+        $quien = $idMedico === null ? 'general' : $this->codigoMedico($idMedico);
+        $this->registrar("Registró bloqueo $quien $fecha: $motivo");
+        $this->mensaje = 'Bloqueo de agenda registrado. Las citas ya programadas ese día no se eliminan.';
+
+        return true;
+    }
+
+    public function quitarBloqueo(int $idBloqueo): bool
+    {
+        $eliminado = (new BloqueoAgenda())->eliminar($idBloqueo);
+        if ($eliminado === null) {
+            $this->mensaje = 'El bloqueo no existe.';
+            return false;
+        }
+
+        $quien = $eliminado['id_medico'] === null ? 'general' : $this->codigoMedico((int) $eliminado['id_medico']);
+        $this->registrar("Quitó bloqueo $quien {$eliminado['fecha']}");
+        $this->mensaje = 'Bloqueo de agenda quitado.';
+
+        return true;
+    }
+
+    private function codigoMedico(int $idMedico): string
+    {
+        foreach ((new Medico())->buscar() as $fila) {
+            if ((int) $fila['id_medico'] === $idMedico) {
+                return $fila['codigo'];
+            }
+        }
+        return '';
     }
 
     // CU09 mensaje 5 → 6, 7, 8, 9, 10.

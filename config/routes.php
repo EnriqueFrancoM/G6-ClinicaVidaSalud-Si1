@@ -50,6 +50,9 @@ return [
     // CU09 mensajes 1 y 4
     ['GET',  '/horarios', [UI_Horarios::class, 'seleccionarMedico'], 'HOR_GESTIONAR'],
     ['POST', '/horarios', [UI_Horarios::class, 'definirHorario'],    'HOR_GESTIONAR'],
+    // CU09 «extend» Registrar bloqueo de agenda
+    ['POST', '/horarios/bloqueo',        [UI_Horarios::class, 'registrarBloqueo'], 'HOR_GESTIONAR'],
+    ['POST', '/horarios/bloqueo/quitar', [UI_Horarios::class, 'quitarBloqueo'],    'HOR_GESTIONAR'],
 
     // Próximos casos de uso (agregar aquí a medida que se implementen):
     // ['GET', '/pacientes',      [UI_Pacientes::class, ...],         'PAC_GESTIONAR'], // CU10

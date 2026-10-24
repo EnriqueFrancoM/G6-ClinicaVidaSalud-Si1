@@ -1142,3 +1142,5 @@ body.app {
 .semana thead th { background: var(--fill); }
 .semana tbody th { width: 64px; font-weight: 500; }
 .semana td.ocupado { background: var(--teal-100); color: var(--teal-800); }
+.columnas-iguales .columna { display: grid; gap: 20px; align-content: start; }
+.columnas-iguales .field input[type="date"] { height: 44px; border-radius: 12px; }

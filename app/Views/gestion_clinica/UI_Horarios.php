@@ -154,6 +154,7 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?string {
             </table>
         </section>
 
+        <div class="columna">
         <section class="hoja">
             <header class="hoja-cabecera">
                 <h1>Vista semanal</h1>
@@ -181,5 +182,63 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?string {
                 </tbody>
             </table>
         </section>
+
+        <!-- «extend» Registrar bloqueo de agenda (feriados o ausencias) -->
+        <section class="hoja">
+            <form id="formBloqueo" method="post" action="<?= App::url('/horarios/bloqueo') ?>">
+                <header class="hoja-cabecera">
+                    <h1>Bloqueos de agenda</h1>
+                </header>
+                <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
+                <div class="modal-grid">
+                    <label class="field<?= $invalido('bloqueo_fecha') ?>">
+                        <span>Fecha *</span>
+                        <input type="date" name="fecha" value="<?= e($formBloqueo['fecha']) ?>" min="<?= date('Y-m-d') ?>" required>
+                    </label>
+                    <label class="field">
+                        <span>Aplica a</span>
+                        <select name="alcance">
+                            <option value="medico"<?= $formBloqueo['alcance'] !== 'general' ? ' selected' : '' ?>>Este médico (ausencia)</option>
+                            <option value="general"<?= $formBloqueo['alcance'] === 'general' ? ' selected' : '' ?>>Todos los médicos (feriado)</option>
+                        </select>
+                    </label>
+                </div>
+                <label class="field<?= $invalido('bloqueo_motivo') ?>">
+                    <span>Motivo *</span>
+                    <input type="text" name="motivo" value="<?= e($formBloqueo['motivo']) ?>" maxlength="120" placeholder="Ej.: Feriado, congreso, vacaciones" required>
+                </label>
+                <div class="modal-acciones">
+                    <button type="submit" class="btn-primary btn-chico" name="btnBloquear">Registrar bloqueo</button>
+                </div>
+            </form>
+
+            <table class="cuentas" id="tablaBloqueos">
+                <thead>
+                    <tr><th>Fecha</th><th>Motivo</th><th>Aplica a</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <?php if (($bloqueos ?? []) === []): ?>
+                        <tr><td colspan="4" class="vacio">Sin bloqueos próximos.</td></tr>
+                    <?php endif; ?>
+                    <?php foreach ($bloqueos ?? [] as $b): ?>
+                        <tr>
+                            <td><?= e(date('d/m/Y', strtotime($b['fecha']))) ?></td>
+                            <td><?= e($b['motivo']) ?></td>
+                            <td><?= $b['id_medico'] === null ? 'Todos (feriado)' : 'Este médico' ?></td>
+                            <td class="acciones">
+                                <form method="post" action="<?= App::url('/horarios/bloqueo/quitar') ?>">
+                                    <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                                    <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
+                                    <input type="hidden" name="id_bloqueo" value="<?= e((string) $b['id_bloqueo']) ?>">
+                                    <button type="submit" class="btn-borde">Quitar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+        </div>
     </div>
 </div>
