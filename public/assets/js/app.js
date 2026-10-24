@@ -201,3 +201,23 @@
         });
     });
 })();
+
+// CU03: abre el formulario de usuario (formUsuario) y aplica los filtros de la lista.
+(function () {
+    const pantalla = document.querySelector("[data-ui='UI_GestionarUsuarios']");
+    if (!pantalla) {
+        return;
+    }
+
+    pantalla.querySelectorAll("[data-autoenviar]").forEach((select) => {
+        select.addEventListener("change", () => select.form.submit());
+    });
+
+    const modal = document.querySelector("[data-modal-usuario]");
+    if (modal && typeof modal.showModal === "function") {
+        modal.showModal();
+        modal.addEventListener("cancel", () => {
+            window.location.href = modal.querySelector(".modal-acciones a").href;
+        });
+    }
+})();
