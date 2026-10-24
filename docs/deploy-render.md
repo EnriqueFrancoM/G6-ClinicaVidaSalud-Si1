@@ -12,8 +12,10 @@ la URL privada de la base con la aplicación.
    `clinica-vida-salud` y `clinica-vida-salud-db`.
 4. Cuando Render solicite `SEED_INITIAL_PASSWORD`, indique una contraseña
    temporal fuerte (mínimo 8 caracteres, con mayúscula, número y símbolo).
-5. Espere el primer despliegue. El hook `scripts/inicializar-db.sh` crea el
-   esquema y carga `database/02_seed.sql` una sola vez.
+5. Espere el despliegue. Antes de iniciar Apache, el contenedor ejecuta
+   `scripts/inicializar-db.sh`, que crea el esquema y carga `database/02_seed.sql`
+   si la base todavía no está inicializada. Si la inicialización falla, el
+   servicio no empieza a aceptar solicitudes.
 
 Al terminar, ingrese con `carla.rojas` y la contraseña temporal elegida. La
 aplicación obligará a cambiarla antes de abrir el panel. Las demás cuentas
@@ -34,9 +36,9 @@ No agregue credenciales de PostgreSQL manualmente. Render genera y vincula
 | `PORT` | Render | Automática; no crearla manualmente. |
 | `RENDER_EXTERNAL_URL` | Render | Automática; se usa como URL base. |
 
-Tras comprobar el primer inicio de sesión, elimine `SEED_INITIAL_PASSWORD` del
-panel de Render: solo se necesita durante la inicialización. No elimine
-`DATABASE_URL`.
+La variable `SEED_INITIAL_PASSWORD` puede eliminarse después de inicializar la
+base. En arranques posteriores el script detecta el esquema existente y no la
+necesita. No elimine `DATABASE_URL`.
 
 ## Inicialización local opcional
 

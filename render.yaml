@@ -5,7 +5,6 @@ services:
     region: virginia
     plan: free
     healthCheckPath: /
-    initialDeployHook: ./scripts/inicializar-db.sh
     envVars:
       - key: APP_NAME
         value: Clínica Vida Salud

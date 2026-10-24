@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+cd /var/www/html
+./scripts/inicializar-db.sh
+
 PUERTO="${PORT:-10000}"
 case "$PUERTO" in
     ''|*[!0-9]*)
