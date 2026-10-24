@@ -2,6 +2,7 @@
 // Tabla de rutas: [método, ruta, clase@operación, permiso requerido]
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
+use App\Controllers\Seguridad\UI_Bitacora;
 use App\Controllers\Seguridad\UI_CambiarContrasena;
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
 use App\Controllers\Seguridad\UI_IniciarSesion;
@@ -30,8 +31,12 @@ return [
     ['GET',  '/roles', [UI_RolesPermisos::class, 'abrirRoles'], 'ROL_GESTIONAR'],
     ['POST', '/roles', [UI_RolesPermisos::class, 'editarRol'],  'ROL_GESTIONAR'],
 
+    // CU06 mensajes 1, 4 y 7
+    ['GET', '/bitacora',          [UI_Bitacora::class, 'abrirBitacora'],  'BIT_CONSULTAR'],
+    ['GET', '/bitacora/filtrar',  [UI_Bitacora::class, 'aplicarFiltros'], 'BIT_CONSULTAR'],
+    ['GET', '/bitacora/exportar', [UI_Bitacora::class, 'exportar'],       'BIT_CONSULTAR'],
+
     // Próximos casos de uso (agregar aquí a medida que se implementen):
-    // ['GET', '/bitacora',       [UI_Bitacora::class, ...],          'BIT_CONSULTAR'], // CU06
     // ['GET', '/especialidades', [UI_Especialidades::class, ...],    'ESP_GESTIONAR'], // CU07
     // ['GET', '/medicos',        [UI_Medicos::class, ...],           'MED_GESTIONAR'], // CU08
     // ['GET', '/horarios',       [UI_Horarios::class, ...],          'HOR_GESTIONAR'], // CU09

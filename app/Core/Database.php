@@ -19,6 +19,8 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
+            // Misma zona horaria que PHP, para que fecha_hora y "hoy" coincidan (CU06).
+            self::$pdo->exec("SET TIME ZONE '" . App::config('app.timezone', 'America/La_Paz') . "'");
         }
         return self::$pdo;
     }

@@ -50,6 +50,13 @@ class Usuario extends Model
         );
     }
 
+    // CU06 mensaje 5: nombre de usuario para mostrar en la bitácora.
+    public function obtenerNombre(int $idUsuario): ?string
+    {
+        $fila = $this->fetch('SELECT username FROM usuario WHERE id_usuario = :id', ['id' => $idUsuario]);
+        return $fila['username'] ?? null;
+    }
+
     // CU05 paso 5: mínimo 8 caracteres, una mayúscula, un número y un símbolo.
     public function validarPolitica(string $nueva): bool
     {

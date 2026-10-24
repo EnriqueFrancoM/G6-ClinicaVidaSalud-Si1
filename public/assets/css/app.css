@@ -1093,3 +1093,13 @@ body.app {
     text-decoration: none;
 }
 .perfil-opciones a:hover { background: var(--teal-100); }
+
+/* ——— CU06 ——— */
+.filtros.filtros-bitacora { grid-template-columns: repeat(4, 1fr) auto; align-items: end; }
+.filtros-bitacora .btn-chico { height: 44px; margin-bottom: 18px; }
+.filtros-bitacora input[type="date"] { height: 44px; border-radius: 12px; }
+.tabla-pie { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 4px 6px; color: var(--muted); font-size: 0.82rem; }
+.paginas { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 900px) {
+    .filtros.filtros-bitacora { grid-template-columns: 1fr 1fr; }
+}
