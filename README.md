@@ -46,7 +46,7 @@ Grupo #06 · INF342 SC · UAGRM – FICCT · Gestión 2-2026
 2. En `php.ini` habilitar `extension=pdo_pgsql` y `extension=pgsql`; reiniciar Apache. Activar `mod_rewrite`.
 3. Crear la base de datos y cargar los scripts:
    ```bash
-   createdb -U postgres bd_vidasalud
+   createdb -U postgres -E UTF8 -T template0 bd_vidasalud
    export DATABASE_URL='postgresql://postgres:clave@127.0.0.1:5432/bd_vidasalud'
    export SEED_INITIAL_PASSWORD='UnaClaveTemporal2026!'
    ./scripts/inicializar-db.sh
