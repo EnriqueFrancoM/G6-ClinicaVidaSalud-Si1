@@ -38,6 +38,7 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
         <button type="submit" class="btn-primary btn-chico">Buscar</button>
     </form>
 
+    <div class="tabla-responsive">
     <table class="cuentas" id="tablaPacientes">
         <thead>
             <tr><th>Paciente</th><th>CI</th><th>Nacimiento</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
@@ -65,6 +66,7 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </section>
 
 <?php if ($form !== null): ?>

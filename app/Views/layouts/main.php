@@ -41,7 +41,7 @@ $menu = [
 <body class="app">
 <div class="shell">
     <aside class="sidebar">
-        <div>
+        <div class="sidebar-inner">
             <div class="side-brand">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
@@ -49,11 +49,15 @@ $menu = [
                 </svg>
                 Vida Salud
             </div>
-            <label class="menu-search">
+            <button type="button" class="nav-toggle" data-nav-toggle aria-controls="menu-principal" aria-expanded="false">
+                <span class="sr-only">Abrir menú de navegación</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+            <label class="menu-search" data-menu-search-wrap>
                 <span class="sr-only">Buscar en el menú</span>
                 <input type="search" data-menu-search placeholder="Buscar en el menú" autocomplete="off">
             </label>
-            <nav>
+            <nav id="menu-principal">
                 <?php foreach ($menu as [$permiso, $ruta, $texto, $trazo]): ?>
                     <?php if ($permiso === 'auth' || Session::hasPermission($permiso)): ?>
                         <?php $activo = rtrim($path, '/') === rtrim($base . $ruta, '/'); ?>

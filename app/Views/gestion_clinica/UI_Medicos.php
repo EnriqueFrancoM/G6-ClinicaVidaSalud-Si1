@@ -42,6 +42,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
         <button type="submit" class="btn-primary btn-chico">Buscar</button>
     </form>
 
+    <div class="tabla-responsive">
     <table class="cuentas" id="tablaMedicos">
         <thead>
                 <tr>
@@ -81,6 +82,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </section>
 
 <?php if ($form !== null): ?>

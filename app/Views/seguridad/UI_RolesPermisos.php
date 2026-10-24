@@ -31,6 +31,7 @@ $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
             <?php foreach ($permisos as $modulo => $lista): ?>
                 <section class="hoja modulo-permiso">
                     <h2><?= e($modulo) ?></h2>
+                    <div class="tabla-responsive">
                     <table class="matriz-roles">
                         <thead>
                             <tr>
@@ -74,6 +75,7 @@ $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 </section>
             <?php endforeach; ?>
         </div>

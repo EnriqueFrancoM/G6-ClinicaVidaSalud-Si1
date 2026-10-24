@@ -60,6 +60,7 @@ foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
         <header class="hoja-cabecera">
             <h1>Historial de citas</h1>
         </header>
+        <div class="tabla-responsive">
         <table class="cuentas" id="tablaHistorial">
             <thead>
                 <tr><th>Código</th><th>Fecha</th><th>Hora</th><th>Médico</th><th>Especialidad</th><th>Motivo</th><th>Estado</th></tr>
@@ -88,5 +89,6 @@ foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     </section>
 <?php endif; ?>

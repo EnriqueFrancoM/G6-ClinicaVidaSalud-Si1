@@ -73,35 +73,43 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                     <?= vs_icono('agregar') ?><span>Agregar horario</span>
                 </button>
                 <button type="button" class="btn-borde btn-chico" id="btnModalBloqueo" data-abrir-dialogo="#modalBloqueo">
-                    <?= vs_icono('calendario') ?><span>Bloquear un día</span>
+                    <?= vs_icono('bloquear') ?><span>Bloqueos de agenda</span>
                 </button>
             </div>
         </header>
-        <table class="semana">
-            <thead>
-                <tr>
-                    <th>Hora</th>
-                    <?php foreach ($columnas as $nombre): ?><th><?= e($nombre) ?></th><?php endforeach; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach (array_keys($horas) as $hora): ?>
+
+        <div class="semana-scroll">
+            <table class="semana">
+                <thead>
                     <tr>
-                        <th><?= sprintf('%02d:00', $hora) ?></th>
-                        <?php foreach (array_keys($columnas) as $dia): ?>
-                            <?php $info = $celda($dia, $hora); ?>
-                            <?php if ($info !== null): ?>
-                                <td class="ocupado" data-abrir-dialogo="#modalHorario" title="Horario: <?= e($info['horario']['hora_inicio']) ?> - <?= e($info['horario']['hora_fin']) ?> (<?= (int) $info['horario']['duracion_cita_min'] ?> min). Clic para gestionar.">
-                                    <?= e($info['texto']) ?>
-                                </td>
-                            <?php else: ?>
-                                <td></td>
-                            <?php endif; ?>
+                        <th class="col-hora">Hora</th>
+                        <?php foreach ($columnas as $nombre): ?>
+                            <th>
+                                <span class="dia-largo"><?= e($nombre) ?></span>
+                                <span class="dia-corto"><?= e(mb_substr($nombre, 0, 3)) ?></span>
+                            </th>
                         <?php endforeach; ?>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach (array_keys($horas) as $hora): ?>
+                        <tr>
+                            <th class="col-hora"><?= sprintf('%02d:00', $hora) ?></th>
+                            <?php foreach (array_keys($columnas) as $dia): ?>
+                                <?php $info = $celda($dia, $hora); ?>
+                                <?php if ($info !== null): ?>
+                                    <td class="ocupado" data-abrir-dialogo="#modalHorario" title="Horario: <?= e($info['horario']['hora_inicio']) ?> - <?= e($info['horario']['hora_fin']) ?> (<?= (int) $info['horario']['duracion_cita_min'] ?> min). Clic para gestionar.">
+                                        <?= e($info['texto']) ?>
+                                    </td>
+                                <?php else: ?>
+                                    <td></td>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <!-- Modal 1: Agregar / Editar horario y listado de horarios -->
@@ -109,7 +117,7 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
         <form id="formHorario" method="post" action="<?= App::url('/horarios') ?>">
             <div class="modal-cabecera-titulo">
                 <h2><?= $editando ? 'Editar horario' : 'Agregar horario' ?></h2>
-                <button type="button" class="btn-cerrar" data-cerrar-modal aria-label="Cerrar"><?= vs_icono('quitar') ?></button>
+                <button type="button" class="btn-cerrar" data-cerrar-modal aria-label="Cerrar">&times;</button>
             </div>
 
             <?php if ($medicoActual !== null && !$medicoActual['estado'] && !$editando): ?>
@@ -156,8 +164,7 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                     <button type="button" class="btn-borde" data-cerrar-modal>Cerrar</button>
                 <?php endif; ?>
                 <button type="submit" class="btn-primary btn-chico" name="btnGuardar">
-                    <?= vs_icono($editando ? 'editar' : 'activar') ?>
-                    <span><?= $editando ? 'Actualizar horario' : 'Guardar horario' ?></span>
+                    <?= vs_icono('agregar') ?><span><?= $editando ? 'Actualizar horario' : 'Guardar horario' ?></span>
                 </button>
             </div>
         </form>
@@ -180,37 +187,39 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
 
         <div class="modal-seccion">
             <h3>Horarios registrados del médico</h3>
-            <table class="cuentas" id="tablaHorarios">
-                <thead>
-                    <tr><th>Día</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Estado</th><th></th></tr>
-                </thead>
-                <tbody>
-                    <?php if ($horarios === []): ?>
-                        <tr><td colspan="6" class="vacio">El médico no tiene horarios registrados.</td></tr>
-                    <?php endif; ?>
-                    <?php foreach ($horarios as $h): ?>
-                        <tr<?= (int) $form['id_horario'] === (int) $h['id_horario'] ? ' class="seleccionado"' : '' ?>>
-                            <td><?= e($dias[(int) $h['dia_semana']] ?? 'Día ' . $h['dia_semana']) ?></td>
-                            <td><?= e($h['hora_inicio']) ?></td>
-                            <td><?= e($h['hora_fin']) ?></td>
-                            <td><?= (int) $h['duracion_cita_min'] ?> min</td>
-                            <td><span class="estado-pill<?= $h['estado'] ? '' : ' bloqueada' ?>"><?= $h['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
-                            <td class="acciones">
-                                <a class="btn-icono" href="<?= App::url('/horarios?medico=' . $idMedico . '&editar=' . (int) $h['id_horario']) ?>" title="Editar" aria-label="Editar horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>"><?= vs_icono('editar') ?></a>
-                                <?php if ($h['estado']): ?>
-                                    <form method="post" action="<?= App::url('/horarios') ?>">
-                                        <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
-                                        <input type="hidden" name="accion" value="desactivar">
-                                        <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
-                                        <input type="hidden" name="id_horario" value="<?= e((string) $h['id_horario']) ?>">
-                                        <button type="submit" class="btn-icono btn-peligro" title="Desactivar" aria-label="Desactivar el horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>" data-confirmar="¿Desactivar el horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>?"><?= vs_icono('bloquear') ?></button>
-                                    </form>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="tabla-responsive">
+                <table class="cuentas" id="tablaHorarios">
+                    <thead>
+                        <tr><th>Día</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Estado</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($horarios === []): ?>
+                            <tr><td colspan="6" class="vacio">El médico no tiene horarios registrados.</td></tr>
+                        <?php endif; ?>
+                        <?php foreach ($horarios as $h): ?>
+                            <tr<?= (int) $form['id_horario'] === (int) $h['id_horario'] ? ' class="seleccionado"' : '' ?>>
+                                <td><?= e($dias[(int) $h['dia_semana']] ?? 'Día ' . $h['dia_semana']) ?></td>
+                                <td><?= e($h['hora_inicio']) ?></td>
+                                <td><?= e($h['hora_fin']) ?></td>
+                                <td><?= (int) $h['duracion_cita_min'] ?> min</td>
+                                <td><span class="estado-pill<?= $h['estado'] ? '' : ' bloqueada' ?>"><?= $h['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
+                                <td class="acciones">
+                                    <a class="btn-icono" href="<?= App::url('/horarios?medico=' . $idMedico . '&editar=' . (int) $h['id_horario']) ?>" title="Editar" aria-label="Editar horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>"><?= vs_icono('editar') ?></a>
+                                    <?php if ($h['estado']): ?>
+                                        <form method="post" action="<?= App::url('/horarios') ?>">
+                                            <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                                            <input type="hidden" name="accion" value="desactivar">
+                                            <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
+                                            <input type="hidden" name="id_horario" value="<?= e((string) $h['id_horario']) ?>">
+                                            <button type="submit" class="btn-icono btn-peligro" title="Desactivar" aria-label="Desactivar el horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>" data-confirmar="¿Desactivar el horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>?"><?= vs_icono('bloquear') ?></button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </dialog>
 
@@ -219,7 +228,7 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
         <form id="formBloqueo" method="post" action="<?= App::url('/horarios/bloqueo') ?>">
             <div class="modal-cabecera-titulo">
                 <h2>Bloqueos de agenda</h2>
-                <button type="button" class="btn-cerrar" data-cerrar-modal aria-label="Cerrar"><?= vs_icono('quitar') ?></button>
+                <button type="button" class="btn-cerrar" data-cerrar-modal aria-label="Cerrar">&times;</button>
             </div>
             <p class="lede">Feriados generales o ausencias de este médico que excluyen la disponibilidad.</p>
             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
@@ -243,37 +252,39 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
             </label>
             <div class="modal-acciones">
                 <button type="button" class="btn-borde" data-cerrar-modal>Cerrar</button>
-                <button type="submit" class="btn-primary btn-chico" name="btnBloquear"><?= vs_icono('calendario') ?><span>Registrar bloqueo</span></button>
+                <button type="submit" class="btn-primary btn-chico" name="btnBloquear"><?= vs_icono('bloquear') ?><span>Registrar bloqueo</span></button>
             </div>
         </form>
 
         <div class="modal-seccion">
             <h3>Bloqueos registrados</h3>
-            <table class="cuentas" id="tablaBloqueos">
-                <thead>
-                    <tr><th>Fecha</th><th>Motivo</th><th>Aplica a</th><th></th></tr>
-                </thead>
-                <tbody>
-                    <?php if (($bloqueos ?? []) === []): ?>
-                        <tr><td colspan="4" class="vacio">Sin bloqueos próximos.</td></tr>
-                    <?php endif; ?>
-                    <?php foreach ($bloqueos ?? [] as $b): ?>
-                        <tr>
-                            <td><?= e(date('d/m/Y', strtotime($b['fecha']))) ?></td>
-                            <td><?= e($b['motivo']) ?></td>
-                            <td><?= $b['id_medico'] === null ? 'Todos (feriado)' : 'Este médico' ?></td>
-                            <td class="acciones">
-                                <form method="post" action="<?= App::url('/horarios/bloqueo/quitar') ?>">
-                                    <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
-                                    <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
-                                    <input type="hidden" name="id_bloqueo" value="<?= e((string) $b['id_bloqueo']) ?>">
-                                    <button type="submit" class="btn-icono btn-peligro" title="Quitar" aria-label="Quitar el bloqueo del <?= e(date('d/m/Y', strtotime($b['fecha']))) ?>" data-confirmar="¿Quitar el bloqueo del <?= e(date('d/m/Y', strtotime($b['fecha']))) ?>?"><?= vs_icono('quitar') ?></button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="tabla-responsive">
+                <table class="cuentas" id="tablaBloqueos">
+                    <thead>
+                        <tr><th>Fecha</th><th>Motivo</th><th>Aplica a</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        <?php if (($bloqueos ?? []) === []): ?>
+                            <tr><td colspan="4" class="vacio">Sin bloqueos próximos.</td></tr>
+                        <?php endif; ?>
+                        <?php foreach ($bloqueos ?? [] as $b): ?>
+                            <tr>
+                                <td><?= e(date('d/m/Y', strtotime($b['fecha']))) ?></td>
+                                <td><?= e($b['motivo']) ?></td>
+                                <td><?= $b['id_medico'] === null ? 'Todos (feriado)' : 'Este médico' ?></td>
+                                <td class="acciones">
+                                    <form method="post" action="<?= App::url('/horarios/bloqueo/quitar') ?>">
+                                        <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                                        <input type="hidden" name="id_medico" value="<?= e((string) $idMedico) ?>">
+                                        <input type="hidden" name="id_bloqueo" value="<?= e((string) $b['id_bloqueo']) ?>">
+                                        <button type="submit" class="btn-icono btn-peligro" title="Quitar" aria-label="Quitar el bloqueo del <?= e(date('d/m/Y', strtotime($b['fecha']))) ?>" data-confirmar="¿Quitar el bloqueo del <?= e(date('d/m/Y', strtotime($b['fecha']))) ?>?"><?= vs_icono('quitar') ?></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </dialog>
 </div>

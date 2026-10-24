@@ -44,6 +44,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
         </label>
     </form>
 
+    <div class="tabla-responsive">
     <table class="cuentas" id="tablaUsuarios">
         <thead>
             <tr>
@@ -87,6 +88,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </section>
 
 <?php if ($form !== null): ?>

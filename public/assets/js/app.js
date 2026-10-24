@@ -168,6 +168,35 @@
 })();
 
 (function () {
+    const sidebar = document.querySelector(".sidebar");
+    const toggle = document.querySelector("[data-nav-toggle]");
+    if (!sidebar || !toggle) {
+        return;
+    }
+
+    const menu = sidebar.querySelector("nav");
+    const media = window.matchMedia("(max-width: 860px)");
+
+    function setOpen(open) {
+        sidebar.classList.toggle("nav-open", open);
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        toggle.querySelector(".sr-only").textContent = open ? "Cerrar menú de navegación" : "Abrir menú de navegación";
+    }
+
+    toggle.addEventListener("click", () => setOpen(!sidebar.classList.contains("nav-open")));
+    menu.addEventListener("click", (event) => {
+        if (media.matches && event.target.closest("a")) {
+            setOpen(false);
+        }
+    });
+    media.addEventListener("change", () => {
+        if (!media.matches) {
+            setOpen(false);
+        }
+    });
+})();
+
+(function () {
     const buscador = document.querySelector("[data-menu-search]");
     if (!buscador) {
         return;

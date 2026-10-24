@@ -44,6 +44,10 @@
 
 * { box-sizing: border-box; }
 
+html { min-width: 320px; }
+
+img, svg { max-width: 100%; }
+
 body {
     margin: 0;
     font-family: var(--font);
@@ -1146,11 +1150,68 @@ body.app {
 .selector-medico select, .columnas-iguales .field input:not([type="checkbox"])[type="time"] { height: 44px; }
 .confirmacion { margin: 0 0 18px; padding: 14px 16px; border: 1px solid #fdba74; border-radius: 14px; background: #fff7ed; color: #9a3412; }
 .confirmacion p { margin: 0 0 10px; }
-.semana { width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center; }
-.semana th, .semana td { padding: 8px 6px; border: 1px solid var(--line); }
-.semana thead th { background: var(--fill); }
-.semana tbody th { width: 64px; font-weight: 500; }
-.semana td.ocupado { background: var(--teal-100); color: var(--teal-800); }
+.semana-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+}
+.semana {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.82rem;
+    text-align: center;
+}
+.semana th, .semana td {
+    padding: 10px 8px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.semana th:last-child, .semana td:last-child {
+    border-right: 0;
+}
+.semana tr:last-child td, .semana tr:last-child th {
+    border-bottom: 0;
+}
+.semana thead th {
+    background: var(--fill);
+    color: var(--ink);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.semana .col-hora {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    width: 72px;
+    min-width: 72px;
+    font-weight: 600;
+    background: var(--fill);
+    color: var(--muted);
+}
+.semana tbody th.col-hora {
+    z-index: 1;
+    background: var(--surface);
+}
+.dia-corto { display: none; }
+.dia-largo { display: inline; }
+
+.tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+}
+.tabla-responsive .cuentas {
+    min-width: 480px;
+}
+.semana td.ocupado { background: var(--teal-100); color: var(--teal-800); font-weight: 650; }
 .columnas-iguales .columna { display: grid; gap: 20px; align-content: start; }
 .columnas-iguales .field input:not([type="checkbox"])[type="date"] { height: 44px; border-radius: 12px; }
 
@@ -1243,7 +1304,7 @@ body.app {
 }
 
 /* Relieve de los módulos: nombre, estado y foco. */
-.hoja { overflow-x: auto; }
+.hoja { overflow: hidden; }
 
 a:focus-visible,
 button:focus-visible,
@@ -1733,6 +1794,10 @@ body.app,
 }
 
 /* Tabla semanal de horarios (CU09) */
+[data-theme="dark"] .semana-scroll {
+    border-color: var(--line);
+    background: var(--surface);
+}
 [data-theme="dark"] .semana {
     border-color: var(--line);
 }
@@ -1745,9 +1810,12 @@ body.app,
     color: #c2d7db;
     font-weight: 600;
 }
-[data-theme="dark"] .semana tbody th {
+[data-theme="dark"] .semana .col-hora {
+    background: #142328;
+    color: var(--muted);
+}
+[data-theme="dark"] .semana tbody th.col-hora {
     background: #101c21;
-    color: #8fa6ad;
 }
 [data-theme="dark"] .semana td {
     background: transparent;
@@ -1959,6 +2027,209 @@ body.app,
 @media (max-width: 900px) {
     .filtros.filtros-medicos { grid-template-columns: 1fr 1fr; }
     .filtros.filtros-medicos > .btn-primary { grid-column: 2; justify-self: end; }
-    .barra-medico { flex-direction: column; align-items: stretch; }
+    .barra-medico { flex-direction: column; align-items: stretch; gap: 14px; }
     .roles-cabecera { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding: 10px 14px 24px;
+    }
+    .hoja {
+        padding: 20px 16px 12px;
+        border-radius: 16px;
+    }
+    .hoja-cabecera {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .acciones-horario {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+    }
+    .acciones-horario button {
+        flex: 1;
+        justify-content: center;
+        height: 44px;
+    }
+    .dia-largo { display: none; }
+    .dia-corto { display: inline; font-weight: 650; }
+    .modal {
+        width: calc(100% - 20px);
+        max-height: calc(100dvh - 24px);
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+    .modal-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .modal-acciones {
+        flex-direction: column-reverse;
+        gap: 8px;
+        width: 100%;
+    }
+    .modal-acciones button,
+    .modal-acciones a {
+        width: 100%;
+        justify-content: center;
+        height: 44px;
+    }
+    .barra-medico .field {
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .acciones-horario {
+        flex-direction: column;
+    }
+    .acciones-horario button {
+        width: 100%;
+    }
+    .semana th, .semana td {
+        padding: 8px 4px;
+        font-size: 0.78rem;
+    }
+    .semana td.ocupado {
+        font-size: 0.75rem;
+    }
+    .tema-auth {
+        top: 14px;
+        right: 14px;
+    }
+}
+
+/* ——— Adaptación para tabletas y móviles ——— */
+.nav-toggle { display: none; }
+
+@media (max-width: 1024px) {
+    .sidebar { width: 216px; padding: 24px 14px 18px; }
+    .workspace-bar { padding: 18px 22px 0; }
+    .content { padding: 8px 22px 24px; }
+    .user-card { min-width: 0; }
+}
+
+@media (max-width: 860px) {
+    body.app { height: auto; min-height: 100dvh; overflow: visible; }
+    .shell { min-height: 100dvh; height: auto; }
+    .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        width: 100%;
+        padding: 10px 14px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0 0 18px 18px;
+        box-shadow: 0 4px 18px rgba(17, 24, 39, 0.06);
+    }
+    .sidebar-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        width: 100%;
+    }
+    .side-brand { padding: 4px 4px; font-size: 1.1rem; }
+    .nav-toggle {
+        display: inline-grid;
+        grid-column: 2;
+        grid-row: 1;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--ink);
+        cursor: pointer;
+    }
+    .nav-toggle svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+    }
+    .menu-search,
+    .sidebar nav { display: none; }
+    .sidebar.nav-open .menu-search {
+        display: block;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 10px;
+    }
+    .sidebar.nav-open .menu-search input { margin-bottom: 0; }
+    .sidebar.nav-open nav {
+        display: block;
+        grid-column: 1 / -1;
+        grid-row: 3;
+        max-height: min(58dvh, 440px);
+        margin-top: 8px;
+        overflow-y: auto;
+    }
+    .sidebar nav a { margin: 3px 0; padding: 11px 12px; }
+    .workspace { overflow: visible; }
+    .workspace-bar { padding: 14px 16px 0; }
+    .content { padding: 10px 16px 24px; }
+}
+
+@media (max-width: 768px) {
+    .filtros,
+    .filtros.filtros-bitacora,
+    .filtros.filtros-medicos {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .filtros .field { margin-bottom: 0; }
+    .filtros > .btn-primary,
+    .filtros.filtros-medicos > .btn-primary,
+    .filtros-bitacora .btn-chico {
+        grid-column: auto;
+        justify-self: stretch;
+        width: 100%;
+        height: 44px;
+        margin: 0;
+        justify-content: center;
+    }
+    .hoja-cabecera > .btn-primary { width: 100%; justify-content: center; }
+    .acciones-cabecera { width: 100%; flex-wrap: wrap; }
+    .acciones-cabecera > a,
+    .acciones-cabecera > button { flex: 1 1 160px; justify-content: center; }
+    .tabla-responsive { margin: 0 -2px; }
+    .tabla-responsive .cuentas { min-width: 600px; }
+    .tabla-responsive .matriz-roles { min-width: 620px; }
+    .tabla-pie { align-items: flex-start; flex-direction: column; }
+    .paginas { flex-wrap: wrap; }
+    .grilla-4, .grilla-3, .ficha { grid-template-columns: 1fr; }
+    .ficha { gap: 12px; }
+    .persona .acciones-cabecera { margin-left: 0; }
+    .toast { right: 12px; bottom: 12px; max-width: calc(100vw - 24px); }
+}
+
+@media (max-width: 480px) {
+    html { min-width: 0; }
+    .sidebar { padding-inline: 10px; }
+    .side-brand { font-size: 1rem; }
+    .workspace-bar { padding: 10px 12px 0; }
+    .barra-usuario { width: 100%; justify-content: flex-end; gap: 8px; }
+    .perfil { min-width: 0; }
+    .user-card { min-width: 0; max-width: calc(100vw - 76px); padding-right: 10px; }
+    .user-copy { min-width: 0; overflow: hidden; }
+    .user-copy strong,
+    .user-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .content { padding: 8px 10px 20px; }
+    .hoja { padding: 18px 14px 12px; border-radius: 14px; }
+    .hoja h1, .hoja-cabecera h1 { font-size: 1.65rem; }
+    .hoja .lede { margin-bottom: 18px; }
+    .acciones-cabecera > a,
+    .acciones-cabecera > button { flex-basis: 100%; }
+    .agenda-dia li { grid-template-columns: 3.5rem minmax(0, 1fr); gap: 10px; }
+    .agenda-dia .estado-pill { max-width: max-content; }
+    .modal-cabecera-titulo { align-items: flex-start; }
+    .modal-cabecera-titulo h2 { padding-right: 8px; }
 }

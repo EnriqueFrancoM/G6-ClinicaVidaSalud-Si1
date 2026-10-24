@@ -66,6 +66,7 @@ $etiquetaModulo = static function (array $fila): string {
         <button type="submit" class="btn-primary btn-chico">Filtrar</button>
     </form>
 
+    <div class="tabla-responsive">
     <table class="cuentas" id="tablaBitacora">
         <thead>
             <tr>
@@ -97,6 +98,7 @@ $etiquetaModulo = static function (array $fila): string {
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 
     <footer class="tabla-pie">
         <span>Mostrando <?= count($registros) ?> de <?= $total ?> registros · Solo lectura</span>

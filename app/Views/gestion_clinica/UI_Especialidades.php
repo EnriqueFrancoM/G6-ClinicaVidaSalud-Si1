@@ -18,6 +18,7 @@ $nueva = $form === null || (int) $form['id_especialidad'] === 0;
             <h1>Especialidades</h1>
             <a class="btn-primary btn-chico" href="<?= App::url('/especialidades?nuevo=1') ?>">Nueva especialidad</a>
         </header>
+        <div class="tabla-responsive">
         <table class="cuentas" id="tablaEspecialidades">
             <thead>
                 <tr>
@@ -52,6 +53,7 @@ $nueva = $form === null || (int) $form['id_especialidad'] === 0;
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     </section>
 
     <?php if ($mostrarForm && $form !== null): ?>
