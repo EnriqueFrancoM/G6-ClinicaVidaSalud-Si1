@@ -319,8 +319,8 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
 })();
 
 (function () {
-    const boton = document.querySelector("[data-tema]");
-    if (!boton) {
+    const botones = document.querySelectorAll("[data-tema]");
+    if (botones.length === 0) {
         return;
     }
 
@@ -330,16 +330,20 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
         } else {
             document.documentElement.removeAttribute("data-theme");
         }
-        boton.setAttribute("aria-pressed", oscuro ? "true" : "false");
-        boton.setAttribute("aria-label", oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+        botones.forEach((btn) => {
+            btn.setAttribute("aria-pressed", oscuro ? "true" : "false");
+            btn.setAttribute("aria-label", oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+        });
         try {
             localStorage.setItem("vs-theme", oscuro ? "dark" : "light");
         } catch (e) {}
     }
 
     aplicar(document.documentElement.getAttribute("data-theme") === "dark");
-    boton.addEventListener("click", () => {
-        aplicar(document.documentElement.getAttribute("data-theme") !== "dark");
+    botones.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            aplicar(document.documentElement.getAttribute("data-theme") !== "dark");
+        });
     });
 })();
 

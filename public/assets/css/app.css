@@ -1394,8 +1394,23 @@ input[type="checkbox"] {
 }
 .tema .ico { width: 20px; height: 20px; }
 .tema .ico-sol { display: none; }
+.tema:hover { border-color: var(--teal-500); color: var(--teal-600); background: var(--fill); }
 [data-theme="dark"] .tema .ico-luna { display: none; }
 [data-theme="dark"] .tema .ico-sol { display: block; }
+[data-theme="dark"] .tema:hover { border-color: var(--teal-400); color: var(--teal-300); background: var(--fill-hover); }
+
+.tema-auth {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 10;
+}
+@media (max-width: 900px) {
+    .tema-auth {
+        top: 16px;
+        right: 16px;
+    }
+}
 
 .cuentas td.acciones a.btn-icono,
 .cuentas td.acciones button.btn-icono {
@@ -1515,63 +1530,431 @@ input[type="checkbox"] {
 .semana td.ocupado { font-weight: 650; }
 .horario-paneles { align-items: start; }
 
-[data-theme="dark"] body.app {
-    --ink: #e7eeef;
-    --muted: #9aafb3;
-    --line: #2a3c41;
-    --surface: #142226;
-    --canvas: #0d181b;
-    --fill: #1c2c31;
-    --teal-100: #163632;
-    --teal-800: #b7e4df;
-    --danger: #f0b4b4;
-    --danger-bg: #3a2224;
-    --ok: #9ddeb4;
-    --ok-bg: #163228;
+/* ==========================================================================
+   MODO OSCURO - PALETA CLÍNICA VIDA SALUD (Obsidian Teal & Deep Medical Slate)
+   ========================================================================== */
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
     color-scheme: dark;
+
+    /* Superficies y Fondos con tinte azul-verde profundo */
+    --canvas: #091215;           /* Fondo general profundo */
+    --surface: #101d22;          /* Tarjetas (.hoja), sidebar, barra */
+    --surface-elevated: #15252b; /* Modales, menús flotantes, dropdowns */
+    --fill: #182a30;             /* Inputs, campos de formulario, fondos de tabla */
+    --fill-hover: #1f343b;       /* Hover en inputs, filas y botones secundarios */
+
+    /* Bordes y Divisiones */
+    --line: #22373f;             /* Líneas de tablas y bordes de tarjetas */
+    --line-subtle: #192b31;
+    --line-focus: #2dd4bf;       /* Anillo de enfoque vibrante */
+
+    /* Tipografía */
+    --ink: #eef6f6;              /* Texto principal de alto contraste y legibilidad */
+    --ink-secondary: #c2d7db;    /* Subtítulos y cabeceras secundarias */
+    --muted: #8fa6ad;            /* Textos secundarios, lede y placeholders */
+
+    /* Acentos de Marca (Vida Salud Teal) */
+    --teal-950: #042023;
+    --teal-900: #042f2e;
+    --teal-800: #115e59;
+    --teal-700: #0f766e;
+    --teal-600: #0d9488;
+    --teal-500: #14b8a6;
+    --teal-400: #2dd4bf;
+    --teal-300: #5eead4;
+    --teal-200: #99f6e4;
+    --teal-100: rgba(45, 212, 191, 0.14); /* Fondos de celdas activas / pills */
+    --teal-glow: rgba(45, 212, 191, 0.28);
+    --gold: #f59e0b;
+
+    /* Semántica de Estados Clínicos */
+    --ok: #4ade80;
+    --ok-bg: rgba(34, 197, 94, 0.16);
+    --ok-border: rgba(74, 222, 128, 0.32);
+
+    --danger: #f87171;
+    --danger-bg: rgba(239, 68, 68, 0.16);
+    --danger-border: rgba(248, 113, 113, 0.32);
+
+    --warn: #fbbf24;
+    --warn-bg: rgba(245, 158, 11, 0.15);
+    --warn-border: rgba(251, 191, 36, 0.32);
+
+    /* Sombras refinadas para fondo oscuro */
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+}
+
+/* Transiciones suaves entre temas */
+body.app,
+.sidebar,
+.hoja,
+.user-card,
+.modal,
+.btn-primary,
+.btn-borde,
+.tema,
+.field input:not([type="checkbox"]),
+.field select,
+.semana td,
+.semana th {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+}
+
+[data-theme="dark"] body.app,
+[data-theme="dark"].auth-page,
+[data-theme="dark"] .auth-page {
     background: var(--canvas);
     color: var(--ink);
 }
+
+[data-theme="dark"] .auth-shell,
+[data-theme="dark"] .auth-panel {
+    background: var(--canvas);
+    color: var(--ink);
+}
+
+/* Contenedores principales */
 [data-theme="dark"] .sidebar,
 [data-theme="dark"] .hoja,
 [data-theme="dark"] .user-card,
-[data-theme="dark"] .perfil-opciones,
-[data-theme="dark"] .modal,
-[data-theme="dark"] .tema,
-[data-theme="dark"] .btn-borde,
-[data-theme="dark"] .btn-icono {
+[data-theme="dark"] .tema {
     background: var(--surface);
     color: var(--ink);
+    border-color: var(--line);
 }
-[data-theme="dark"] .sidebar { border-color: var(--line); }
-[data-theme="dark"] .sidebar a { color: #c5d4d6; }
-[data-theme="dark"] .sidebar a.active { background: #1a3a38; color: #d7f3ef; }
+
+/* Sidebar & Navegación */
+[data-theme="dark"] .sidebar {
+    background: #0d171a;
+    border-right: 1px solid var(--line);
+}
+[data-theme="dark"] .side-brand {
+    color: #eef6f6;
+}
+[data-theme="dark"] .sidebar a {
+    color: #8fa6ad;
+}
+[data-theme="dark"] .sidebar a:hover {
+    background: #142328;
+    color: #eef6f6;
+}
+[data-theme="dark"] .sidebar a.active {
+    background: rgba(20, 184, 166, 0.18);
+    color: #5eead4;
+    border-left: 3px solid #2dd4bf;
+    font-weight: 650;
+}
+
+/* Campos de Formulario */
 [data-theme="dark"] .menu-search input,
 [data-theme="dark"] .field input:not([type="checkbox"]),
 [data-theme="dark"] .field select,
-[data-theme="dark"] .field textarea,
-[data-theme="dark"] .field input:not([type="checkbox"]):focus,
-[data-theme="dark"] .menu-search input:focus {
+[data-theme="dark"] .field textarea {
     background: var(--fill);
     color: var(--ink);
-    border-color: transparent;
+    border: 1px solid var(--line);
+    border-radius: 12px;
 }
-[data-theme="dark"] .cuentas td,
+[data-theme="dark"] .menu-search input::placeholder,
+[data-theme="dark"] .field input::placeholder,
+[data-theme="dark"] .field textarea::placeholder {
+    color: #627b82;
+}
+[data-theme="dark"] .menu-search input:focus,
+[data-theme="dark"] .field input:not([type="checkbox"]):focus,
+[data-theme="dark"] .field select:focus,
+[data-theme="dark"] .field textarea:focus {
+    border-color: var(--teal-400);
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+    outline: none;
+}
+[data-theme="dark"] .field select option {
+    background-color: #15252b;
+    color: #eef6f6;
+}
+[data-theme="dark"] .field input:not([type="checkbox"]):disabled {
+    color: #627b82;
+    background: #132025;
+}
+
+/* Botón primario y secundario */
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+[data-theme="dark"] .btn-primary:hover {
+    background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.45);
+}
+[data-theme="dark"] .btn-borde {
+    background: var(--fill);
+    border: 1px solid var(--line);
+    color: var(--ink);
+}
+[data-theme="dark"] .btn-borde:hover {
+    background: var(--fill-hover);
+    border-color: var(--teal-400);
+    color: var(--teal-300);
+}
+
+/* Botones de acción / iconos */
+[data-theme="dark"] .cuentas td.acciones .btn-icono,
+[data-theme="dark"] .btn-icono {
+    background: var(--fill);
+    border: 1px solid var(--line);
+    color: var(--muted);
+}
+[data-theme="dark"] .cuentas td.acciones .btn-icono:hover,
+[data-theme="dark"] .btn-icono:hover {
+    background: var(--fill-hover);
+    border-color: var(--teal-400);
+    color: var(--teal-300);
+}
+[data-theme="dark"] .btn-icono.btn-peligro,
+[data-theme="dark"] .cuentas td.acciones .btn-icono.btn-peligro {
+    color: var(--danger);
+    border-color: var(--danger-border);
+}
+[data-theme="dark"] .btn-icono.btn-peligro:hover,
+[data-theme="dark"] .cuentas td.acciones .btn-icono.btn-peligro:hover {
+    background: var(--danger-bg);
+    color: #fca5a5;
+    border-color: var(--danger);
+}
+[data-theme="dark"] .btn-cerrar {
+    color: var(--muted);
+}
+[data-theme="dark"] .btn-cerrar:hover {
+    background: var(--fill);
+    color: var(--ink);
+}
+
+/* Tabla semanal de horarios (CU09) */
+[data-theme="dark"] .semana {
+    border-color: var(--line);
+}
 [data-theme="dark"] .semana th,
-[data-theme="dark"] .semana td { border-color: var(--line); }
-[data-theme="dark"] .semana thead th,
-[data-theme="dark"] .matriz-roles th:first-child,
-[data-theme="dark"] .matriz-roles tbody th { background: var(--surface); }
-[data-theme="dark"] .semana td.ocupado { background: #1a3a38; color: #d7f3ef; }
-[data-theme="dark"] .semana td.ocupado:hover { filter: brightness(1.2); }
-[data-theme="dark"] .btn-cerrar:hover { background: var(--fill); color: var(--ink); }
-[data-theme="dark"] .user-copy span,
-[data-theme="dark"] .marca-rol.paciente { color: var(--muted); }
-[data-theme="dark"] .perfil-opciones button { color: var(--danger); background: transparent; }
-[data-theme="dark"] .alert.success { background: var(--ok-bg); color: var(--ok); }
-[data-theme="dark"] .alert.error { background: var(--danger-bg); color: var(--danger); }
-[data-theme="dark"] .toast { background: #142226; color: var(--ink); }
-[data-theme="dark"] .cuentas td.acciones .btn-icono { background: transparent; color: #d5e2e4; }
+[data-theme="dark"] .semana td {
+    border-color: var(--line);
+}
+[data-theme="dark"] .semana thead th {
+    background: #142328;
+    color: #c2d7db;
+    font-weight: 600;
+}
+[data-theme="dark"] .semana tbody th {
+    background: #101c21;
+    color: #8fa6ad;
+}
+[data-theme="dark"] .semana td {
+    background: transparent;
+}
+[data-theme="dark"] .semana td.ocupado {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.32), rgba(20, 184, 166, 0.22));
+    border: 1px solid rgba(45, 212, 191, 0.45);
+    color: #5eead4;
+    font-weight: 650;
+}
+[data-theme="dark"] .semana td.ocupado:hover {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.48), rgba(20, 184, 166, 0.35));
+    filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.4));
+    color: #a7f3d0;
+}
+
+/* Modales y Diálogos */
+[data-theme="dark"] .modal {
+    background: var(--surface-elevated);
+    border: 1px solid #283e47;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .modal::backdrop {
+    background: rgba(5, 12, 15, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+[data-theme="dark"] .modal-seccion {
+    border-top-color: var(--line);
+}
+[data-theme="dark"] .modal .nota {
+    color: var(--muted);
+}
+
+/* Tablas generales (.cuentas) */
+[data-theme="dark"] .cuentas th {
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+[data-theme="dark"] .cuentas td {
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+}
+[data-theme="dark"] .cuentas tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+[data-theme="dark"] .cuentas tr.seleccionado td {
+    background: rgba(20, 184, 166, 0.16);
+}
+[data-theme="dark"] .cuentas td.vacio {
+    color: var(--muted);
+}
+
+/* Pills y Marcas */
+[data-theme="dark"] .estado-pill {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: 1px solid var(--ok-border);
+}
+[data-theme="dark"] .estado-pill.bloqueada {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+}
+[data-theme="dark"] .estado-programada {
+    background: rgba(20, 184, 166, 0.18);
+    color: #5eead4;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+}
+[data-theme="dark"] .estado-confirmada {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fde047;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+[data-theme="dark"] .estado-atendida {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: 1px solid var(--ok-border);
+}
+[data-theme="dark"] .estado-cancelada,
+[data-theme="dark"] .estado-inasistencia {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+}
+[data-theme="dark"] .marca-rol.admin {
+    background: rgba(168, 85, 247, 0.18);
+    color: #d8b4fe;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+[data-theme="dark"] .marca-rol.medico {
+    background: rgba(20, 184, 166, 0.18);
+    color: #5eead4;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+}
+[data-theme="dark"] .marca-rol.recepcion {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fde047;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+[data-theme="dark"] .marca-rol.paciente {
+    background: rgba(148, 163, 184, 0.15);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+[data-theme="dark"] .marcas .marca {
+    background: rgba(45, 212, 191, 0.12);
+    color: #5eead4;
+    border: 1px solid rgba(45, 212, 191, 0.25);
+}
+[data-theme="dark"] .persona-marca {
+    background: #182a30;
+    color: #5eead4;
+    border: 1px solid var(--line);
+}
+[data-theme="dark"] .agenda-dia li {
+    border-top-color: var(--line);
+}
+[data-theme="dark"] .agenda-dia time {
+    color: #eef6f6;
+}
+[data-theme="dark"] .agenda-dia .quien span {
+    color: var(--muted);
+}
+
+/* Alertas, Confirmaciones y Toasts */
+[data-theme="dark"] .alert.success {
+    background: var(--ok-bg);
+    color: #86efac;
+    border: 1px solid var(--ok-border);
+}
+[data-theme="dark"] .alert.error {
+    background: var(--danger-bg);
+    color: #fca5a5;
+    border: 1px solid var(--danger-border);
+}
+[data-theme="dark"] .confirmacion,
+[data-theme="dark"] .alerta-clinica {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: #fde68a;
+}
+[data-theme="dark"] .toast {
+    background: var(--surface-elevated);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+}
+[data-theme="dark"] .toast.toast-ok {
+    border-left: 4px solid var(--ok);
+}
+[data-theme="dark"] .toast.toast-error {
+    border-left: 4px solid var(--danger);
+}
+
+/* Menú de Usuario y Perfil */
+[data-theme="dark"] .user-card {
+    background: #121f24;
+    border: 1px solid var(--line);
+}
+[data-theme="dark"] .user-card:hover {
+    border-color: #2dd4bf;
+}
+[data-theme="dark"] .user-mark {
+    background: #182a30;
+    color: #5eead4;
+}
+[data-theme="dark"] .user-copy span {
+    color: var(--muted);
+}
+[data-theme="dark"] .perfil-opciones {
+    background: var(--surface-elevated);
+    border: 1px solid #283e47;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+[data-theme="dark"] .perfil-opciones a {
+    color: var(--ink);
+}
+[data-theme="dark"] .perfil-opciones a:hover {
+    background: var(--fill);
+    color: var(--teal-300);
+}
+[data-theme="dark"] .perfil-opciones button {
+    color: var(--danger);
+    background: transparent;
+}
+[data-theme="dark"] .perfil-opciones button:hover {
+    background: var(--danger-bg);
+}
+
+/* Matriz de Roles y Avisos */
+[data-theme="dark"] .aviso-rango {
+    background: var(--teal-100);
+    color: var(--teal-300);
+    border: 1px solid rgba(45, 212, 191, 0.3);
+}
+[data-theme="dark"] .matriz-roles th {
+    background: #142328;
+    border-color: var(--line);
+}
+[data-theme="dark"] .matriz-roles td {
+    border-color: var(--line);
+}
+[data-theme="dark"] .matriz fieldset {
+    border-color: var(--line);
+    background: #121f24;
+}
 
 @media (max-width: 900px) {
     .filtros.filtros-medicos { grid-template-columns: 1fr 1fr; }
