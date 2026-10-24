@@ -38,6 +38,7 @@ CREATE TABLE usuario (
     password_hash     VARCHAR(255) NOT NULL,
     estado            BOOLEAN      NOT NULL DEFAULT TRUE,
     intentos_fallidos SMALLINT     NOT NULL DEFAULT 0 CHECK (intentos_fallidos >= 0),
+    bloqueo_hasta     TIMESTAMPTZ,
     primer_ingreso    BOOLEAN      NOT NULL DEFAULT TRUE,
     ultimo_acceso     TIMESTAMP,
     fecha_creacion    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP

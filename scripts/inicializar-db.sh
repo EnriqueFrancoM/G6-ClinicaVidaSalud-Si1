@@ -5,7 +5,9 @@ set -eu
 : "${DATABASE_URL:?Falta DATABASE_URL}"
 
 if psql "$DATABASE_URL" -tAc "SELECT to_regclass('public.rol') IS NOT NULL" | grep -qx 't'; then
-    echo "La base ya contiene el esquema; no se vuelve a inicializar."
+    psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 \
+        -c 'ALTER TABLE usuario ADD COLUMN IF NOT EXISTS bloqueo_hasta TIMESTAMPTZ'
+    echo "La base ya contiene el esquema; se aplicaron migraciones y no se vuelve a poblar."
     exit 0
 fi
 

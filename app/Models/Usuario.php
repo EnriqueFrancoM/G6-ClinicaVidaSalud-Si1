@@ -26,28 +26,60 @@ class Usuario extends Model
     }
 
     // CU01 paso 6 / E1: si coincide reinicia los intentos; si no, los incrementa.
-    public function verificarClave(array $usuario, string $clave): bool
+    public function verificarClave(array $usuario, string $clave): array
     {
         if (!password_verify($clave, $usuario['password_hash'])) {
-            $this->registrarIntentoFallido((int) $usuario['id_usuario']);
-            return false;
+            return $this->registrarIntentoFallido((int) $usuario['id_usuario']);
         }
 
         $this->registrarAccesoExitoso((int) $usuario['id_usuario']);
-        return true;
+        return ['correcta' => true, 'intentos_fallidos' => 0, 'segundos_bloqueo' => 0, 'estado' => true];
     }
 
-    // CU01 E1: incrementa los intentos fallidos.
-    // CU01 E2: si supera el máximo de intentos, la cuenta se desactiva.
-    public function registrarIntentoFallido(int $idUsuario): void
+    public function segundosBloqueoRestante(int $idUsuario): int
     {
-        $this->execute(
+        $fila = $this->fetch(
+            "SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (bloqueo_hasta - CURRENT_TIMESTAMP))))::int AS segundos
+               FROM usuario WHERE id_usuario = :id",
+            ['id' => $idUsuario]
+        );
+
+        return (int) ($fila['segundos'] ?? 0);
+    }
+
+    // CU01 E1: aplica esperas progresivas; el último fallo desactiva la cuenta.
+    private function registrarIntentoFallido(int $idUsuario): array
+    {
+        $fila = $this->fetch(
             'UPDATE usuario
                 SET intentos_fallidos = intentos_fallidos + 1,
-                    estado = CASE WHEN intentos_fallidos + 1 > :max THEN FALSE ELSE estado END
-              WHERE id_usuario = :id',
-            ['id' => $idUsuario, 'max' => (int) App::config('security.max_intentos_login', 5)]
+                    estado = CASE WHEN intentos_fallidos + 1 >= :max THEN FALSE ELSE estado END,
+                    bloqueo_hasta = CASE
+                        WHEN intentos_fallidos + 1 = :intento_15 THEN CURRENT_TIMESTAMP + make_interval(secs => CAST(:espera_15 AS double precision))
+                        WHEN intentos_fallidos + 1 = :intento_30 THEN CURRENT_TIMESTAMP + make_interval(secs => CAST(:espera_30 AS double precision))
+                        ELSE NULL
+                    END
+              WHERE id_usuario = :id
+          RETURNING intentos_fallidos, estado,
+                    CASE WHEN bloqueo_hasta > CURRENT_TIMESTAMP
+                         THEN CEIL(EXTRACT(EPOCH FROM (bloqueo_hasta - CURRENT_TIMESTAMP)))::int
+                         ELSE 0 END AS segundos_bloqueo',
+            [
+                'id' => $idUsuario,
+                'max' => (int) App::config('security.max_intentos_login', 6),
+                'intento_15' => (int) App::config('security.bloqueo_login_15s', 4),
+                'espera_15' => 15,
+                'intento_30' => (int) App::config('security.bloqueo_login_30s', 5),
+                'espera_30' => 30,
+            ]
         );
+
+        return [
+            'correcta' => false,
+            'intentos_fallidos' => (int) ($fila['intentos_fallidos'] ?? 0),
+            'segundos_bloqueo' => (int) ($fila['segundos_bloqueo'] ?? 0),
+            'estado' => self::activo($fila['estado'] ?? false),
+        ];
     }
 
     // CU06 mensaje 5: nombre de usuario para mostrar en la bitácora.
@@ -176,7 +208,7 @@ class Usuario extends Model
     {
         $this->execute(
             $activo
-                ? 'UPDATE usuario SET estado = TRUE, intentos_fallidos = 0 WHERE id_usuario = :id'
+                ? 'UPDATE usuario SET estado = TRUE, intentos_fallidos = 0, bloqueo_hasta = NULL WHERE id_usuario = :id'
                 : 'UPDATE usuario SET estado = FALSE WHERE id_usuario = :id',
             ['id' => $idUsuario]
         );
