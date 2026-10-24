@@ -2,6 +2,7 @@
 // Tabla de rutas: [método, ruta, clase@operación, permiso requerido]
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
+use App\Controllers\GestionClinica\UI_Especialidades;
 use App\Controllers\Seguridad\UI_Bitacora;
 use App\Controllers\Seguridad\UI_CambiarContrasena;
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
@@ -36,8 +37,11 @@ return [
     ['GET', '/bitacora/filtrar',  [UI_Bitacora::class, 'aplicarFiltros'], 'BIT_CONSULTAR'],
     ['GET', '/bitacora/exportar', [UI_Bitacora::class, 'exportar'],       'BIT_CONSULTAR'],
 
+    // P2 Gestión Clínica — CU07 mensajes 1 y 4
+    ['GET',  '/especialidades', [UI_Especialidades::class, 'abrirEspecialidades'], 'ESP_GESTIONAR'],
+    ['POST', '/especialidades', [UI_Especialidades::class, 'registrarOModificar'], 'ESP_GESTIONAR'],
+
     // Próximos casos de uso (agregar aquí a medida que se implementen):
-    // ['GET', '/especialidades', [UI_Especialidades::class, ...],    'ESP_GESTIONAR'], // CU07
     // ['GET', '/medicos',        [UI_Medicos::class, ...],           'MED_GESTIONAR'], // CU08
     // ['GET', '/horarios',       [UI_Horarios::class, ...],          'HOR_GESTIONAR'], // CU09
     // ['GET', '/pacientes',      [UI_Pacientes::class, ...],         'PAC_GESTIONAR'], // CU10

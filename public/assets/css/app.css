@@ -1103,3 +1103,23 @@ body.app {
 @media (max-width: 900px) {
     .filtros.filtros-bitacora { grid-template-columns: 1fr 1fr; }
 }
+
+/* ——— CU07 ——— */
+.dos-columnas { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+.dos-columnas .hoja { padding-bottom: 20px; }
+.dos-columnas .field input { height: 44px; border-radius: 12px; }
+.cuentas tr.seleccionado td { background: var(--teal-100); }
+.field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: var(--fill);
+    color: var(--ink);
+    font: inherit;
+    resize: vertical;
+}
+.field.is-invalid textarea { border-color: #e4b4b4; background: #fff; }
+@media (max-width: 1000px) {
+    .dos-columnas { grid-template-columns: 1fr; }
+}
