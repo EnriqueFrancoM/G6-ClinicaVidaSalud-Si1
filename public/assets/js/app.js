@@ -202,18 +202,13 @@
     });
 })();
 
-// CU03: abre el formulario de usuario (formUsuario) y aplica los filtros de la lista.
+// CU03 / CU08: abre el formulario en ventana (formUsuario, formMedico) y aplica los filtros.
 (function () {
-    const pantalla = document.querySelector("[data-ui='UI_GestionarUsuarios']");
-    if (!pantalla) {
-        return;
-    }
-
-    pantalla.querySelectorAll("[data-autoenviar]").forEach((select) => {
+    document.querySelectorAll("[data-autoenviar]").forEach((select) => {
         select.addEventListener("change", () => select.form.submit());
     });
 
-    const modal = document.querySelector("[data-modal-usuario]");
+    const modal = document.querySelector("[data-modal]");
     if (modal && typeof modal.showModal === "function") {
         modal.showModal();
         modal.addEventListener("cancel", () => {

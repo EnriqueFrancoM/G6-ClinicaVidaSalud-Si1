@@ -82,7 +82,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 
 <?php if ($form !== null): ?>
     <?php $nuevo = (int) $form['id_usuario'] === 0; ?>
-    <dialog class="modal" data-modal-usuario>
+    <dialog class="modal" data-modal>
         <form id="formUsuario" method="post" action="<?= App::url('/usuarios') ?>">
             <h2><?= $nuevo ? 'Registrar usuario' : 'Editar usuario' ?></h2>
             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">

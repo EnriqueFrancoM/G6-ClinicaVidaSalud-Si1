@@ -1123,3 +1123,10 @@ body.app {
 @media (max-width: 1000px) {
     .dos-columnas { grid-template-columns: 1fr; }
 }
+
+/* ——— CU08 ——— */
+.modal.modal-ancho { width: min(680px, calc(100% - 32px)); }
+.modal .field input:disabled { color: var(--muted); }
+.field.casillas { display: flex; flex-wrap: wrap; gap: 2px 18px; margin: 0 0 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.field.casillas legend { padding: 0 6px; font-size: 0.92rem; font-weight: 500; }
+.field.casillas.is-invalid { border-color: #e4b4b4; box-shadow: 0 0 0 4px rgba(155, 28, 28, 0.12); }

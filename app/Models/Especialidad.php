@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Model;
 
 // Entidad Especialidad. CU07: listar(), existeNombreNormalizado(), insertar(), actualizar(), cambiarEstado().
+// CU08: listarActivas().
 class Especialidad extends Model
 {
     public function listar(): array
@@ -15,6 +16,12 @@ class Especialidad extends Model
         }
 
         return $filas;
+    }
+
+    // CU08 mensaje 4: especialidades activas para asignar a un médico.
+    public function listarActivas(): array
+    {
+        return $this->fetchAll('SELECT id_especialidad, nombre FROM especialidad WHERE estado = TRUE ORDER BY nombre');
     }
 
     // CU07 paso 5 / E1: compara sin espacios sobrantes y sin distinguir mayúsculas
