@@ -6,6 +6,7 @@ use App\Core\Model;
 
 // Entidad Medico. CU03: listar() para el vínculo con un usuario.
 // CU08: buscar(filtro), existeRegistro(), insertar(), actualizar(), cambiarEstado().
+// CU09: verificarActivo().
 class Medico extends Model
 {
     public function listar(): array
@@ -55,6 +56,13 @@ class Medico extends Model
         }
 
         return $filas;
+    }
+
+    // CU09 mensaje 6 / E4: solo un médico activo puede recibir nuevos horarios.
+    public function verificarActivo(int $idMedico): bool
+    {
+        $fila = $this->fetch('SELECT estado FROM medico WHERE id_medico = :id', ['id' => $idMedico]);
+        return $fila !== null && in_array($fila['estado'], [true, 't', '1', 1], true);
     }
 
     // CU08 E1: ¿el n.º de registro profesional ya está registrado en otro médico?

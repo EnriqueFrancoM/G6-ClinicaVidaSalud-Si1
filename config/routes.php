@@ -3,6 +3,7 @@
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
 use App\Controllers\GestionClinica\UI_Especialidades;
+use App\Controllers\GestionClinica\UI_Horarios;
 use App\Controllers\GestionClinica\UI_Medicos;
 use App\Controllers\Seguridad\UI_Bitacora;
 use App\Controllers\Seguridad\UI_CambiarContrasena;
@@ -46,7 +47,10 @@ return [
     ['GET',  '/medicos', [UI_Medicos::class, 'abrirMedicos'],        'MED_GESTIONAR'],
     ['POST', '/medicos', [UI_Medicos::class, 'registrarOModificar'], 'MED_GESTIONAR'],
 
+    // CU09 mensajes 1 y 4
+    ['GET',  '/horarios', [UI_Horarios::class, 'seleccionarMedico'], 'HOR_GESTIONAR'],
+    ['POST', '/horarios', [UI_Horarios::class, 'definirHorario'],    'HOR_GESTIONAR'],
+
     // Próximos casos de uso (agregar aquí a medida que se implementen):
-    // ['GET', '/horarios',       [UI_Horarios::class, ...],          'HOR_GESTIONAR'], // CU09
     // ['GET', '/pacientes',      [UI_Pacientes::class, ...],         'PAC_GESTIONAR'], // CU10
 ];
