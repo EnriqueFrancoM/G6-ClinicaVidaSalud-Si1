@@ -4,6 +4,10 @@
 -- Todas las cuentas arrancan con la contraseña temporal indicada en
 -- SEED_INITIAL_PASSWORD y se obliga a cambiarla en el primer acceso.
 -- =========================================================
+-- Este archivo está en UTF-8. Sin esta línea, psql en Windows lo lee como WIN1252
+-- y guarda los acentos rotos ("Médico" queda como "MÃ©dico").
+SET client_encoding = 'UTF8';
+
 INSERT INTO rol (nombre, descripcion) VALUES
  ('Administrador','Configura y supervisa el sistema'),
  ('Recepcionista','Gestiona pacientes y citas'),

@@ -3,6 +3,10 @@
 -- Clínica Vida Salud | PostgreSQL 16+
 -- Fuente: documento G6 - Examen 2 Ciclo 1, sección 6.3.2
 -- =========================================================
+-- Este archivo está en UTF-8. Sin esta línea, psql en Windows lo lee como WIN1252
+-- y guarda los acentos rotos ("Médico" queda como "MÃ©dico").
+SET client_encoding = 'UTF8';
+
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- ---------- P1 Seguridad y Acceso ----------

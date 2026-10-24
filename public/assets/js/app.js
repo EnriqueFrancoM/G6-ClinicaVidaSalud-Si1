@@ -408,3 +408,17 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
         aviso.addEventListener("click", cerrar);
     });
 })();
+
+// Vista de celular: cada celda lleva el título de su columna para mostrarse como tarjeta.
+(function () {
+    document.querySelectorAll(".tabla-responsive .cuentas").forEach((tabla) => {
+        const titulos = Array.from(tabla.querySelectorAll("thead th"), (th) => th.textContent.trim());
+        tabla.querySelectorAll("tbody tr").forEach((fila) => {
+            Array.from(fila.cells).forEach((celda, i) => {
+                if (celda.colSpan === 1 && titulos[i]) {
+                    celda.dataset.label = titulos[i];
+                }
+            });
+        });
+    });
+})();
