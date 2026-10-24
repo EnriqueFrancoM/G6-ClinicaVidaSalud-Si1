@@ -5,6 +5,7 @@
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
 use App\Controllers\Seguridad\UI_IniciarSesion;
 use App\Controllers\Seguridad\UI_PanelPrincipal;
+use App\Controllers\Seguridad\UI_RolesPermisos;
 
 return [
     // P1 Seguridad y Acceso — CU01 mensaje 1
@@ -20,8 +21,11 @@ return [
     ['GET',  '/usuarios', [UI_GestionarUsuarios::class, 'abrirUsuarios'],       'USU_GESTIONAR'],
     ['POST', '/usuarios', [UI_GestionarUsuarios::class, 'registrarOModificar'], 'USU_GESTIONAR'],
 
+    // CU04 mensajes 1 y 5
+    ['GET',  '/roles', [UI_RolesPermisos::class, 'abrirRoles'], 'ROL_GESTIONAR'],
+    ['POST', '/roles', [UI_RolesPermisos::class, 'editarRol'],  'ROL_GESTIONAR'],
+
     // Próximos casos de uso (agregar aquí a medida que se implementen):
-    // ['GET', '/roles',          [UI_RolesPermisos::class, ...],     'ROL_GESTIONAR'], // CU04
     // ['GET', '/bitacora',       [UI_Bitacora::class, ...],          'BIT_CONSULTAR'], // CU06
     // ['GET', '/especialidades', [UI_Especialidades::class, ...],    'ESP_GESTIONAR'], // CU07
     // ['GET', '/medicos',        [UI_Medicos::class, ...],           'MED_GESTIONAR'], // CU08

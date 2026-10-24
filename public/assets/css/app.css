@@ -1060,3 +1060,22 @@ body.app {
 @media (max-width: 700px) {
     .filtros, .modal-grid { grid-template-columns: 1fr; }
 }
+
+/* ——— CU04 ——— */
+.roles-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+.roles-layout .hoja { padding-bottom: 20px; }
+#tablaRoles td a { color: var(--ink); font-weight: 600; text-decoration: none; }
+#tablaRoles tr.seleccionado td { background: var(--teal-100); }
+.rol-datos { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 0 14px; }
+.rol-datos .field input { height: 44px; border-radius: 12px; }
+.matriz { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 18px; padding: 4px; border-radius: 14px; }
+.matriz.is-invalid { box-shadow: 0 0 0 2px #e4b4b4; }
+.matriz fieldset { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.matriz legend { padding: 0 6px; font-weight: 650; font-size: 0.88rem; }
+.permiso { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; cursor: pointer; font-size: 0.9rem; }
+.permiso input { margin-top: 3px; accent-color: var(--teal-700); }
+.permiso small { display: block; color: var(--muted); font-size: 0.72rem; }
+
+@media (max-width: 900px) {
+    .roles-layout, .rol-datos { grid-template-columns: 1fr; }
+}
