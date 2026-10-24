@@ -60,3 +60,4 @@ Grupo #06 · INF342 SC · UAGRM – FICCT · Gestión 2-2026
 2. Controlador en `app/Controllers/<Paquete>/` (extiende `App\Core\Controller`).
 3. Vistas en `app/Views/<paquete>/`.
 4. Registrar la ruta y su permiso en `config/routes.php`.
+ php -S 127.0.0.1:8080 -t public public/router.php   

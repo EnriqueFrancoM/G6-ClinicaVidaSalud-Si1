@@ -21,21 +21,30 @@ class UI_Horarios extends Controller
         // Formulario: reintento (error o confirmación pendiente), "Editar" o "Agregar horario".
         $form = Session::get('_form_horario');
         Session::set('_form_horario', null);
-        if ($form === null && ($editar = (int) $this->input('editar', 0)) > 0) {
+        $editarId = (int) $this->input('editar', 0);
+        if ($form === null && $editarId > 0) {
             foreach ($datos['horarios'] as $fila) {
-                if ((int) $fila['id_horario'] === $editar) {
+                if ((int) $fila['id_horario'] === $editarId) {
                     $form = $fila + ['accion' => 'guardar'];
                 }
             }
         }
         $form ??= ['id_horario' => 0, 'dia_semana' => 1, 'hora_inicio' => '08:00', 'hora_fin' => '12:00', 'duracion_cita_min' => 30, 'accion' => 'guardar'];
 
+        $campoError = Session::flash('campo_error');
+        $confirmacion = Session::flash('confirmacion');
+
+        $abrirHorario = $editarId > 0 || $confirmacion !== null || ($campoError !== null && !str_starts_with((string) $campoError, 'bloqueo_')) || (int) $this->input('nuevo', 0) === 1;
+        $abrirBloqueo = ($campoError !== null && str_starts_with((string) $campoError, 'bloqueo_')) || (int) $this->input('bloqueo', 0) === 1;
+
         $this->mostrarAgendaSemanal($datos + [
-            'idMedico'     => $idMedico,
-            'form'         => $form,
-            'campoError'   => Session::flash('campo_error'),
-            'confirmacion' => Session::flash('confirmacion'),
-            'formBloqueo'  => $this->formularioBloqueo(),
+            'idMedico'      => $idMedico,
+            'form'          => $form,
+            'campoError'    => $campoError,
+            'confirmacion'  => $confirmacion,
+            'formBloqueo'   => $this->formularioBloqueo(),
+            'abrirHorario'  => $abrirHorario,
+            'abrirBloqueo'  => $abrirBloqueo,
         ]);
     }
 

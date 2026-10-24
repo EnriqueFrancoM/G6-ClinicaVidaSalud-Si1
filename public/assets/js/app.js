@@ -226,19 +226,63 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
     });
 });
 
-// CU03 / CU08: abre el formulario en ventana (formUsuario, formMedico) y aplica los filtros.
+// CU03 / CU08 / CU09: apertura de formularios modales y filtros automáticos.
 (function () {
     document.querySelectorAll("[data-autoenviar]").forEach((select) => {
         select.addEventListener("change", () => select.form.submit());
     });
 
-    const modal = document.querySelector("[data-modal]");
-    if (modal && typeof modal.showModal === "function") {
-        modal.showModal();
-        modal.addEventListener("cancel", () => {
-            window.location.href = modal.querySelector(".modal-acciones a").href;
+    // Apertura automática de modales con estado del servidor (error, edición, confirmación).
+    document.querySelectorAll("dialog[data-modal]").forEach((modal) => {
+        if (typeof modal.showModal === "function") {
+            try {
+                modal.showModal();
+            } catch (e) {}
+            modal.addEventListener("cancel", () => {
+                const link = modal.querySelector(".modal-acciones a");
+                if (link && link.href) {
+                    window.location.href = link.href;
+                }
+            });
+        }
+    });
+
+    // Disparadores de apertura mediante botón (ej. botones de Horario y Bloqueos).
+    document.querySelectorAll("[data-abrir-dialogo]").forEach((boton) => {
+        boton.addEventListener("click", () => {
+            const selector = boton.dataset.abrirDialogo;
+            const target = document.querySelector(selector);
+            if (target && typeof target.showModal === "function") {
+                target.showModal();
+            }
         });
-    }
+    });
+
+    // Botones para cerrar modales.
+    document.querySelectorAll("[data-cerrar-modal]").forEach((boton) => {
+        boton.addEventListener("click", () => {
+            const dialog = boton.closest("dialog");
+            if (dialog && typeof dialog.close === "function") {
+                dialog.close();
+            }
+        });
+    });
+
+    // Cerrar al hacer clic en el backdrop.
+    document.querySelectorAll("dialog.modal").forEach((dialog) => {
+        dialog.addEventListener("click", (e) => {
+            const rect = dialog.getBoundingClientRect();
+            const isInDialog = (
+                rect.top <= e.clientY &&
+                e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX &&
+                e.clientX <= rect.left + rect.width
+            );
+            if (!isInDialog && typeof dialog.close === "function") {
+                dialog.close();
+            }
+        });
+    });
 })();
 
 // CU05 paso 5: validación en el cliente de la política y la confirmación (el servidor vuelve a validar).

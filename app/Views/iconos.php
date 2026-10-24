@@ -8,6 +8,8 @@ function vs_icono(string $nombre): string
         'activar' => '<path d="M20 6 9 17l-5-5"/>',
         'historial' => '<circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/>',
         'quitar' => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+        'agregar' => '<path d="M12 5v14"/><path d="M5 12h14"/>',
+        'calendario' => '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
         default => '',
     };
 
