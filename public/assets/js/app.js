@@ -12,28 +12,6 @@
     const boton = form.querySelector("[name='btnIngresar']");
     const avisos = form.querySelector("[data-avisos]");
 
-    const penalizacion = avisos.querySelector("[data-espera]");
-    if (penalizacion) {
-        let resta = parseInt(penalizacion.dataset.espera, 10) || 0;
-        const conError = penalizacion.textContent.includes("incorrectos");
-        const pintar = (segundos) => {
-            const unidad = segundos === 1 ? "segundo" : "segundos";
-            const espera = "Espere " + segundos + " " + unidad + " para volver a intentar.";
-            penalizacion.textContent = conError ? "Usuario o contraseña incorrectos. " + espera : espera;
-            boton.textContent = segundos > 0 ? "Espere " + segundos + " s" : "Iniciar sesión";
-            boton.disabled = segundos > 0;
-        };
-        const tick = () => {
-            pintar(resta);
-            if (resta <= 0) {
-                return;
-            }
-            resta -= 1;
-            window.setTimeout(tick, 1000);
-        };
-        tick();
-    }
-
     function caja(input) {
         return input.closest(".field");
     }
@@ -97,6 +75,7 @@
         input.addEventListener("input", () => limpiarCampo(input));
     });
 
+    // CU01 paso 4: validar que los campos no estén vacíos (cliente).
     form.addEventListener("submit", (event) => {
         const faltaUsuario = usuario.value.trim() === "";
         const faltaClave = clave.value === "";
@@ -130,92 +109,33 @@
     });
 })();
 
+// CU02 paso 1: menú del perfil con la opción "Cerrar sesión".
 (function () {
-    const form = document.querySelector("[data-ui='UI_RecuperarClave']");
-    if (!form) {
+    const perfil = document.querySelector("[data-menu-perfil]");
+    if (!perfil) {
         return;
     }
 
-    form.noValidate = true;
-    const avisos = form.querySelector("[data-avisos]");
-    const boton = form.querySelector("button[type='submit']");
+    const boton = perfil.querySelector("[data-perfil-toggle]");
+    const menu = perfil.querySelector("[data-perfil-opciones]");
 
-    function caja(input) {
-        return input.closest(".field");
+    function abrir(estado) {
+        menu.hidden = !estado;
+        boton.setAttribute("aria-expanded", estado ? "true" : "false");
     }
 
-    function mostrarErrorCampo(input, mensaje) {
-        const field = caja(input);
-        let hint = field.querySelector(".field-error");
-        if (!hint) {
-            hint = document.createElement("p");
-            hint.className = "field-error";
-            field.append(hint);
+    boton.addEventListener("click", () => abrir(menu.hidden));
+
+    document.addEventListener("click", (event) => {
+        if (!perfil.contains(event.target)) {
+            abrir(false);
         }
-        hint.textContent = mensaje;
-        field.classList.add("is-invalid");
-    }
-
-    form.querySelectorAll("[data-toggle-password]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const input = button.parentElement.querySelector("input");
-            const visible = input.type === "text";
-            input.type = visible ? "password" : "text";
-            button.classList.toggle("is-revealed", !visible);
-            button.setAttribute("aria-pressed", visible ? "false" : "true");
-            button.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
-        });
     });
 
-    function politica(clave) {
-        return clave.length >= 8 && /[A-Z]/.test(clave) && /[a-z]/.test(clave) && /[0-9]/.test(clave) && /[^A-Za-z0-9]/.test(clave);
-    }
-
-    form.addEventListener("submit", (event) => {
-        const paso = form.dataset.paso;
-        if (paso === "solicitar") {
-            const usuario = form.querySelector("[name='txtUsuario']");
-            if (usuario.value.trim() === "") {
-                event.preventDefault();
-                mostrarErrorCampo(usuario, "Ingrese su usuario o correo.");
-                usuario.focus();
-            }
-            return;
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            abrir(false);
         }
-        if (paso === "codigo") {
-            const codigo = form.querySelector("[name='txtCodigo']");
-            if (!/^\d{6}$/.test(codigo.value.trim())) {
-                event.preventDefault();
-                mostrarErrorCampo(codigo, "Ingrese el código de 6 dígitos.");
-                codigo.focus();
-            }
-            return;
-        }
-        const nueva = form.querySelector("[name='txtContrasenaNueva']");
-        const confirmacion = form.querySelector("[name='txtContrasenaConfirmacion']");
-        if (!politica(nueva.value)) {
-            event.preventDefault();
-            mostrarErrorCampo(nueva, "Use 8 caracteres, con mayúscula, minúscula, número y un carácter especial.");
-            nueva.focus();
-            return;
-        }
-        if (nueva.value !== confirmacion.value) {
-            event.preventDefault();
-            mostrarErrorCampo(confirmacion, "La confirmación no coincide.");
-            confirmacion.focus();
-            return;
-        }
-        if (boton) {
-            event.preventDefault();
-            boton.disabled = true;
-            boton.textContent = "Guardando…";
-            form.submit();
-        }
-        avisos.querySelectorAll(".alert.error").forEach((alerta) => {
-            if (!alerta.textContent.includes("Brevo")) {
-                alerta.remove();
-            }
-        });
     });
 })();
 
@@ -252,7 +172,7 @@
     if (!buscador) {
         return;
     }
-    const plano = (texto) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const plano = (texto) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
     buscador.addEventListener("input", () => {
         const texto = plano(buscador.value.trim());

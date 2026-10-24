@@ -58,20 +58,25 @@ $menu = [
                 <?php endforeach; ?>
             </nav>
         </div>
-        <form method="post" action="<?= App::url('/logout') ?>">
-            <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
-            <button type="submit" name="btnCerrarSesion">Cerrar sesión</button>
-        </form>
     </aside>
     <div class="workspace">
         <header class="workspace-bar">
-            <article class="user-card lift-card" data-spotlight>
-                <span class="user-mark" aria-hidden="true"><?= e($iniciales !== '' ? $iniciales : 'VS') ?></span>
-                <div class="user-copy">
-                    <strong><?= e($usuario['username'] ?? '') ?></strong>
-                    <span><?= e($usuario['rol'] ?? '') ?></span>
+            <!-- CU02 paso 1: menú del perfil (prototipo figura 13) -->
+            <div class="perfil" data-menu-perfil>
+                <button type="button" class="user-card lift-card" data-spotlight data-perfil-toggle aria-haspopup="true" aria-expanded="false">
+                    <span class="user-mark" aria-hidden="true"><?= e($iniciales !== '' ? $iniciales : 'VS') ?></span>
+                    <span class="user-copy">
+                        <strong><?= e($usuario['username'] ?? '') ?></strong>
+                        <span><?= e($usuario['rol'] ?? '') ?></span>
+                    </span>
+                </button>
+                <div class="perfil-opciones" data-perfil-opciones hidden>
+                    <form method="post" action="<?= App::url('/logout') ?>">
+                        <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                        <button type="submit" name="btnCerrarSesion">Cerrar sesión</button>
+                    </form>
                 </div>
-            </article>
+            </div>
         </header>
         <main class="content">
             <?php if ($msg = Session::flash('success')): ?><div class="alert success"><?= e($msg) ?></div><?php endif; ?>

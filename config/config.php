@@ -22,17 +22,7 @@ return [
         'pass' => $env['DB_PASS'] ?? '',
     ],
     'security' => [
-        'max_intentos_login' => 5, // al 5.º fallo se bloquea la cuenta
-        'penalizaciones' => [
-            3 => 15,
-            4 => 30,
-        ],
-        'codigo_minutos' => 10,
-    ],
-    'mail' => [
-        'proveedor'   => 'brevo',
-        'api_key'     => $env['BREVO_API_KEY'] ?? '',
-        'sender'      => $env['BREVO_SENDER_EMAIL'] ?? '',
-        'sender_name' => $env['BREVO_SENDER_NAME'] ?? 'Clínica Vida Salud',
+        'max_intentos_login'  => 5,  // CU01 E2: al superar 5 intentos fallidos se desactiva la cuenta
+        'inactividad_minutos' => 30, // CU02 E1: la sesión expira tras 30 minutos sin actividad
     ],
 ];

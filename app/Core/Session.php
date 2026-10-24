@@ -31,6 +31,18 @@ class Session
         return $_SESSION['usuario'] ?? null;
     }
 
+    // Marca la última actividad de la sesión (CU02 E1).
+    public static function tocar(): void
+    {
+        $_SESSION['_ultima_actividad'] = time();
+    }
+
+    public static function expirada(int $minutos): bool
+    {
+        $ultima = $_SESSION['_ultima_actividad'] ?? null;
+        return $ultima !== null && time() - (int) $ultima > $minutos * 60;
+    }
+
     public static function hasPermission(string $codigo): bool
     {
         return in_array($codigo, $_SESSION['permisos'] ?? [], true);

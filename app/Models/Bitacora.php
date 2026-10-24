@@ -4,25 +4,9 @@ namespace App\Models;
 
 use App\Core\Model;
 
+// Entidad Bitacora. CU01: registrar("LOGIN", ip). CU02: registrar("LOGOUT", ip).
 class Bitacora extends Model
 {
-    public function segundosDesde(string $accion, int $idUsuario): ?int
-    {
-        $fila = $this->fetch(
-            'SELECT EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - fecha_hora))::int AS transcurrido
-               FROM bitacora
-              WHERE id_usuario = :id AND accion = :accion
-              ORDER BY fecha_hora DESC
-              LIMIT 1',
-            ['id' => $idUsuario, 'accion' => $accion]
-        );
-        if ($fila === null) {
-            return null;
-        }
-
-        return max(0, (int) $fila['transcurrido']);
-    }
-
     public function registrar(?int $idUsuario, string $accion, string $modulo, ?string $detalle = null): void
     {
         $this->execute(

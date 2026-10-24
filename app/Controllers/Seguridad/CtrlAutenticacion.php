@@ -11,65 +11,52 @@ use App\Core\Session;
 // CU02: cerrarSesion().
 class CtrlAutenticacion
 {
-    public string $mensajeFallo = 'Usuario o contraseña incorrectos.';
-    public int $esperaSegundos = 0;
+    // CU01 E1: mensaje genérico para cualquier fallo de credenciales.
+    public const MENSAJE_FALLO = 'Usuario o contraseña incorrectos.';
+
+    public ?array $usuarioSesion = null;
 
     public function autenticar(string $usuario, string $clave): bool
     {
         $usuarios = new Usuario();
+        $bitacora = new Bitacora();
         $fila = $usuarios->buscarPorUsuario($usuario);
 
+        // E1: la cuenta no existe.
         if ($fila === null) {
+            $bitacora->registrar(null, 'LOGIN_FALLIDO', 'Seguridad', $usuario);
             return false;
         }
 
+        // E1: la cuenta está inactiva.
         if (!$fila['estado']) {
-            $this->mensajeFallo = 'Su cuenta está bloqueada. Contacte al administrador.';
+            $usuarios->registrarIntentoFallido((int) $fila['id_usuario']);
+            $bitacora->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
             return false;
         }
 
-        $espera = $usuarios->segundosDeEspera($fila);
-        if ($espera > 0) {
-            $this->esperaSegundos = $espera;
-            $this->mensajeFallo = $this->mensajeEspera($espera);
-            return false;
-        }
-
+        // E1: la contraseña no coincide (verificarClave incrementa los intentos).
         if (!$usuarios->verificarClave($fila, $clave)) {
-            (new Bitacora())->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
-            $actual = $usuarios->buscarPorUsuario($usuario) ?? $fila;
-            if (!$actual['estado']) {
-                $this->mensajeFallo = 'Su cuenta está bloqueada. Contacte al administrador.';
-                return false;
-            }
-            $this->esperaSegundos = $usuarios->segundosDeEspera($actual);
-            if ($this->esperaSegundos > 0) {
-                $this->mensajeFallo = 'Usuario o contraseña incorrectos. ' . $this->mensajeEspera($this->esperaSegundos);
-            }
+            $bitacora->registrar((int) $fila['id_usuario'], 'LOGIN_FALLIDO', 'Seguridad');
             return false;
         }
 
         $permisos = (new Rol())->obtenerPermisos((int) $fila['id_rol']);
-        (new Bitacora())->registrar((int) $fila['id_usuario'], 'LOGIN', 'Seguridad');
+        $bitacora->registrar((int) $fila['id_usuario'], 'LOGIN', 'Seguridad');
 
         session_regenerate_id(true);
-        Session::set('usuario', [
+        $this->usuarioSesion = [
             'id_usuario' => $fila['id_usuario'],
             'username'   => $fila['username'],
             'id_rol'     => $fila['id_rol'],
             'rol'        => $fila['rol'],
-        ]);
+        ];
+        Session::set('usuario', $this->usuarioSesion);
         Session::set('permisos', $permisos);
+        Session::tocar();
 
         (new UI_PanelPrincipal())->redirigir((string) $fila['rol']);
         return true;
-    }
-
-    private function mensajeEspera(int $segundos): string
-    {
-        $unidad = $segundos === 1 ? 'segundo' : 'segundos';
-
-        return "Espere {$segundos} {$unidad} para volver a intentar.";
     }
 
     public function cerrarSesion(): void

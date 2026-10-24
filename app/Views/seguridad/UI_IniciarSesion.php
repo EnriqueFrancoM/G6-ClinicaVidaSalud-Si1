@@ -34,9 +34,8 @@ use function App\Core\e;
             <p class="lede">Usuario o correo, y su contraseña.</p>
 
             <div data-avisos>
-                <?php $espera = Session::flash('espera'); ?>
                 <?php if ($msg = Session::flash('success')): ?><div class="alert success" role="status"><?= e($msg) ?></div><?php endif; ?>
-                <?php if ($msg = Session::flash('error')): ?><div class="alert error" role="alert"<?= $espera !== null ? ' data-espera="' . e((string) $espera) . '"' : '' ?>><?= e($msg) ?></div><?php endif; ?>
+                <?php if ($msg = Session::flash('error')): ?><div class="alert error" role="alert"><?= e($msg) ?></div><?php endif; ?>
             </div>
 
             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
@@ -68,6 +67,6 @@ use function App\Core\e;
             <button class="btn-primary" type="submit" name="btnIngresar">Iniciar sesión</button>
         </form>
 
-        <p class="auth-note"><a href="<?= App::url('/recuperar') ?>">¿Olvidó su contraseña?</a></p>
+        <p class="auth-note">¿Olvidó su contraseña? Contacte al administrador.</p>
     </section>
 </div>

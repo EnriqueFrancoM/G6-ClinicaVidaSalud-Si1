@@ -19,7 +19,7 @@ class UI_PanelPrincipal extends Controller
 
     public function mostrarMenuSegunRol(): void
     {
-        $this->view('Seguridad/UI_PanelPrincipal', [
+        $this->view('seguridad/UI_PanelPrincipal', [
             'usuario' => Session::user() ?? [],
         ]);
     }

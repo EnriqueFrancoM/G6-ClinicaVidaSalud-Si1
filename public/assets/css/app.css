@@ -501,35 +501,6 @@ body.app {
 .sidebar a.active { background: #e7f4f2; color: #0f4f4c; font-weight: 650; }
 .sidebar a[hidden] { display: none; }
 
-.sidebar form button {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    height: 42px;
-    border: 0;
-    border-radius: 12px;
-    background: #111827;
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 180ms var(--ease-out), transform 140ms var(--ease-press);
-}
-
-.sidebar form button::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(110deg, transparent 34%, rgba(255, 255, 255, 0.28) 50%, transparent 66%);
-    transform: translateX(-130%);
-}
-
-.sidebar form button:hover { background: #0f6e68; }
-.sidebar form button:hover::after {
-    transform: translateX(130%);
-    transition: transform 520ms var(--ease-out);
-}
-.sidebar form button:active { transform: scale(0.98); }
-
 .workspace {
     display: flex;
     flex-direction: column;
@@ -544,7 +515,13 @@ body.app {
     padding: 22px 32px 0;
 }
 
+.perfil { position: relative; }
+
 .user-card {
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -585,6 +562,34 @@ body.app {
     font-weight: 600;
     letter-spacing: 0.04em;
 }
+
+.perfil-opciones {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 34px rgba(16, 34, 38, 0.12);
+    animation: rise 180ms var(--ease-out) both;
+}
+
+.perfil-opciones button {
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--danger);
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.perfil-opciones button:hover { background: var(--danger-bg); }
 
 .user-copy strong { display: block; font-size: 0.92rem; }
 .user-copy span { color: #6b7280; font-size: 0.75rem; }

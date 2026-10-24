@@ -15,24 +15,21 @@ class UI_IniciarSesion extends Controller
             if (Session::user() !== null) {
                 (new UI_PanelPrincipal())->redirigir((string) Session::user()['rol']);
             }
-            $this->view('Seguridad/UI_IniciarSesion', [], 'auth');
+            $this->view('seguridad/UI_IniciarSesion', [], 'auth');
             return;
         }
 
         $usuario = (string) $this->input('txtUsuario', '');
         $clave = (string) $this->input('txtContrasena', '');
 
+        // CU01 paso 4: validar que los campos no estén vacíos (servidor).
         if ($usuario === '' || $clave === '') {
             $this->mostrarMensaje('Ingrese su usuario y contraseña.');
             $this->redirigir();
         }
 
-        $control = new CtrlAutenticacion();
-        if (!$control->autenticar($usuario, $clave)) {
-            if ($control->esperaSegundos > 0) {
-                Session::flash('espera', (string) $control->esperaSegundos);
-            }
-            $this->mostrarMensaje($control->mensajeFallo);
+        if (!(new CtrlAutenticacion())->autenticar($usuario, $clave)) {
+            $this->mostrarMensaje(CtrlAutenticacion::MENSAJE_FALLO);
             $this->redirigir();
         }
     }
