@@ -8,7 +8,23 @@ use function App\Core\e;
 require_once __DIR__ . '/../iconos.php';
 
 $campoError = $campoError ?? null;
-$invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
+$mensajeCampo = $mensajeCampo ?? null;
+$avisoFecha = $avisoFecha ?? null;
+$sinCupo = $sinCupo ?? null;
+$invalido = fn (string $campo) => $campoError === $campo || ($campo === 'fecha' && $avisoFecha) ? ' is-invalid' : '';
+$errorDe = function (string $campo) use ($campoError, $mensajeCampo, $avisoFecha): string {
+    $texto = $campoError === $campo ? $mensajeCampo : ($campo === 'fecha' ? $avisoFecha : null);
+    if ($texto === null || $texto === '') {
+        return '';
+    }
+    return '<p class="error-campo" role="alert">' . e($texto) . '</p>';
+};
+$nombreEspecialidad = '';
+foreach ($especialidades as $espFila) {
+    if ((int) $espFila['id_especialidad'] === (int) $filtro['id_especialidad']) {
+        $nombreEspecialidad = $espFila['nombre'];
+    }
+}
 $titulos = ['pendientes' => 'Pendientes', 'confirmadas' => 'Confirmadas', 'completadas' => 'Completadas', 'canceladas' => 'Canceladas'];
 $fecha = fn (string $f) => date('d/m/Y', strtotime($f));
 ?>
@@ -41,16 +57,11 @@ $fecha = fn (string $f) => date('d/m/Y', strtotime($f));
                             <?php foreach ($especialidades as $esp): ?>
                                 <option value="<?= (int) $esp['id_especialidad'] ?>"<?= $filtro['id_especialidad'] === (int) $esp['id_especialidad'] ? ' selected' : '' ?>><?= e($esp['nombre']) ?></option>
                             <?php endforeach; ?>
-                        </select></label>
-                    <label class="field<?= $invalido('id_medico') ?>"><span>Médico</span>
-                        <select name="id_medico" data-medico required>
-                            <option value="">Seleccione…</option>
-                            <?php foreach ($medicos as $m): ?>
-                                <option value="<?= (int) $m['id_medico'] ?>" data-especialidades="<?= e(implode(',', $m['ids_especialidad'])) ?>"<?= $filtro['id_medico'] === (int) $m['id_medico'] ? ' selected' : '' ?>><?= e($m['nombres'] . ' ' . $m['apellidos']) ?></option>
-                            <?php endforeach; ?>
-                        </select></label>
+                        </select>
+                        <?= $errorDe('id_especialidad') ?></label>
                     <label class="field<?= $invalido('fecha') ?>"><span>Fecha</span>
-                        <input type="date" name="fecha" value="<?= e($filtro['fecha']) ?>" min="<?= date('Y-m-d') ?>" required></label>
+                        <input type="date" name="fecha" value="<?= e($filtro['fecha']) ?>" min="<?= date('Y-m-d') ?>" required<?= $campoError === 'fecha' || $avisoFecha ? ' aria-invalid="true"' : '' ?>>
+                        <?= $errorDe('fecha') ?></label>
                     <button type="submit" class="btn-primary btn-chico">Ver horarios</button>
                 </form>
 
@@ -59,24 +70,36 @@ $fecha = fn (string $f) => date('d/m/Y', strtotime($f));
                         <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
                         <input type="hidden" name="accion" value="reservar">
                         <input type="hidden" name="id_especialidad" value="<?= (int) $filtro['id_especialidad'] ?>">
-                        <input type="hidden" name="id_medico" value="<?= (int) $filtro['id_medico'] ?>">
                         <input type="hidden" name="fecha" value="<?= e($filtro['fecha']) ?>">
                         <?php if ($cupos === []): ?>
-                            <p class="vacio-dia">No hay horarios libres ese día. Pruebe otra fecha.</p>
+                            <?php if ($mensajeCampo): ?><p class="alert error" role="alert"><?= e($mensajeCampo) ?></p><?php endif; ?>
+                            <?php require __DIR__ . '/../citas/_sin_cupos.php'; ?>
                         <?php else: ?>
-                            <div class="cupos<?= $invalido('hora_inicio') ?>" role="radiogroup" aria-label="Horarios libres">
-                                <?php foreach ($cupos as $i => $cupo): ?>
+                            <div class="cupos cupos-con-medico<?= $invalido('hora_inicio') ?>" role="radiogroup" aria-label="Horarios libres">
+                                <?php foreach ($cupos as $cupo): ?>
                                     <label class="cupo">
-                                        <input type="radio" name="hora_inicio" value="<?= e($cupo['hora_inicio']) ?>" required<?= $i === 0 ? ' checked' : '' ?>>
-                                        <span><?= e($cupo['hora_inicio']) ?></span>
+                                        <input type="radio" name="hora_inicio" value="<?= (int) $cupo['id_medico'] ?>|<?= e($cupo['hora_inicio']) ?>" data-hora="<?= e($cupo['hora_inicio']) ?>" data-medico="<?= e($cupo['medico']) ?>" required>
+                                        <span><?= e($cupo['hora_inicio']) ?><small><?= e($cupo['medico']) ?></small></span>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
+                            <?= $errorDe('hora_inicio') ?>
                             <label class="field<?= $invalido('motivo') ?>"><span>Motivo de la consulta</span>
-                                <input type="text" name="motivo" value="<?= e($filtro['motivo']) ?>" maxlength="200"></label>
+                                <input type="text" name="motivo" value="<?= e($filtro['motivo']) ?>" maxlength="200"<?= $campoError === 'motivo' ? ' aria-invalid="true"' : '' ?>>
+                                <?= $errorDe('motivo') ?></label>
+                            <aside class="resumen-previo" aria-live="polite">
+                                <h2>Resumen antes de reservar</h2>
+                                <dl>
+                                    <dt>Especialidad</dt><dd><?= e($nombreEspecialidad !== '' ? $nombreEspecialidad : '—') ?></dd>
+                                    <dt>Médico</dt><dd data-resumen-medico>Seleccione un horario</dd>
+                                    <dt>Fecha</dt><dd><?= e(date('d/m/Y', strtotime($filtro['fecha']))) ?></dd>
+                                    <dt>Horario</dt><dd data-resumen-hora>Seleccione un horario</dd>
+                                </dl>
+                                <p class="nota">La reserva no se registra hasta que elija el horario y confirme.</p>
+                            </aside>
                             <div class="modal-acciones">
                                 <a class="btn-borde" href="<?= App::url('/portal/citas') ?>">Cerrar</a>
-                                <button type="submit" class="btn-primary btn-chico" name="btnReservar">Reservar</button>
+                                <button type="submit" class="btn-primary btn-chico" name="btnReservar">Confirmar y reservar</button>
                             </div>
                         <?php endif; ?>
                     </form>

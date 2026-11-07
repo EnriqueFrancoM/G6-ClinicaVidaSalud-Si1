@@ -42,7 +42,7 @@ class CtrlIndicador
         ];
         // Paso 3: validar alcance (período válido).
         foreach (['desde', 'hasta'] as $campo) {
-            if (\DateTime::createFromFormat('!Y-m-d', $filtros[$campo])?->format('Y-m-d') !== $filtros[$campo]) {
+            if (!\App\Core\App::fechaIso($filtros[$campo])) {
                 return $this->error('Ingrese un período válido (desde y hasta).');
             }
         }

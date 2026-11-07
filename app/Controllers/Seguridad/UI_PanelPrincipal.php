@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Seguridad;
 
+use App\Controllers\Portal\CtrlReserva;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Cita;
@@ -21,6 +22,11 @@ class UI_PanelPrincipal extends Controller
     public function mostrarMenuSegunRol(): void
     {
         $usuario = Session::user() ?? [];
+        if ((string) ($usuario['rol'] ?? '') === 'Paciente') {
+            $this->view('portal/UI_InicioPaciente', (new CtrlReserva())->datosInicio());
+            return;
+        }
+
         $this->view('seguridad/UI_PanelPrincipal', [
             'usuario' => $usuario,
             'citas'   => (new Cita())->delDia((int) ($usuario['id_usuario'] ?? 0), (string) ($usuario['rol'] ?? '')),

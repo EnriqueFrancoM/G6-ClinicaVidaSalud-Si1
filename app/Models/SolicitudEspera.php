@@ -112,12 +112,22 @@ class SolicitudEspera extends Model
         );
     }
 
-    public function marcarAsignada(int $idSolicitud, int $idCita): void
+    // Bloquea la oferta vigente para que dos aceptaciones no la tomen a la vez.
+    public function bloquearOfertada(int $idSolicitud): ?array
     {
-        $this->execute(
-            "UPDATE solicitud_espera SET estado = 'ASIGNADA', id_cita = :cita, oferta_hasta = NULL WHERE id_solicitud = :id",
-            ['id' => $idSolicitud, 'cita' => $idCita]
+        return $this->fetch(
+            self::SELECT . " WHERE s.id_solicitud = :id AND s.estado = 'OFERTADA' FOR UPDATE OF s",
+            ['id' => $idSolicitud]
         );
+    }
+
+    public function marcarAsignada(int $idSolicitud, int $idCita): bool
+    {
+        return $this->execute(
+            "UPDATE solicitud_espera SET estado = 'ASIGNADA', id_cita = :cita, oferta_hasta = NULL
+              WHERE id_solicitud = :id AND estado = 'OFERTADA'",
+            ['id' => $idSolicitud, 'cita' => $idCita]
+        ) === 1;
     }
 
     // PN13: si la oferta no se concreta, la solicitud vuelve a la cola conservando su orden de ingreso.

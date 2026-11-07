@@ -32,12 +32,19 @@ class UI_ListaEspera extends Controller
         $estado = (string) $this->input('estado', '');
         $form = Session::get('_form_espera');
         Session::set('_form_espera', null);
+        $desdeConsulta = array_fill_keys(self::CAMPOS, '');
+        foreach (self::CAMPOS as $campo) {
+            $valor = (string) $this->input($campo, '');
+            if ($valor !== '') {
+                $desdeConsulta[$campo] = $valor;
+            }
+        }
 
         $this->view('citas/UI_ListaEspera', [
             'solicitudes'    => $control->listar(isset(SolicitudEspera::ESTADOS[$estado]) ? $estado : null),
             'estado'         => $estado,
-            'form'           => $form ?? array_fill_keys(self::CAMPOS, '') + ['paciente' => (string) $this->input('paciente', '')],
-            'abrirForm'      => $form !== null || $this->input('nuevo') !== null,
+            'form'           => $form ?? $desdeConsulta,
+            'abrirForm'      => $form !== null || $this->input('nuevo') !== null || $desdeConsulta['paciente'] !== '',
             'especialidades' => (new Especialidad())->listarActivas(),
             'medicos'        => (new Medico())->buscar(['estado' => true]),
             'campoError'     => Session::flash('campo_error'),

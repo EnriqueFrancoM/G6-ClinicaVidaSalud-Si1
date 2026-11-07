@@ -24,14 +24,27 @@ class Recordatorio extends Model
     }
 
     // CU12: al reprogramar, el recordatorio pendiente sigue al nuevo horario.
+    // Si ya se envió o falló, se crea uno nuevo: el aviso anterior no cubre el horario nuevo.
     public function reprogramar(int $idCita, string $fecha, string $horaInicio): void
     {
-        $this->execute(
+        $actualizados = $this->execute(
             "UPDATE recordatorio
                 SET fecha_programada = GREATEST(LOCALTIMESTAMP, CAST(:fecha AS DATE) + CAST(:hora AS TIME) - make_interval(hours => :horas))
               WHERE id_cita = :cita AND estado_envio = 'PENDIENTE'",
             ['cita' => $idCita, 'fecha' => $fecha, 'hora' => $horaInicio, 'horas' => self::HORAS_ANTES]
         );
+        if ($actualizados > 0) {
+            return;
+        }
+
+        $fila = $this->fetch(
+            'SELECT NULLIF(TRIM(p.email), \'\') AS email
+               FROM cita c
+               JOIN paciente p ON p.id_paciente = c.id_paciente
+              WHERE c.id_cita = :cita',
+            ['cita' => $idCita]
+        );
+        $this->programar($idCita, $fecha, $horaInicio, $fila['email'] ?? null);
     }
 
     // CU20 mensaje buscarPendientes(instante): pendientes cuyo momento ya llegó. FOR UPDATE SKIP LOCKED:

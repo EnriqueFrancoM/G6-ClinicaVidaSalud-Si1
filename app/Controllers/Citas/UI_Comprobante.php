@@ -7,6 +7,7 @@ use App\Core\Controller;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\Cita;
+use App\Models\Medico;
 use App\Models\Paciente;
 use App\Services\GeneradorQR;
 
@@ -32,10 +33,15 @@ class UI_Comprobante extends Controller
         ]);
     }
 
-    // Recepción y médicos ven cualquier comprobante; el paciente, solo los suyos.
+    // Recepción (CIT_GESTIONAR) ve cualquier comprobante. El médico, solo los de su agenda.
+    // El paciente, solo los suyos. AGE_CONSULTAR no abre comprobantes ajenos.
     private function puedeVer(array $cita): bool
     {
-        if (Session::hasPermission('CIT_GESTIONAR') || Session::hasPermission('AGE_CONSULTAR')) {
+        if (Session::hasPermission('CIT_GESTIONAR')) {
+            return true;
+        }
+        $medico = (new Medico())->obtenerPorUsuario((int) (Session::user()['id_usuario'] ?? 0));
+        if ($medico !== null && (int) $medico['id_medico'] === (int) $cita['id_medico']) {
             return true;
         }
         $titular = (new Paciente())->validarTitular(Session::user() ?? []);

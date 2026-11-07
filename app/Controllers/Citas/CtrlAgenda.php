@@ -72,14 +72,18 @@ class CtrlAgenda
         } elseif (!Session::hasPermission('CIT_GESTIONAR')) {
             return $this->error('Su usuario no está vinculado a un médico.');
         }
-        if ($idMedico <= 0) {
-            return $this->error('Seleccione un médico.');
-        }
-        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha) {
+        if (!\App\Core\App::fechaIso($fecha)) {
             return $this->error('Ingrese una fecha válida.');
         }
         if ($estado !== '' && !isset(Cita::ESTADOS[$estado])) {
             return $this->error('Seleccione un estado válido.');
+        }
+        // id 0: todos los médicos. Solo recepción o administración (CIT_GESTIONAR y sin médico propio).
+        if ($idMedico === 0 && $this->medicoPropio === null && Session::hasPermission('CIT_GESTIONAR')) {
+            return $this->agendaDeTodos($fecha, $estado);
+        }
+        if ($idMedico <= 0) {
+            return $this->error('Seleccione un médico.');
         }
 
         // Mensaje validarMédico(id).
@@ -106,6 +110,49 @@ class CtrlAgenda
             'horario'   => (new HorarioAtencion())->consultarHorario($idMedico, $fecha),
             'bloqueado' => (new BloqueoAgenda())->existeBloqueo($idMedico, $fecha),
             'citas'     => $citas,
+        ];
+    }
+
+    private function agendaDeTodos(string $fecha, string $estado): array
+    {
+        $citas = (new Cita())->buscarAgendaDia($fecha, $estado !== '' ? $estado : null);
+        foreach ($citas as &$cita) {
+            $cita['prioritaria'] = mb_strtolower($cita['especialidad']) === 'pediatría'
+                && Paciente::edad($cita['fecha_nacimiento']) < self::EDAD_PRIORITARIA
+                && in_array($cita['estado'], Cita::PENDIENTES, true);
+        }
+        unset($cita);
+
+        $conCita = [];
+        foreach ($citas as $cita) {
+            $conCita[(int) $cita['id_medico']] = true;
+        }
+        $sinCitas = [];
+        $horarios = new HorarioAtencion();
+        $bloqueos = new BloqueoAgenda();
+        foreach ($this->medicosVisibles() as $medico) {
+            $id = (int) $medico['id_medico'];
+            if (isset($conCita[$id])) {
+                continue;
+            }
+            $sinCitas[] = [
+                'nombre'    => $medico['nombre'],
+                'codigo'    => $medico['codigo'],
+                'bloqueado' => $bloqueos->existeBloqueo($id, $fecha),
+                'horario'   => $horarios->consultarHorario($id, $fecha),
+            ];
+        }
+        if ($citas === []) {
+            $this->mensaje = 'Sin citas para la fecha y el estado elegidos.';
+        }
+
+        return [
+            'medico'    => ['id_medico' => 0, 'codigo' => '', 'nombre' => 'Todos los médicos'],
+            'horario'   => [],
+            'bloqueado' => false,
+            'citas'     => $citas,
+            'todos'     => true,
+            'sin_citas' => $sinCitas,
         ];
     }
 

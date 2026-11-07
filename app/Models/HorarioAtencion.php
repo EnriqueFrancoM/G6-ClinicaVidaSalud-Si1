@@ -69,10 +69,204 @@ class HorarioAtencion extends Model
         return array_values(array_filter($this->cuposDelDia($idMedico, $fecha), fn ($c) => $c['libre']));
     }
 
+    // Por qué consultarDisponibilidad quedó vacía: bloqueo, sin horario, hora pasada o agenda completa.
+    public function causaSinCupo(int $idMedico, string $fecha): string
+    {
+        if ((new BloqueoAgenda())->existeBloqueo($idMedico, $fecha)) {
+            return 'La agenda de este médico está bloqueada ese día (feriado o ausencia).';
+        }
+        $cupos = $this->cuposDelDia($idMedico, $fecha);
+        if ($cupos === []) {
+            return 'El médico no atiende ese día de la semana.';
+        }
+
+        $minutos = fn (string $hora) => (int) substr($hora, 0, 2) * 60 + (int) substr($hora, 3, 2);
+        $ahora = $fecha === date('Y-m-d') ? (int) date('G') * 60 + (int) date('i') : ($fecha < date('Y-m-d') ? PHP_INT_MAX : -1);
+        $hayOcupadoVigente = false;
+        foreach ($cupos as $cupo) {
+            if ($cupo['libre']) {
+                return '';
+            }
+            if ($minutos($cupo['hora_inicio']) > $ahora) {
+                $hayOcupadoVigente = true;
+            }
+        }
+
+        return $hayOcupadoVigente
+            ? 'Todos los horarios vigentes de ese día ya están ocupados.'
+            : 'Los horarios de ese día ya pasaron.';
+    }
+
+    // Próximas fechas, a partir del día siguiente, en las que este médico sí tiene cupo libre.
+    public function otrasFechasConCupo(int $idMedico, string $fecha, int $limite = 3): array
+    {
+        $salida = [];
+        $cursor = $fecha;
+        for ($i = 0; $i < 21 && count($salida) < $limite; $i++) {
+            $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
+            if ($cursor < date('Y-m-d')) {
+                continue;
+            }
+            $libres = $this->consultarDisponibilidad($idMedico, $cursor);
+            if ($libres === []) {
+                continue;
+            }
+            $salida[] = [
+                'fecha'       => $cursor,
+                'hora_inicio' => $libres[0]['hora_inicio'],
+                'cantidad'    => count($libres),
+            ];
+        }
+
+        return $salida;
+    }
+
+    // Otros médicos de la misma especialidad con cupo libre en la fecha indicada.
+    public function otrosMedicosConCupo(int $idEspecialidad, string $fecha, int $excluirMedico, int $limite = 3): array
+    {
+        if ($idEspecialidad <= 0) {
+            return [];
+        }
+        $medicos = $this->fetchAll(
+            "SELECT m.id_medico, m.nombres || ' ' || m.apellidos AS nombre
+               FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+              WHERE me.id_especialidad = :esp AND m.estado = TRUE AND m.id_medico <> :excluir
+              ORDER BY m.apellidos, m.nombres",
+            ['esp' => $idEspecialidad, 'excluir' => $excluirMedico]
+        );
+        $salida = [];
+        foreach ($medicos as $medico) {
+            $libres = $this->consultarDisponibilidad((int) $medico['id_medico'], $fecha);
+            if ($libres === []) {
+                continue;
+            }
+            $salida[] = [
+                'id_medico'   => (int) $medico['id_medico'],
+                'nombre'      => $medico['nombre'],
+                'hora_inicio' => $libres[0]['hora_inicio'],
+                'cantidad'    => count($libres),
+            ];
+            if (count($salida) >= $limite) {
+                break;
+            }
+        }
+
+        return $salida;
+    }
+
     // CU18 mensaje consultarCupos(médico, fecha): los cupos libres que ve el paciente en el portal.
     public function consultarCupos(int $idMedico, string $fecha): array
     {
         return $this->consultarDisponibilidad($idMedico, $fecha);
+    }
+
+    // Cupos libres de todos los médicos activos que atienden la especialidad ese día.
+    public function cuposDeEspecialidad(int $idEspecialidad, string $fecha): array
+    {
+        $salida = [];
+        foreach ($this->medicosConHorario($idEspecialidad) as $medico) {
+            foreach ($this->consultarDisponibilidad((int) $medico['id_medico'], $fecha) as $cupo) {
+                $salida[] = [
+                    'id_medico'   => (int) $medico['id_medico'],
+                    'medico'      => $medico['nombre'],
+                    'hora_inicio' => $cupo['hora_inicio'],
+                    'hora_fin'    => $cupo['hora_fin'],
+                ];
+            }
+        }
+        usort($salida, static function (array $a, array $b): int {
+            return [$a['hora_inicio'], $a['medico']] <=> [$b['hora_inicio'], $b['medico']];
+        });
+
+        return $salida;
+    }
+
+    // Próximas fechas en las que algún médico de la especialidad tiene un cupo libre.
+    public function otrasFechasDeEspecialidad(int $idEspecialidad, string $fecha, int $limite = 3): array
+    {
+        $salida = [];
+        $cursor = $fecha;
+        for ($i = 0; $i < 21 && count($salida) < $limite; $i++) {
+            $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
+            if ($cursor < date('Y-m-d')) {
+                continue;
+            }
+            $libres = $this->cuposDeEspecialidad($idEspecialidad, $cursor);
+            if ($libres === []) {
+                continue;
+            }
+            $salida[] = [
+                'fecha'       => $cursor,
+                'hora_inicio' => $libres[0]['hora_inicio'],
+                'cantidad'    => count($libres),
+            ];
+        }
+
+        return $salida;
+    }
+
+    // Por qué la especialidad no tiene cupo ese día, sin inventar horarios.
+    public function causaSinCupoEspecialidad(int $idEspecialidad, string $fecha): string
+    {
+        $medicos = $this->medicosConHorario($idEspecialidad);
+        if ($medicos === []) {
+            return 'Esta especialidad no tiene un médico activo con horario. No se ofrecen cupos.';
+        }
+        if ($this->cuposDeEspecialidad($idEspecialidad, $fecha) !== []) {
+            return '';
+        }
+        $causas = [];
+        foreach ($medicos as $medico) {
+            $causas[$this->causaSinCupo((int) $medico['id_medico'], $fecha)] = true;
+        }
+        if (count($causas) === 1) {
+            return (string) array_key_first($causas);
+        }
+
+        return 'No hay horarios libres para esta especialidad en esa fecha.';
+    }
+
+    private function medicosConHorario(int $idEspecialidad): array
+    {
+        if ($idEspecialidad <= 0) {
+            return [];
+        }
+
+        return $this->fetchAll(
+            "SELECT m.id_medico, m.nombres || ' ' || m.apellidos AS nombre
+               FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+              WHERE me.id_especialidad = :esp AND m.estado = TRUE
+                AND EXISTS (
+                    SELECT 1 FROM horario_atencion h
+                     WHERE h.id_medico = m.id_medico AND h.estado = TRUE
+                )
+              ORDER BY m.apellidos, m.nombres",
+            ['esp' => $idEspecialidad]
+        );
+    }
+
+    // Próximos cupos libres reales del médico, desde hoy y hasta tres semanas.
+    // Cada elemento es un horario que consultarDisponibilidad ya marcó como libre.
+    public function proximosCuposLibres(int $idMedico, int $limite = 3): array
+    {
+        $salida = [];
+        $cursor = date('Y-m-d', strtotime('-1 day'));
+        for ($i = 0; $i < 21 && count($salida) < $limite; $i++) {
+            $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
+            foreach ($this->consultarDisponibilidad($idMedico, $cursor) as $cupo) {
+                $salida[] = [
+                    'fecha'       => $cursor,
+                    'hora_inicio' => $cupo['hora_inicio'],
+                ];
+                if (count($salida) >= $limite) {
+                    break;
+                }
+            }
+        }
+
+        return $salida;
     }
 
     // CU12 mensaje validarNuevoCupo(datos): el nuevo horario es un cupo del médico y está libre

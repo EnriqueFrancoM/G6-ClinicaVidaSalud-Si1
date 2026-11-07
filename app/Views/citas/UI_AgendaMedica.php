@@ -13,7 +13,7 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
     <header class="hoja-cabecera">
         <div>
             <h1>Agenda médica</h1>
-            <p class="lede"><?= $esMedico ? 'Sus citas por fecha y estado.' : 'Citas de un médico por fecha y estado, ordenadas por hora.' ?></p>
+            <p class="lede"><?= $esMedico ? 'Sus citas por fecha y estado.' : 'Citas por médico, fecha y estado, ordenadas por hora.' ?></p>
         </div>
         <?php if ($puedeGestionar): ?>
             <a class="btn-primary btn-chico" data-fab href="<?= App::url('/citas/programar') ?>">Programar cita</a>
@@ -25,6 +25,9 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
         <label class="field">
             <span>Médico</span>
             <select name="id_medico"<?= $esMedico ? ' disabled' : '' ?> data-autoenviar>
+                <?php if ($puedeGestionar && !$esMedico): ?>
+                    <option value="0"<?= (int) $filtro['id_medico'] === 0 ? ' selected' : '' ?>>Todos los médicos</option>
+                <?php endif; ?>
                 <?php foreach ($medicos as $m): ?>
                     <option value="<?= (int) $m['id_medico'] ?>"<?= (int) $filtro['id_medico'] === (int) $m['id_medico'] ? ' selected' : '' ?>><?= e($m['codigo'] . ' – ' . $m['nombre']) ?></option>
                 <?php endforeach; ?>
@@ -46,10 +49,17 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
         <button type="submit" class="btn-primary btn-chico">Consultar</button>
     </form>
 
+    <?php if ($agenda === null && !empty($aviso)): ?>
+        <p class="alert error" role="alert"><?= e($aviso) ?></p>
+    <?php endif; ?>
+
     <?php if ($agenda !== null): ?>
+        <?php $todos = !empty($agenda['todos']); ?>
         <p class="aviso-rango">
             <strong><?= e($agenda['medico']['nombre']) ?></strong> · <?= e(date('d/m/Y', strtotime($filtro['fecha']))) ?> ·
-            <?php if ($agenda['bloqueado']): ?>
+            <?php if ($todos): ?>
+                Citas de todos los médicos ese día.
+            <?php elseif ($agenda['bloqueado']): ?>
                 Agenda bloqueada ese día (feriado o ausencia).
             <?php elseif ($agenda['horario'] === []): ?>
                 Sin horario de atención ese día.
@@ -61,15 +71,16 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
         <div class="tabla-responsive">
         <table class="cuentas" id="tablaAgenda">
             <thead>
-                <tr><th>Hora</th><th>Paciente</th><th>Especialidad</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th>Hora</th><?php if ($todos): ?><th>Médico</th><?php endif; ?><th>Paciente</th><th>Especialidad</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody>
                 <?php if ($citas === []): ?>
-                    <tr><td colspan="6" class="vacio"><?= e($aviso ?? 'Sin citas.') ?></td></tr>
+                    <tr><td colspan="<?= $todos ? 7 : 6 ?>" class="vacio"><?= e($aviso ?? 'Sin citas.') ?></td></tr>
                 <?php endif; ?>
                 <?php foreach ($citas as $c): ?>
                     <tr<?= $c['prioritaria'] ? ' class="fila-prioritaria"' : '' ?>>
                         <td><strong><?= e($c['hora_inicio']) ?></strong>–<?= e($c['hora_fin']) ?></td>
+                        <?php if ($todos): ?><td><?= e($c['medico']) ?></td><?php endif; ?>
                         <td class="quien">
                             <strong><?= e($c['paciente']) ?></strong>
                             <span><?= e($c['codigo']) ?> · <?= e($c['paciente_codigo']) ?><?= $c['prioritaria'] ? ' · ' : '' ?></span>
@@ -97,6 +108,23 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
         </div>
         <?php if (array_filter(array_column($citas, 'prioritaria'))): ?>
             <p class="nota">Prioritaria: cita de Pediatría de un menor de 5 años (RF23).</p>
+        <?php endif; ?>
+        <?php if ($todos && !empty($agenda['sin_citas'])): ?>
+            <h2 class="subtitulo">Médicos sin citas ese día</h2>
+            <ul class="sin-cupos">
+                <?php foreach ($agenda['sin_citas'] as $medico): ?>
+                    <li>
+                        <?= e($medico['codigo'] . ' – ' . $medico['nombre']) ?>
+                        <?php if ($medico['bloqueado']): ?>
+                            · agenda bloqueada
+                        <?php elseif ($medico['horario'] === []): ?>
+                            · no atiende ese día
+                        <?php else: ?>
+                            · atiende <?= e(implode(', ', array_map(fn ($h) => $h['hora_inicio'] . '–' . $h['hora_fin'], $medico['horario']))) ?>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         <?php endif; ?>
     <?php endif; ?>
 </section>

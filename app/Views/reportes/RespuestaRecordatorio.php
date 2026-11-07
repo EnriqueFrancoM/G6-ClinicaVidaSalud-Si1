@@ -1,7 +1,12 @@
 <?php
 
 use App\Core\App;
+use App\Core\Session;
 use function App\Core\e;
+
+$pendiente = $pendiente ?? false;
+$cita = $cita ?? null;
+$respuesta = $respuesta ?? '';
 ?>
 <div class="registro-pagina respuesta-recordatorio">
     <a class="auth-brand" href="<?= App::url('/login') ?>">
@@ -12,9 +17,29 @@ use function App\Core\e;
         Vida Salud
     </a>
     <section class="hoja">
-        <h1><?= $ok ? 'Respuesta registrada' : 'No se pudo registrar' ?></h1>
-        <p class="alert <?= $ok ? 'success' : 'error' ?>"><?= e($mensaje) ?></p>
-        <p class="nota">Puede revisar sus citas iniciando sesión en el portal del paciente.</p>
-        <a class="btn-primary btn-chico" href="<?= App::url('/login') ?>">Ir al portal</a>
+        <h1><?= $pendiente ? 'Confirmar respuesta' : ($ok ? 'Respuesta registrada' : 'No se pudo registrar') ?></h1>
+        <p class="alert <?= $ok ? 'success' : 'error' ?>" role="status"><?= e($mensaje) ?></p>
+        <?php if ($pendiente && $cita !== null): ?>
+            <article class="resumen-previo">
+                <h2>Cita <?= e($cita['codigo']) ?></h2>
+                <dl>
+                    <dt>Paciente</dt><dd><?= e($cita['paciente']) ?></dd>
+                    <dt>Médico</dt><dd><?= e($cita['medico']) ?></dd>
+                    <dt>Horario</dt><dd><?= e(date('d/m/Y', strtotime($cita['fecha']))) ?> · <?= e($cita['hora_inicio']) ?></dd>
+                </dl>
+            </article>
+            <form method="post" action="<?= App::url('/recordatorio/responder') ?>">
+                <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                <input type="hidden" name="c" value="<?= (int) $id ?>">
+                <input type="hidden" name="r" value="<?= e($respuesta) ?>">
+                <input type="hidden" name="f" value="<?= e($fecha) ?>">
+                <input type="hidden" name="h" value="<?= e($hora) ?>">
+                <input type="hidden" name="t" value="<?= e($firma) ?>">
+                <button type="submit" class="btn-primary btn-chico"><?= $respuesta === 'cancelar' ? 'Cancelar la cita' : 'Confirmar asistencia' ?></button>
+            </form>
+        <?php else: ?>
+            <p class="nota">Puede revisar sus citas iniciando sesión en el portal del paciente.</p>
+            <a class="btn-primary btn-chico" href="<?= App::url('/login') ?>">Ir al portal</a>
+        <?php endif; ?>
     </section>
 </div>

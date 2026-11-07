@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Session;
 use App\Models\Bitacora;
 use App\Models\Cita;
+use App\Models\Especialidad;
 use App\Models\HistorialEstadoCita;
 use App\Models\HorarioAtencion;
 use App\Models\Paciente;
@@ -55,6 +56,22 @@ class CtrlReserva
         return (new HorarioAtencion())->consultarCupos($idMedico, $fecha);
     }
 
+    // Inicio del paciente: próxima cita futura, directorio real y sus propias citas.
+    public function datosInicio(): array
+    {
+        $paciente = $this->titular();
+        $idPaciente = $paciente !== null ? (int) $paciente['id_paciente'] : 0;
+        $citas = new Cita();
+
+        return [
+            'paciente'     => $paciente,
+            'proxima'      => $idPaciente > 0 ? $citas->proximaDelPaciente($idPaciente) : null,
+            'grupos'         => $idPaciente > 0 ? $this->misCitas($idPaciente) : [],
+            'especialidades' => (new Especialidad())->catalogoReserva(),
+            'avisos'         => $idPaciente > 0 ? (new Recordatorio())->avisosDelPaciente($idPaciente) : [],
+        ];
+    }
+
     // Paso 6: mis citas agrupadas (solo las del titular, PN10).
     public function misCitas(int $idPaciente): array
     {
@@ -91,7 +108,7 @@ class CtrlReserva
         $fecha = trim((string) ($datos['fecha'] ?? ''));
         $hora = trim((string) ($datos['hora_inicio'] ?? ''));
         $motivo = preg_replace('/\s+/u', ' ', trim((string) ($datos['motivo'] ?? '')));
-        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha || $fecha < date('Y-m-d')) {
+        if (!\App\Core\App::fechaIso($fecha) || $fecha < date('Y-m-d')) {
             return $this->error('Elija una fecha válida desde hoy.', 'fecha');
         }
         if (mb_strlen($motivo) > 200) {

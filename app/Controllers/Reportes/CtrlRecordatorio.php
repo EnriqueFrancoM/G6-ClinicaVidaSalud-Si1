@@ -92,30 +92,68 @@ class CtrlRecordatorio
         return $resumen;
     }
 
-    // RF21: firma del enlace de confirmar o cancelar (no se puede adivinar ni reutilizar para otra cita).
-    public static function firmar(int $idCita): string
+    // RF21: la firma ata la cita, la acción y el horario. No sirve para la acción contraria ni tras reprogramar.
+    public static function firmar(int $idCita, string $respuesta, string $fecha, string $hora): string
     {
         $clave = (string) App::config('app.key', '');
         if ($clave === '') {
             $clave = hash('sha256', json_encode(App::config('db')));
         }
-        return substr(hash_hmac('sha256', 'cita:' . $idCita, $clave), 0, 32);
+        return substr(hash_hmac('sha256', $idCita . '|' . $respuesta . '|' . $fecha . '|' . $hora, $clave), 0, 32);
     }
 
-    public static function enlace(int $idCita, string $respuesta): string
+    public static function enlace(int $idCita, string $respuesta, string $fecha, string $hora): string
     {
-        return App::url('/recordatorio/responder?' . http_build_query(['c' => $idCita, 'r' => $respuesta, 't' => self::firmar($idCita)]));
+        return App::url('/recordatorio/responder?' . http_build_query([
+            'c' => $idCita,
+            'r' => $respuesta,
+            'f' => $fecha,
+            'h' => $hora,
+            't' => self::firmar($idCita, $respuesta, $fecha, $hora),
+        ]));
     }
 
-    // RF21: respuesta del paciente desde el enlace del recordatorio.
-    public function responder(int $idCita, string $respuesta, string $firma): bool
+    // Comprueba propósito, horario vigente y que la cita no haya pasado. No cambia datos.
+    public function validarEnlace(int $idCita, string $respuesta, string $fecha, string $hora, string $firma): ?array
     {
-        if (!hash_equals(self::firmar($idCita), $firma)) {
-            return $this->error('El enlace no es válido.');
+        if (!in_array($respuesta, ['confirmar', 'cancelar'], true)) {
+            $this->error('Respuesta no válida.');
+            return null;
+        }
+        if (!hash_equals(self::firmar($idCita, $respuesta, $fecha, $hora), $firma)) {
+            $this->error('El enlace no es válido.');
+            return null;
         }
         $cita = (new Cita())->buscarPorId($idCita);
         if ($cita === null) {
-            return $this->error('La cita no existe.');
+            $this->error('La cita no existe.');
+            return null;
+        }
+        if ($cita['fecha'] !== $fecha || $cita['hora_inicio'] !== $hora) {
+            $this->error('Este enlace correspondía a un horario que ya cambió. Use el recordatorio más reciente.');
+            return null;
+        }
+        if (strtotime($cita['fecha'] . ' ' . $cita['hora_inicio']) <= time()) {
+            $this->error('El enlace venció: la cita ' . $cita['codigo'] . ' ya pasó.');
+            return null;
+        }
+        if (!in_array($cita['estado'], Cita::PENDIENTES, true)) {
+            $this->error('La cita ' . $cita['codigo'] . ' ya está ' . mb_strtolower(Cita::ESTADOS[$cita['estado']]) . '.');
+            return null;
+        }
+        $this->mensaje = $respuesta === 'cancelar'
+            ? 'Confirme si desea cancelar la cita ' . $cita['codigo'] . '.'
+            : 'Confirme la asistencia a la cita ' . $cita['codigo'] . '.';
+
+        return $cita;
+    }
+
+    // RF21: respuesta del paciente desde el enlace del recordatorio. Solo se llama en POST.
+    public function responder(int $idCita, string $respuesta, string $fecha, string $hora, string $firma): bool
+    {
+        $cita = $this->validarEnlace($idCita, $respuesta, $fecha, $hora, $firma);
+        if ($cita === null) {
+            return false;
         }
 
         return $this->aplicarRespuesta($cita, $respuesta, $this->usuarioDelPaciente($cita));
@@ -171,8 +209,8 @@ class CtrlRecordatorio
         return "Hola {$cita['paciente']}:\n\n"
             . 'Le recordamos su cita ' . $cita['codigo'] . ' de ' . $cita['especialidad'] . ' con ' . $cita['medico']
             . ' el ' . date('d/m/Y', strtotime($cita['fecha'])) . ' a las ' . $cita['hora_inicio'] . ".\n\n"
-            . 'Confirmar asistencia: ' . self::enlace((int) $cita['id_cita'], 'confirmar') . "\n"
-            . 'Cancelar la cita: ' . self::enlace((int) $cita['id_cita'], 'cancelar') . "\n\n"
+            . 'Confirmar asistencia: ' . self::enlace((int) $cita['id_cita'], 'confirmar', $cita['fecha'], $cita['hora_inicio']) . "\n"
+            . 'Cancelar la cita: ' . self::enlace((int) $cita['id_cita'], 'cancelar', $cita['fecha'], $cita['hora_inicio']) . "\n\n"
             . App::config('app.name');
     }
 

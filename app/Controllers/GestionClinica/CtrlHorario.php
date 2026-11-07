@@ -47,7 +47,7 @@ class CtrlHorario
         $fecha = (string) ($datos['fecha'] ?? '');
         $motivo = preg_replace('/\s+/u', ' ', trim((string) ($datos['motivo'] ?? '')));
 
-        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha) {
+        if (!\App\Core\App::fechaIso($fecha)) {
             $this->invalido('fecha', 'Ingrese una fecha válida.');
             return false;
         }

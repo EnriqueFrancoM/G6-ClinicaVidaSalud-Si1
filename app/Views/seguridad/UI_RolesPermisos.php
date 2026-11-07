@@ -11,6 +11,11 @@ $editarMeta = $editarMeta ?? false;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 $activo = fn ($estado) => $estado === true || $estado === 't' || $estado === '1' || $estado === 1;
 $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
+$nPermisos = 0;
+foreach ($permisos as $lista) {
+    $nPermisos += count($lista);
+}
+$nActivos = count(array_filter($roles, fn ($rol) => $activo($rol['estado'])));
 ?>
 <div class="roles-pagina" data-ui="UI_RolesPermisos">
     <form method="post" action="<?= App::url('/roles') ?>">
@@ -24,6 +29,12 @@ $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
                 <button type="submit" class="btn-primary btn-chico" data-confirmar="¿Guardar los permisos de todos los roles?">Guardar permisos</button>
             </div>
         </header>
+        <div class="stat-row">
+            <article class="stat-card lift-card"><span>Roles</span><strong><?= count($roles) ?></strong></article>
+            <article class="stat-card lift-card"><span>Activos</span><strong><?= $nActivos ?></strong></article>
+            <article class="stat-card lift-card"><span>Permisos</span><strong><?= $nPermisos ?></strong></article>
+            <article class="stat-card lift-card"><span>Módulos</span><strong><?= count($permisos) ?></strong></article>
+        </div>
         <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
         <input type="hidden" name="accion" value="matriz">
 
@@ -51,6 +62,7 @@ $candado = ['USU_GESTIONAR', 'ROL_GESTIONAR', 'BIT_CONSULTAR'];
                                 <tr class="<?= $activo($rol['estado']) ? '' : 'rol-inactivo' ?>">
                                     <th scope="row">
                                         <a class="rol-nombre" href="<?= App::url('/roles?datos=' . $idRol) ?>"><?= e($rol['nombre']) ?></a>
+                                        <span class="rol-meta"><?= count($rol['permisos']) ?> permisos<?= $esAdmin ? ' · seguridad fija' : '' ?></span>
                                         <?php if (!$activo($rol['estado'])): ?><span class="estado-pill bloqueada">Inactivo</span><?php endif; ?>
                                     </th>
                                     <?php foreach ($lista as $permiso): ?>

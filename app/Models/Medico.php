@@ -58,6 +58,44 @@ class Medico extends Model
         return $filas;
     }
 
+    // Portal del paciente: médicos activos, con horario activo y especialidad activa.
+    // No incluye teléfono ni correo.
+    public function directorioConHorario(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT m.id_medico, m.nombres, m.apellidos, m.nro_registro_prof,
+                    e.id_especialidad, e.nombre AS especialidad
+               FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+               JOIN especialidad e ON e.id_especialidad = me.id_especialidad AND e.estado = TRUE
+              WHERE m.estado = TRUE
+                AND EXISTS (
+                    SELECT 1 FROM horario_atencion h
+                     WHERE h.id_medico = m.id_medico AND h.estado = TRUE
+                )
+              ORDER BY m.apellidos, m.nombres, e.nombre"
+        );
+        $grupos = [];
+        foreach ($filas as $fila) {
+            $id = (int) $fila['id_medico'];
+            if (!isset($grupos[$id])) {
+                $grupos[$id] = [
+                    'id_medico'       => $id,
+                    'nombres'         => $fila['nombres'],
+                    'apellidos'       => $fila['apellidos'],
+                    'registro'        => $fila['nro_registro_prof'],
+                    'especialidades'  => [],
+                ];
+            }
+            $grupos[$id]['especialidades'][] = [
+                'id_especialidad' => (int) $fila['id_especialidad'],
+                'nombre'          => $fila['especialidad'],
+            ];
+        }
+
+        return array_values($grupos);
+    }
+
     // CU09 mensaje 6 / E4: solo un médico activo puede recibir nuevos horarios.
     public function verificarActivo(int $idMedico): bool
     {

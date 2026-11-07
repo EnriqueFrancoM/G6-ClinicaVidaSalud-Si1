@@ -86,8 +86,9 @@ return [
     // lo comprueba CtrlEstadoCita.validarAcceso().
     ['GET',  '/citas/estado', [UI_EstadoCita::class, 'solicitar'], 'auth'],
     ['POST', '/citas/estado', [UI_EstadoCita::class, 'solicitar'], 'auth'],
-    // RF24: destino del QR del comprobante (llegada del paciente)
+    // RF24: el QR abre la confirmación. La llegada solo cambia con POST.
     ['GET',  '/citas/llegada',     [UI_EstadoCita::class, 'registrarLlegada'], 'CIT_GESTIONAR'],
+    ['POST', '/citas/llegada',     [UI_EstadoCita::class, 'registrarLlegada'], 'CIT_GESTIONAR'],
     ['GET',  '/citas/comprobante', [UI_Comprobante::class, 'mostrar'],         'auth'],
     // CU15 solicitar(consultarAgenda) → consultarAgenda(datos)
     ['GET',  '/agenda', [UI_AgendaMedica::class, 'solicitar'], 'AGE_CONSULTAR'],
@@ -111,8 +112,9 @@ return [
     // CU20 solicitar(procesarPendientes) → procesarPendientes(datos); seguimiento de recordatorios (PN12)
     ['GET',  '/recordatorios', [ServicioRecordatorios::class, 'solicitar'], 'REP_GENERAR'],
     ['POST', '/recordatorios', [ServicioRecordatorios::class, 'solicitar'], 'REP_GENERAR'],
-    // RF21: enlace del recordatorio para confirmar o cancelar (firmado)
+    // RF21: el enlace firmado muestra la confirmación. Confirmar o cancelar solo con POST.
     ['GET',  '/recordatorio/responder', [ServicioRecordatorios::class, 'responder'], null],
+    ['POST', '/recordatorio/responder', [ServicioRecordatorios::class, 'responder'], null],
     // CU22 solicitar(calcularIndicadores) → calcularIndicadores(datos)
     ['GET',  '/indicadores', [UI_Indicadores::class, 'solicitar'], 'REP_GENERAR'],
 ];

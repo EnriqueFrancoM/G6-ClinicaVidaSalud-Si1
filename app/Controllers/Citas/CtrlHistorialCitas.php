@@ -37,7 +37,7 @@ class CtrlHistorialCitas
         $desde = trim((string) ($datos['desde'] ?? ''));
         $hasta = trim((string) ($datos['hasta'] ?? ''));
         foreach (['desde' => $desde, 'hasta' => $hasta] as $valor) {
-            if ($valor !== '' && \DateTime::createFromFormat('!Y-m-d', $valor)?->format('Y-m-d') !== $valor) {
+            if ($valor !== '' && !\App\Core\App::fechaIso($valor)) {
                 return $this->error('Ingrese fechas válidas.');
             }
         }

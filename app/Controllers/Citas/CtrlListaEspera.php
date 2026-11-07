@@ -128,45 +128,65 @@ class CtrlListaEspera
     }
 
     // Paso 6: confirmar aceptación y volver a validar disponibilidad con asignarSiDisponible(datos).
-    // PN13: si el cupo se ocupó entretanto, se rechaza y la solicitud conserva su lugar en la cola.
+    // La oferta se bloquea (FOR UPDATE) y el cupo se revalida dentro de la transacción:
+    // horario vigente, sin bloqueo y sin otra cita. PN13 si el cupo ya no sirve.
     private function aceptarOferta(int $idSolicitud): bool
     {
-        $solicitudes = new SolicitudEspera();
-        $s = $solicitudes->buscarPorId($idSolicitud);
-        if ($s === null || $s['estado'] !== 'OFERTADA') {
-            return $this->error('La solicitud no tiene una oferta vigente.');
-        }
-        if (strtotime((string) $s['oferta_hasta']) < time()) {
-            $this->revisarOfertasVencidas();
-            return $this->error('El plazo de la oferta venció; la solicitud volvió a la cola.');
-        }
-        $paciente = (new Paciente())->validarPaciente((int) $s['id_paciente']);
-        if ($paciente === null) {
-            return $this->error('El paciente ya no está activo.');
-        }
-
-        $datos = [
-            'id_paciente'         => (int) $s['id_paciente'],
-            'id_medico'           => (int) $s['oferta_id_medico'],
-            'id_especialidad'     => (int) $s['id_especialidad'],
-            'id_usuario_registro' => (int) $this->usuarioActual['id_usuario'],
-            'fecha'               => $s['oferta_fecha'],
-            'hora_inicio'         => $s['oferta_inicio'],
-            'hora_fin'            => $s['oferta_fin'],
-            'motivo'              => 'Asignada desde la lista de espera',
-        ];
-
         $db = Database::connection();
         $db->beginTransaction();
+        $solicitudes = new SolicitudEspera();
         try {
+            $s = $solicitudes->bloquearOfertada($idSolicitud);
+            if ($s === null) {
+                $db->rollBack();
+                return $this->error('La solicitud no tiene una oferta vigente.');
+            }
+            if (strtotime((string) $s['oferta_hasta']) < time()) {
+                $solicitudes->volverACola($idSolicitud);
+                $db->commit();
+                return $this->error('El plazo de la oferta venció; la solicitud volvió a la cola.');
+            }
+            $paciente = (new Paciente())->validarPaciente((int) $s['id_paciente']);
+            if ($paciente === null) {
+                $db->rollBack();
+                return $this->error('El paciente ya no está activo.');
+            }
+
+            $datos = [
+                'id_paciente'         => (int) $s['id_paciente'],
+                'id_medico'           => (int) $s['oferta_id_medico'],
+                'id_especialidad'     => (int) $s['id_especialidad'],
+                'id_usuario_registro' => (int) $this->usuarioActual['id_usuario'],
+                'fecha'               => $s['oferta_fecha'],
+                'hora_inicio'         => $s['oferta_inicio'],
+                'hora_fin'            => $s['oferta_fin'],
+                'motivo'              => 'Asignada desde la lista de espera',
+            ];
+            $cupo = (new HorarioAtencion())->validarNuevoCupo([
+                'id_medico'   => $datos['id_medico'],
+                'fecha'       => $datos['fecha'],
+                'hora_inicio' => $datos['hora_inicio'],
+            ]);
+            if ($cupo === null) {
+                $solicitudes->volverACola($idSolicitud);
+                $db->commit();
+                return $this->error('El cupo ofrecido ya no está disponible (horario, bloqueo o cupo ocupado). La solicitud volvió a la cola conservando su orden.');
+            }
+            $datos['hora_fin'] = $cupo['hora_fin'];
+
             $cita = (new Cita())->asignarSiDisponible($datos);
             (new HistorialEstadoCita())->registrarInicial($cita['id_cita'], $datos['id_usuario_registro'], 'Asignada desde la lista de espera');
             (new Recordatorio())->programar($cita['id_cita'], $datos['fecha'], $datos['hora_inicio'], $paciente['email']);
-            $solicitudes->marcarAsignada($idSolicitud, $cita['id_cita']);
+            if (!$solicitudes->marcarAsignada($idSolicitud, $cita['id_cita'])) {
+                $db->rollBack();
+                return $this->error('La oferta ya no estaba disponible.');
+            }
             $this->bitacora('Asignó ' . $cita['codigo'] . ' a ' . $s['paciente_codigo'] . ' desde la lista de espera');
             $db->commit();
         } catch (\Throwable $e) {
-            $db->rollBack();
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             if (!Cita::esCupoOcupado($e)) {
                 throw $e;
             }
@@ -265,7 +285,7 @@ class CtrlListaEspera
         if ($valor === '') {
             return null;
         }
-        return \DateTime::createFromFormat('!Y-m-d', $valor)?->format('Y-m-d') === $valor ? $valor : false;
+        return \App\Core\App::fechaIso($valor) ? $valor : false;
     }
 
     private function bitacora(string $detalle): void

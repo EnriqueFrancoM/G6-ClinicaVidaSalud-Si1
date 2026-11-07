@@ -38,12 +38,38 @@ class ServicioRecordatorios extends Controller
         return (new CtrlRecordatorio())->procesarPendientes(['instante' => date('Y-m-d H:i:s')]);
     }
 
-    // RF21: enlace del recordatorio para confirmar o cancelar la cita.
+    // RF21: GET muestra el resumen y pide confirmación. POST aplica confirmar o cancelar.
     public function responder(): void
     {
         $control = new CtrlRecordatorio();
-        $ok = $control->responder((int) $this->input('c', 0), (string) $this->input('r', ''), (string) $this->input('t', ''));
-        $this->view('reportes/RespuestaRecordatorio', ['ok' => $ok, 'mensaje' => $control->mensaje], 'auth');
+        $id = (int) $this->input('c', 0);
+        $respuesta = (string) $this->input('r', '');
+        $fecha = (string) $this->input('f', '');
+        $hora = (string) $this->input('h', '');
+        $firma = (string) $this->input('t', '');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $ok = $control->responder($id, $respuesta, $fecha, $hora, $firma);
+            $this->view('reportes/RespuestaRecordatorio', [
+                'ok'        => $ok,
+                'mensaje'   => $control->mensaje,
+                'pendiente' => false,
+            ], 'auth');
+            return;
+        }
+
+        $cita = $control->validarEnlace($id, $respuesta, $fecha, $hora, $firma);
+        $this->view('reportes/RespuestaRecordatorio', [
+            'ok'        => $cita !== null,
+            'mensaje'   => $control->mensaje,
+            'pendiente' => $cita !== null,
+            'cita'      => $cita,
+            'respuesta' => $respuesta,
+            'id'        => $id,
+            'fecha'     => $fecha,
+            'hora'      => $hora,
+            'firma'     => $firma,
+        ], 'auth');
     }
 
     // Paso 6: envío registrado o fallo controlado.

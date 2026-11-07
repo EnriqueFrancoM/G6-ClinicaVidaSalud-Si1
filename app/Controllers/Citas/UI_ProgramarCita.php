@@ -2,9 +2,11 @@
 
 namespace App\Controllers\Citas;
 
+use App\Core\App;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Especialidad;
+use App\Models\HorarioAtencion;
 use App\Models\Medico;
 use App\Models\Paciente;
 
@@ -52,9 +54,14 @@ class UI_ProgramarCita extends Controller
         }
 
         // Paso 3: horarios disponibles (solo con médico y fecha elegidos).
+        $fechaOk = \App\Core\App::fechaIso($filtro['fecha']);
         $cupos = null;
-        if ($paciente !== null && $filtro['id_medico'] > 0 && $filtro['fecha'] >= date('Y-m-d')
-            && \DateTime::createFromFormat('!Y-m-d', $filtro['fecha'])?->format('Y-m-d') === $filtro['fecha']) {
+        $avisoFecha = null;
+        if ($paciente !== null && $filtro['id_medico'] > 0 && !$fechaOk) {
+            $avisoFecha = 'Ingrese una fecha válida.';
+        } elseif ($paciente !== null && $filtro['id_medico'] > 0 && $filtro['fecha'] < date('Y-m-d')) {
+            $avisoFecha = 'No se pueden registrar citas en fechas pasadas.';
+        } elseif ($paciente !== null && $filtro['id_medico'] > 0 && $fechaOk) {
             $cupos = $control->consultarDisponibilidad($filtro['id_medico'], $filtro['fecha']);
         }
 
@@ -62,12 +69,57 @@ class UI_ProgramarCita extends Controller
             'filtro'         => $filtro,
             'paciente'       => $paciente,
             'avisoPaciente'  => $avisoPaciente,
+            'avisoFecha'     => $avisoFecha,
             'especialidades' => (new Especialidad())->listarConMedicoActivo(),
             'medicos'        => (new Medico())->buscar(['estado' => true]),
             'cupos'          => $cupos,
+            'sinCupo'        => $cupos === [] ? $this->opcionesSinCupo($filtro) : null,
             'registrada'     => ($codigo = (string) $this->input('registrada', '')) !== '' ? $control->buscarCita($codigo) : null,
             'campoError'     => Session::flash('campo_error'),
+            'mensajeCampo'   => Session::flash('error_detalle'),
         ]);
+    }
+
+    // Fechas, médicos y lista de espera que sí tienen disponibilidad para el filtro actual.
+    private function opcionesSinCupo(array $filtro): array
+    {
+        $horarios = new HorarioAtencion();
+        $idMedico = (int) $filtro['id_medico'];
+        $idEspecialidad = (int) $filtro['id_especialidad'];
+        $fechas = $horarios->otrasFechasConCupo($idMedico, $filtro['fecha']);
+        $otros = $idEspecialidad > 0 ? $horarios->otrosMedicosConCupo($idEspecialidad, $filtro['fecha'], $idMedico) : [];
+        $base = [
+            'paciente'        => $filtro['paciente'],
+            'id_especialidad' => $idEspecialidad,
+            'motivo'          => $filtro['motivo'],
+        ];
+        foreach ($fechas as &$fecha) {
+            $fecha['url'] = App::url('/citas/programar?' . http_build_query($base + [
+                'id_medico' => $idMedico,
+                'fecha'     => $fecha['fecha'],
+            ]));
+        }
+        unset($fecha);
+        foreach ($otros as &$medico) {
+            $medico['url'] = App::url('/citas/programar?' . http_build_query($base + [
+                'id_medico' => $medico['id_medico'],
+                'fecha'     => $filtro['fecha'],
+            ]));
+        }
+        unset($medico);
+
+        return [
+            'causa'   => $horarios->causaSinCupo($idMedico, $filtro['fecha']),
+            'fechas'  => $fechas,
+            'medicos' => $otros,
+            'espera'  => App::url('/lista-espera?' . http_build_query([
+                'nuevo'           => 1,
+                'paciente'        => $filtro['paciente'],
+                'id_especialidad' => $idEspecialidad,
+                'id_medico'       => $idMedico,
+                'fecha_desde'     => $filtro['fecha'],
+            ])),
+        ];
     }
 
     // Paso 6: mostrar el código de la cita.
@@ -80,7 +132,7 @@ class UI_ProgramarCita extends Controller
     // Alternativas: cupo ocupado, fecha pasada o médico inactivo; no se aplican cambios parciales.
     private function mostrarError(CtrlCita $control): never
     {
-        Session::flash('error', $control->mensaje);
+        Session::flash('error_detalle', $control->mensaje);
         Session::flash('campo_error', (string) $control->campoError);
         $this->redirect('/citas/programar?' . http_build_query([
             'paciente'        => $this->input('paciente', ''),

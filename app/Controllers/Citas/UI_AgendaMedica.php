@@ -43,6 +43,6 @@ class UI_AgendaMedica extends Controller
     // Alternativa: fecha inválida o médico fuera del alcance del usuario.
     private function mostrarError(CtrlAgenda $control): void
     {
-        Session::flash('error', $control->mensaje);
+        $control->mensaje = $control->mensaje !== '' ? $control->mensaje : 'No se pudo consultar la agenda.';
     }
 }

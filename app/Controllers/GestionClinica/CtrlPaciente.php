@@ -133,7 +133,7 @@ class CtrlPaciente
         if ($texto('apellidos') === '' || mb_strlen($texto('apellidos')) > 60) {
             return $this->invalido('apellidos', 'Ingrese los apellidos (máximo 60 caracteres).');
         }
-        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha) {
+        if (!\App\Core\App::fechaIso($fecha)) {
             return $this->invalido('fecha_nacimiento', 'Ingrese una fecha de nacimiento válida.');
         }
         if ($fecha > date('Y-m-d')) {

@@ -13,14 +13,34 @@ $pacientes = $pacientes ?? [];
 $filtros = $filtros ?? ['buscar' => '', 'rol' => null, 'estado' => ''];
 $campoError = $campoError ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
+$inicialesDe = function (string $texto): string {
+    $partes = preg_split('/[.\s_-]+/', $texto) ?: [];
+    $iniciales = '';
+    foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
+        $iniciales .= mb_strtoupper(mb_substr($parte, 0, 1));
+    }
+    return $iniciales !== '' ? $iniciales : '·';
+};
+$activos = count(array_filter($usuarios, fn ($fila) => $fila['estado']));
+$vinculados = count(array_filter($usuarios, fn ($fila) => !empty($fila['id_medico']) || !empty($fila['id_paciente'])));
 ?>
 <section class="hoja" data-ui="UI_GestionarUsuarios">
     <header class="hoja-cabecera">
-        <h1>Usuarios registrados</h1>
+        <div>
+            <h1>Usuarios registrados</h1>
+            <p class="lede">Cuentas de acceso, rol y vínculo con una ficha de médico o paciente.</p>
+        </div>
         <a class="btn-primary btn-chico" data-fab href="<?= App::url('/usuarios?nuevo=1') ?>">Nuevo usuario</a>
     </header>
 
-    <form class="filtros" method="get" action="<?= App::url('/usuarios') ?>">
+    <div class="stat-row">
+        <article class="stat-card lift-card"><span>En esta vista</span><strong><?= count($usuarios) ?></strong></article>
+        <article class="stat-card lift-card"><span>Activos</span><strong><?= $activos ?></strong></article>
+        <article class="stat-card lift-card"><span>Inactivos</span><strong><?= count($usuarios) - $activos ?></strong></article>
+        <article class="stat-card lift-card"><span>Con ficha vinculada</span><strong><?= $vinculados ?></strong></article>
+    </div>
+
+    <form class="filtros filtros-medicos" method="get" action="<?= App::url('/usuarios') ?>">
         <label class="field">
             <span>Buscar</span>
             <input type="search" name="buscar" value="<?= e($filtros['buscar']) ?>" placeholder="nombre de usuario o correo">
@@ -42,6 +62,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                 <option value="0"<?= $filtros['estado'] === '0' ? ' selected' : '' ?>>Inactivo</option>
             </select>
         </label>
+        <button type="submit" class="btn-primary btn-chico">Buscar</button>
     </form>
 
     <div class="tabla-responsive">
@@ -68,10 +89,18 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                     default => '',
                 }; ?>
                 <tr>
-                    <td class="quien"><strong><?= e($fila['username']) ?></strong></td>
-                    <td><?= e($fila['email']) ?></td>
-                    <td><span class="marca-rol <?= e($marca) ?>"><?= e($fila['rol']) ?></span></td>
-                    <td><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
+                    <td class="quien">
+                        <div class="quien-persona">
+                            <span class="persona-marca" aria-hidden="true"><?= e($inicialesDe($fila['username'])) ?></span>
+                            <div>
+                                <strong><?= e($fila['username']) ?></strong>
+                                <span><?= !empty($fila['id_medico']) ? 'Vinculado a un médico' : (!empty($fila['id_paciente']) ? 'Vinculado a un paciente' : 'Sin ficha vinculada') ?></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Correo"><?= e($fila['email']) ?></td>
+                    <td data-label="Rol"><span class="marca-rol <?= e($marca) ?>"><?= e($fila['rol']) ?></span></td>
+                    <td data-label="Estado"><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
                         <a class="btn-icono" href="<?= App::url('/usuarios?editar=' . (int) $fila['id_usuario']) ?>" title="Editar" aria-label="Editar a <?= e($fila['username']) ?>"><?= vs_icono('editar') ?></a>
                         <?php if (!($fila['estado'] && (int) $fila['id_usuario'] === $idSesion)): ?>
@@ -100,6 +129,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             <input type="hidden" name="accion" value="guardar">
             <input type="hidden" name="id_usuario" value="<?= e((string) $form['id_usuario']) ?>">
 
+            <h3 class="subtitulo">Cuenta</h3>
             <div class="modal-grid">
                 <label class="field<?= $invalido('username') ?>">
                     <span>Nombre de usuario *</span>
@@ -127,6 +157,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                 </label>
             </div>
 
+            <h3 class="subtitulo">Vínculo clínico</h3>
             <label class="field<?= $invalido('vinculo') ?>">
                 <span>Vincular con médico/paciente (opcional)</span>
                 <select name="vinculo">
@@ -151,7 +182,7 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             </label>
 
             <?php if ($nuevo): ?>
-                <p class="nota">Se generará una contraseña temporal. La persona deberá cambiarla en el primer ingreso.</p>
+                <p class="aviso-rango">Se generará una contraseña temporal. La persona deberá cambiarla en el primer ingreso.</p>
             <?php endif; ?>
 
             <div class="modal-acciones">

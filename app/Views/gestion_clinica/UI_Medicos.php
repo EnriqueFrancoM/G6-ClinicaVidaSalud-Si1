@@ -10,12 +10,30 @@ $medicos = $medicos ?? [];
 $especialidades = $especialidades ?? [];
 $campoError = $campoError ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
+$inicialesDe = function (string $texto): string {
+    $partes = preg_split('/\s+/', trim($texto)) ?: [];
+    $iniciales = '';
+    foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
+        $iniciales .= mb_strtoupper(mb_substr($parte, 0, 1));
+    }
+    return $iniciales !== '' ? $iniciales : 'M';
+};
+$activos = count(array_filter($medicos, fn ($fila) => $fila['estado']));
+$conCuenta = count(array_filter($medicos, fn ($fila) => !empty($fila['id_usuario'])));
 ?>
 <section class="hoja" data-ui="UI_Medicos">
     <header class="hoja-cabecera">
-        <h1>Médicos</h1>
+        <div>
+            <h1>Médicos</h1>
+            <p class="lede">Registro profesional, especialidades y cuenta de acceso, si ya está vinculada.</p>
+        </div>
         <a class="btn-primary btn-chico" data-fab href="<?= App::url('/medicos?nuevo=1') ?>">Nuevo médico</a>
     </header>
+    <div class="stat-row">
+        <article class="stat-card lift-card"><span>En esta vista</span><strong><?= count($medicos) ?></strong></article>
+        <article class="stat-card lift-card"><span>Activos</span><strong><?= $activos ?></strong></article>
+        <article class="stat-card lift-card"><span>Con usuario</span><strong><?= $conCuenta ?></strong></article>
+    </div>
 
     <form class="filtros filtros-bitacora filtros-medicos" method="get" action="<?= App::url('/medicos') ?>">
         <label class="field">
@@ -60,14 +78,22 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
             <?php foreach ($medicos as $fila): ?>
                 <?php $nombre = $fila['nombres'] . ' ' . $fila['apellidos']; ?>
                 <tr>
-                    <td><?= e($nombre) ?> · <?= e($fila['codigo']) ?></td>
-                    <td><?= e($fila['nro_registro_prof']) ?></td>
-                    <td class="marcas">
+                    <td class="quien">
+                        <div class="quien-persona">
+                            <span class="persona-marca" aria-hidden="true"><?= e($inicialesDe($nombre)) ?></span>
+                            <div>
+                                <strong><?= e($nombre) ?></strong>
+                                <span><?= e($fila['codigo']) ?><?= $fila['telefono'] ? ' · ' . e($fila['telefono']) : '' ?><?= empty($fila['id_usuario']) ? ' · sin cuenta' : '' ?></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Registro"><?= e($fila['nro_registro_prof']) ?></td>
+                    <td class="marcas" data-label="Especialidad">
                         <?php foreach (array_filter(array_map('trim', explode(',', (string) $fila['especialidades']))) as $esp): ?>
                             <span class="marca"><?= e($esp) ?></span>
                         <?php endforeach; ?>
                     </td>
-                    <td><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
+                    <td data-label="Estado"><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
                         <a class="btn-icono" href="<?= App::url('/medicos?editar=' . (int) $fila['id_medico']) ?>" title="Editar" aria-label="Editar a <?= e($nombre) ?>"><?= vs_icono('editar') ?></a>
                         <form method="post" action="<?= App::url('/medicos') ?>">

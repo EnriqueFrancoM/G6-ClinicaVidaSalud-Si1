@@ -38,6 +38,47 @@ class Especialidad extends Model
         );
     }
 
+    // Catálogo del portal: especialidades activas y cuántos médicos tienen horario.
+    public function catalogoReserva(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT e.id_especialidad, e.nombre, e.descripcion,
+                    (SELECT COUNT(DISTINCT m.id_medico)
+                       FROM medico_especialidad me
+                       JOIN medico m ON m.id_medico = me.id_medico AND m.estado = TRUE
+                       JOIN horario_atencion h ON h.id_medico = m.id_medico AND h.estado = TRUE
+                      WHERE me.id_especialidad = e.id_especialidad) AS medicos
+               FROM especialidad e
+              WHERE e.estado = TRUE
+              ORDER BY e.nombre"
+        );
+        foreach ($filas as &$fila) {
+            $fila['id_especialidad'] = (int) $fila['id_especialidad'];
+            $fila['medicos'] = (int) $fila['medicos'];
+        }
+
+        return $filas;
+    }
+
+    // Especialidades activas del catálogo que todavía no se pueden reservar (RN15):
+    // no tienen un médico activo con horario. No se inventan cupos.
+    public function sinCobertura(): array
+    {
+        return $this->fetchAll(
+            'SELECT e.id_especialidad, e.nombre, e.descripcion
+               FROM especialidad e
+              WHERE e.estado = TRUE
+                AND NOT EXISTS (
+                    SELECT 1
+                      FROM medico_especialidad me
+                      JOIN medico m ON m.id_medico = me.id_medico AND m.estado = TRUE
+                      JOIN horario_atencion h ON h.id_medico = m.id_medico AND h.estado = TRUE
+                     WHERE me.id_especialidad = e.id_especialidad
+                )
+              ORDER BY e.nombre'
+        );
+    }
+
     public function buscarPorId(int $idEspecialidad): ?array
     {
         return $this->fetch('SELECT id_especialidad, nombre, estado FROM especialidad WHERE id_especialidad = :id', ['id' => $idEspecialidad]);

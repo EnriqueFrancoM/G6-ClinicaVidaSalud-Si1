@@ -5,6 +5,7 @@ namespace App\Controllers\Citas;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Core\View;
+use App\Models\Cita;
 
 // CU14 boundary. Mensajes: solicitar(cambiarEstado), mostrarResultado(), mostrarError().
 // RF24: llegada por comprobante QR (registrarLlegada).
@@ -40,14 +41,28 @@ class UI_EstadoCita extends Controller
         ]);
     }
 
-    // RF24: destino del código QR del comprobante; la recepción lo escanea al llegar el paciente.
+    // RF24: el QR abre esta pantalla. GET solo muestra la cita; la llegada se confirma con POST.
     public function registrarLlegada(): void
     {
         $control = new CtrlEstadoCita();
-        if ($control->registrarLlegada((string) $this->input('codigo', ''))) {
-            $this->mostrarResultado($control);
+        $codigo = (string) $this->input('codigo', '');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($control->registrarLlegada($codigo)) {
+                $this->mostrarResultado($control);
+            }
+            Session::flash('error_detalle', $control->mensaje);
+            $this->redirect('/citas/llegada?codigo=' . rawurlencode($codigo));
         }
-        $this->mostrarError($control);
+
+        $cita = $codigo !== '' ? (new Cita())->buscarPorCodigo($codigo) : null;
+        $this->view('citas/UI_Llegada', [
+            'codigo'  => $codigo,
+            'cita'    => $cita,
+            'mensaje' => Session::flash('error_detalle'),
+            'puede'   => $cita !== null
+                && in_array($cita['estado'], Cita::PENDIENTES, true)
+                && $cita['fecha'] === date('Y-m-d'),
+        ]);
     }
 
     // Paso 6: mostrar estado actualizado.

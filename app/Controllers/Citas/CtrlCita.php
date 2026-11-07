@@ -152,7 +152,10 @@ class CtrlCita
         $db->beginTransaction();
         try {
             // Paso 4: actualizar horario en transacción. Paso 5: guardar historial (registrarReprogramación(datos)).
-            (new Cita())->actualizarHorario((int) $cita['id_cita'], $fecha, $cupo['hora_inicio'], $cupo['hora_fin']);
+            if (!(new Cita())->actualizarHorario((int) $cita['id_cita'], $fecha, $cupo['hora_inicio'], $cupo['hora_fin'])) {
+                $db->rollBack();
+                return $this->error('La cita cambió de estado mientras se reprogramaba. Revísela nuevamente.', 'codigo');
+            }
             (new HistorialEstadoCita())->registrarReprogramacion([
                 'id_cita'     => (int) $cita['id_cita'],
                 'id_usuario'  => (int) $this->usuarioActual['id_usuario'],
@@ -315,7 +318,7 @@ class CtrlCita
 
     private function fechaValida(string $fecha): bool
     {
-        return \DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') === $fecha;
+        return \App\Core\App::fechaIso($fecha);
     }
 
     private function fechaHora(string $fecha, string $hora): string

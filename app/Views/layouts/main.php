@@ -12,28 +12,36 @@ foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
 }
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $base = rtrim((string) parse_url(App::config('app.base_url', ''), PHP_URL_PATH), '/');
-$menu = [
-    ['auth',          '/dashboard',      'Inicio',          'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'],
-    ['USU_GESTIONAR', '/usuarios',       'Usuarios',        'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0'],
-    ['ROL_GESTIONAR', '/roles',          'Roles y permisos','M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z'],
-    ['BIT_CONSULTAR', '/bitacora',       'Bitácora',        'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4'],
-    ['ESP_GESTIONAR', '/especialidades', 'Especialidades',  'M12 3v18M5 8h14M7 16h10'],
-    ['MED_GESTIONAR', '/medicos',        'Médicos',         'M8 21v-2a4 4 0 0 1 8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
-    ['HOR_GESTIONAR', '/horarios',       'Horarios',        'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z'],
-    ['PAC_GESTIONAR', '/pacientes',      'Pacientes',       'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 19a5 5 0 0 1 10 0M13 19a4 4 0 0 1 8 0'],
-    // P3 Gestión de Citas
-    ['CIT_GESTIONAR', '/citas/programar', 'Programar cita', 'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M12 12v5M9.5 14.5h5'],
-    ['AGE_CONSULTAR', '/agenda',          'Agenda médica',  'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M8 13h3M8 16h6'],
-    ['CIT_GESTIONAR', '/citas/historial', 'Historial de citas', 'M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4M12 8v4l3 2'],
-    ['CIT_GESTIONAR', '/lista-espera',    'Lista de espera', 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'],
-    // P4 Portal del Paciente
-    ['POR_PACIENTE',  '/portal/citas',    'Mis citas',      'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M9 14l2 2 4-4'],
-    ['POR_PACIENTE',  '/portal/perfil',   'Mi perfil',      'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0'],
-    // P5 Reportes y Notificaciones
-    ['REP_GENERAR',   '/reportes',        'Reportes',       'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6'],
-    ['REP_GENERAR',   '/indicadores',     'Indicadores',    'M4 20V10M10 20V4M16 20v-7M22 20H2'],
-    ['REP_GENERAR',   '/recordatorios',   'Recordatorios',  'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0'],
+$inicio = ['auth', '/dashboard', 'Inicio', 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'];
+$gruposMenu = [
+    'Atención' => [
+        ['CIT_GESTIONAR', '/citas/programar', 'Programar cita', 'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M12 12v5M9.5 14.5h5', true],
+        ['AGE_CONSULTAR', '/agenda',          'Agenda médica',  'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M8 13h3M8 16h6', true],
+        ['CIT_GESTIONAR', '/citas/historial', 'Historial de citas', 'M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4M12 8v4l3 2', false],
+        ['CIT_GESTIONAR', '/lista-espera',    'Lista de espera', 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', false],
+        ['POR_PACIENTE',  '/portal/citas',    'Mis citas',      'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M9 14l2 2 4-4', false],
+        ['POR_PACIENTE',  '/portal/perfil',   'Mi perfil',      'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0', false],
+    ],
+    'Gestión clínica' => [
+        ['PAC_GESTIONAR', '/pacientes',      'Pacientes',       'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 19a5 5 0 0 1 10 0M13 19a4 4 0 0 1 8 0', false],
+        ['MED_GESTIONAR', '/medicos',        'Médicos',         'M8 21v-2a4 4 0 0 1 8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', false],
+        ['ESP_GESTIONAR', '/especialidades', 'Especialidades',  'M12 3v18M5 8h14M7 16h10', false],
+        ['HOR_GESTIONAR', '/horarios',       'Horarios',        'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', false],
+    ],
+    'Administración' => [
+        ['USU_GESTIONAR', '/usuarios',       'Usuarios',        'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0', false],
+        ['ROL_GESTIONAR', '/roles',          'Roles y permisos','M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z', false],
+        ['BIT_CONSULTAR', '/bitacora',       'Bitácora',        'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4', false],
+        ['REP_GENERAR',   '/reportes',        'Reportes',       'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6', false],
+        ['REP_GENERAR',   '/indicadores',     'Indicadores',    'M4 20V10M10 20V4M16 20v-7M22 20H2', false],
+        ['REP_GENERAR',   '/recordatorios',   'Recordatorios',  'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0', false],
+    ],
 ];
+// Recepción: tiene citas y no administra usuarios, médicos ni reportes.
+$destacarRecepcion = Session::hasPermission('CIT_GESTIONAR')
+    && !Session::hasPermission('USU_GESTIONAR')
+    && !Session::hasPermission('MED_GESTIONAR')
+    && !Session::hasPermission('REP_GENERAR');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -69,14 +77,43 @@ $menu = [
                 <input type="search" data-menu-search placeholder="Buscar en el menú" autocomplete="off">
             </label>
             <nav id="menu-principal">
-                <?php foreach ($menu as [$permiso, $ruta, $texto, $trazo]): ?>
-                    <?php if ($permiso === 'auth' || Session::hasPermission($permiso)): ?>
-                        <?php $activo = rtrim($path, '/') === rtrim($base . $ruta, '/'); ?>
-                        <a href="<?= App::url($ruta) ?>" data-menu-item<?= $activo ? ' class="active"' : '' ?>>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="<?= e($trazo) ?>"/></svg>
-                            <?= e($texto) ?>
-                        </a>
-                    <?php endif; ?>
+                <?php
+                [$permiso, $ruta, $texto, $trazo] = $inicio;
+                $activo = rtrim($path, '/') === rtrim($base . $ruta, '/');
+                ?>
+                <a href="<?= App::url($ruta) ?>" data-menu-item<?= $activo ? ' class="active"' : '' ?>>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="<?= e($trazo) ?>"/></svg>
+                    <?= e($texto) ?>
+                </a>
+                <?php foreach ($gruposMenu as $titulo => $items): ?>
+                    <?php
+                    $visibles = array_values(array_filter(
+                        $items,
+                        fn ($item) => $item[0] === 'auth' || Session::hasPermission($item[0])
+                    ));
+                    if ($visibles === []) {
+                        continue;
+                    }
+                    ?>
+                    <div class="menu-grupo" data-menu-grupo>
+                        <p class="menu-grupo-titulo"><?= e($titulo) ?></p>
+                        <?php foreach ($visibles as [$permiso, $ruta, $texto, $trazo, $destacar]): ?>
+                            <?php
+                            $activo = rtrim($path, '/') === rtrim($base . $ruta, '/');
+                            $clases = [];
+                            if ($activo) {
+                                $clases[] = 'active';
+                            }
+                            if ($destacar && $destacarRecepcion) {
+                                $clases[] = 'menu-destacado';
+                            }
+                            ?>
+                            <a href="<?= App::url($ruta) ?>" data-menu-item<?= $clases !== [] ? ' class="' . e(implode(' ', $clases)) . '"' : '' ?>>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="<?= e($trazo) ?>"/></svg>
+                                <?= e($texto) ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endforeach; ?>
             </nav>
         </div>

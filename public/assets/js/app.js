@@ -326,8 +326,29 @@
         document.querySelectorAll("[data-menu-item]").forEach((item) => {
             item.hidden = texto !== "" && !plano(item.textContent).includes(texto);
         });
+        document.querySelectorAll("[data-menu-grupo]").forEach((grupo) => {
+            const items = grupo.querySelectorAll("[data-menu-item]");
+            grupo.hidden = items.length > 0 && [...items].every((item) => item.hidden);
+        });
     });
 })();
+
+document.querySelectorAll(".form-cupos").forEach((form) => {
+    const hora = form.querySelector("[data-resumen-hora]");
+    if (!hora) {
+        return;
+    }
+    const sync = () => {
+        const elegido = form.querySelector('input[name="hora_inicio"]:checked:not(:disabled)');
+        hora.textContent = elegido ? (elegido.dataset.hora || elegido.value) : "Seleccione un horario";
+        const medico = form.querySelector("[data-resumen-medico]");
+        if (medico) {
+            medico.textContent = elegido && elegido.dataset.medico ? elegido.dataset.medico : "Seleccione un horario";
+        }
+    };
+    form.addEventListener("change", sync);
+    sync();
+});
 
 (function () {
     const tarjetas = document.querySelectorAll("[data-spotlight]");
@@ -615,10 +636,16 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
         if (!medico) {
             return;
         }
+        const porEspecialidad = especialidad.form.hasAttribute("data-por-especialidad");
         const filtrar = () => {
             const id = especialidad.value;
+            const vacio = medico.querySelector('option[value=""]');
+            if (porEspecialidad && vacio) {
+                vacio.textContent = id === "" ? "Primero elija la especialidad" : "Seleccione…";
+            }
             medico.querySelectorAll("option[data-especialidades]").forEach((opcion) => {
-                const atiende = id === "" || opcion.dataset.especialidades.split(",").includes(id);
+                const ids = opcion.dataset.especialidades.split(",");
+                const atiende = porEspecialidad ? id !== "" && ids.includes(id) : id === "" || ids.includes(id);
                 opcion.hidden = !atiende;
                 opcion.disabled = !atiende;
                 if (!atiende && opcion.selected) {

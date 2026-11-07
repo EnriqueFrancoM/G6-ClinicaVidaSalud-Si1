@@ -69,6 +69,27 @@ class Cita extends Model
         );
     }
 
+    // CU18: la próxima cita del titular entre las que aún no ocurrieron, no solo las de hoy.
+    public function proximaDelPaciente(int $idPaciente): ?array
+    {
+        return $this->fetch(
+            "SELECT c.codigo, c.fecha::text AS fecha, TO_CHAR(c.hora_inicio, 'HH24:MI') AS hora,
+                    c.estado, c.motivo,
+                    m.nombres || ' ' || m.apellidos AS medico,
+                    e.nombre AS especialidad
+               FROM cita c
+               JOIN medico m ON m.id_medico = c.id_medico
+               JOIN especialidad e ON e.id_especialidad = c.id_especialidad
+              WHERE c.id_paciente = :id
+                AND c.estado IN ('PROGRAMADA', 'CONFIRMADA')
+                AND (c.fecha > CURRENT_DATE
+                     OR (c.fecha = CURRENT_DATE AND c.hora_inicio > LOCALTIME))
+              ORDER BY c.fecha, c.hora_inicio
+              LIMIT 1",
+            ['id' => $idPaciente]
+        );
+    }
+
     // CU10 paso 9: historial de citas del paciente, de la más reciente a la más antigua.
     public function historialPorPaciente(int $idPaciente): array
     {
@@ -177,13 +198,15 @@ class Cita extends Model
         return ['cita' => $cita, 'valida' => $cita !== null && in_array($cita['estado'], self::PENDIENTES, true)];
     }
 
-    // CU12 paso 4: actualiza el horario dentro de la transacción del control.
-    public function actualizarHorario(int $idCita, string $fecha, string $inicio, string $fin): void
+    // CU12 paso 4: actualiza el horario solo si la cita sigue programada o confirmada.
+    // Si otra operación la canceló o la atendió, no cambia la fila (devuelve false).
+    public function actualizarHorario(int $idCita, string $fecha, string $inicio, string $fin): bool
     {
-        $this->execute(
-            'UPDATE cita SET fecha = :fecha, hora_inicio = :inicio, hora_fin = :fin WHERE id_cita = :id',
+        return $this->execute(
+            "UPDATE cita SET fecha = :fecha, hora_inicio = :inicio, hora_fin = :fin
+              WHERE id_cita = :id AND estado IN ('PROGRAMADA', 'CONFIRMADA')",
             ['id' => $idCita, 'fecha' => $fecha, 'inicio' => $inicio, 'fin' => $fin]
-        );
+        ) === 1;
     }
 
     // CU13 mensaje cancelarConMotivo(código, motivo): la cita no se elimina; libera su cupo (RN09).
@@ -230,6 +253,23 @@ class Cita extends Model
         return $this->fetchAll(
             self::SELECT_DETALLE . " WHERE c.id_medico = :medico AND c.fecha = CAST(:fecha AS DATE){$filtro}
               ORDER BY c.hora_inicio",
+            $params
+        );
+    }
+
+    // Agenda del día de todos los médicos (recepción). Mismo detalle que buscarAgenda, ordenado por médico y hora.
+    public function buscarAgendaDia(string $fecha, ?string $estado = null): array
+    {
+        $params = ['fecha' => $fecha];
+        $filtro = '';
+        if ($estado !== null && $estado !== '') {
+            $filtro = ' AND c.estado = :estado';
+            $params['estado'] = $estado;
+        }
+
+        return $this->fetchAll(
+            self::SELECT_DETALLE . " WHERE c.fecha = CAST(:fecha AS DATE){$filtro}
+              ORDER BY m.apellidos, m.nombres, c.hora_inicio",
             $params
         );
     }

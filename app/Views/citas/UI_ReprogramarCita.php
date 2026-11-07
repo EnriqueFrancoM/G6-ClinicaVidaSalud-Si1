@@ -6,7 +6,17 @@ use App\Models\Cita;
 use function App\Core\e;
 
 $campoError = $campoError ?? null;
-$invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
+$mensajeCampo = $mensajeCampo ?? null;
+$avisoFecha = $avisoFecha ?? null;
+$sinCupo = $sinCupo ?? null;
+$invalido = fn (string $campo) => $campoError === $campo || ($campo === 'fecha' && $avisoFecha) ? ' is-invalid' : '';
+$errorDe = function (string $campo) use ($campoError, $mensajeCampo, $avisoFecha): string {
+    $texto = $campoError === $campo ? $mensajeCampo : ($campo === 'fecha' ? $avisoFecha : null);
+    if ($texto === null || $texto === '') {
+        return '';
+    }
+    return '<p class="error-campo" role="alert">' . e($texto) . '</p>';
+};
 ?>
 <section class="hoja" data-ui="UI_ReprogramarCita">
     <header class="hoja-cabecera">
@@ -20,7 +30,8 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
     <form class="filtros filtros-codigo" method="get" action="<?= App::url('/citas/reprogramar') ?>">
         <label class="field<?= $invalido('codigo') ?>">
             <span>Código de cita</span>
-            <input type="search" name="codigo" value="<?= e($codigo) ?>" placeholder="Ej. CM-0005" required>
+            <input type="search" name="codigo" value="<?= e($codigo) ?>" placeholder="Ej. CM-0005" required<?= $campoError === 'codigo' ? ' aria-invalid="true"' : '' ?>>
+            <?= $errorDe('codigo') ?>
         </label>
         <button type="submit" class="btn-primary btn-chico">Buscar</button>
     </form>
@@ -40,7 +51,8 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                 <input type="hidden" name="codigo" value="<?= e($cita['codigo']) ?>">
                 <label class="field<?= $invalido('fecha') ?>">
                     <span>Nueva fecha</span>
-                    <input type="date" name="fecha" value="<?= e($fecha) ?>" min="<?= date('Y-m-d') ?>" required>
+                    <input type="date" name="fecha" value="<?= e($fecha) ?>" min="<?= date('Y-m-d') ?>" required<?= $campoError === 'fecha' || $avisoFecha ? ' aria-invalid="true"' : '' ?>>
+                    <?= $errorDe('fecha') ?>
                 </label>
                 <button type="submit" class="btn-borde">Ver horarios</button>
             </form>
@@ -52,7 +64,8 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                     <input type="hidden" name="fecha" value="<?= e($fecha) ?>">
                     <h2 class="subtitulo">Horarios libres de <?= e($cita['medico']) ?> el <?= e(date('d/m/Y', strtotime($fecha))) ?></h2>
                     <?php if ($cupos === []): ?>
-                        <p class="vacio-dia">No hay horarios libres en esa fecha.</p>
+                        <?php if ($mensajeCampo): ?><p class="alert error" role="alert"><?= e($mensajeCampo) ?></p><?php endif; ?>
+                        <?php require __DIR__ . '/_sin_cupos.php'; ?>
                     <?php else: ?>
                         <div class="cupos<?= $invalido('hora_inicio') ?>" role="radiogroup" aria-label="Nuevo horario">
                             <?php foreach ($cupos as $cupo): ?>
@@ -63,6 +76,16 @@ $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
                                 </label>
                             <?php endforeach; ?>
                         </div>
+                        <?= $errorDe('hora_inicio') ?>
+                        <aside class="resumen-previo" aria-live="polite">
+                            <h2>Resumen antes de reprogramar</h2>
+                            <dl>
+                                <dt>Cita</dt><dd><?= e($cita['codigo']) ?> · <?= e($cita['paciente']) ?></dd>
+                                <dt>Médico</dt><dd><?= e($cita['medico']) ?></dd>
+                                <dt>Nueva fecha</dt><dd><?= e(date('d/m/Y', strtotime($fecha))) ?></dd>
+                                <dt>Nuevo horario</dt><dd data-resumen-hora>Seleccione un horario</dd>
+                            </dl>
+                        </aside>
                         <div class="modal-acciones">
                             <a class="btn-borde" href="<?= App::url('/agenda?id_medico=' . (int) $cita['id_medico'] . '&fecha=' . $cita['fecha']) ?>">Volver a la agenda</a>
                             <button type="submit" class="btn-primary btn-chico" name="btnReprogramar">Reprogramar</button>
