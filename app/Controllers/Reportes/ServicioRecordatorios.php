@@ -42,11 +42,19 @@ class ServicioRecordatorios extends Controller
     public function responder(): void
     {
         $control = new CtrlRecordatorio();
-        $id = (int) $this->input('c', 0);
-        $respuesta = (string) $this->input('r', '');
-        $fecha = (string) $this->input('f', '');
-        $hora = (string) $this->input('h', '');
-        $firma = (string) $this->input('t', '');
+        $enlace = CtrlRecordatorio::leerEnlace(
+            (string) $this->input('t', ''),
+            (string) $this->input('c', ''),
+            (string) $this->input('r', ''),
+            (string) $this->input('f', ''),
+            (string) $this->input('h', '')
+        );
+        $id = $enlace['id'];
+        $respuesta = $enlace['respuesta'];
+        $fecha = $enlace['fecha'];
+        $hora = $enlace['hora'];
+        $firma = $enlace['firma'];
+        $token = $enlace['token'];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = $control->responder($id, $respuesta, $fecha, $hora, $firma);
@@ -69,6 +77,7 @@ class ServicioRecordatorios extends Controller
             'fecha'     => $fecha,
             'hora'      => $hora,
             'firma'     => $firma,
+            'token'     => $token,
         ], 'auth');
     }
 

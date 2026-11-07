@@ -46,7 +46,7 @@ No se creó un médico ni un horario, porque eso duplicaría datos o publicaría
 | Seis especialidades. Pediatría de 0 a 14 años: María, nacida en 1990, es rechazada | Requisito comprobado, sin insertar cita |
 | Horario activo, bloqueo y solapamiento dentro de `reservar` | Requisito existente; esta pasada no creó citas |
 | Recordatorio de `CM-0006`: fila real `PENDIENTE`, canal según el correo. `MAIL_HOST` está vacío, así que no se envió correo ni se simuló un proveedor | Requisito comprobado sin integración ficticia |
-| QR del comprobante propio: SVG generado por `GeneradorQR` con la URL de `/citas/llegada?codigo=CM-0006` | Requisito comprobado |
+| QR del comprobante propio: SVG generado por `GeneradorQR`. La URL es `/citas/llegada?t=` con un token opaco, no el código de la cita | Requisito comprobado |
 | Reportes, indicadores y usuarios | Fuera del paciente. Con solo `POR_PACIENTE`, `/reportes` renderiza 403 |
 | Tarjetas con iniciales y próximos horarios reales | Mejora de uso. No usa marca, fotos, reseñas ni precios de otro directorio |
 

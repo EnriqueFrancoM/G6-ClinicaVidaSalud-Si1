@@ -4,6 +4,7 @@ namespace App\Controllers\Citas;
 
 use App\Core\App;
 use App\Core\Controller;
+use App\Core\EnlaceOpaco;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\Cita;
@@ -24,7 +25,11 @@ class UI_Comprobante extends Controller
             exit;
         }
 
-        $enlace = $this->absoluta('/citas/llegada?codigo=' . rawurlencode($cita['codigo']));
+        $token = EnlaceOpaco::sellar('L', [$cita['codigo']]);
+        $ruta = $token !== ''
+            ? '/citas/llegada?t=' . rawurlencode($token)
+            : '/citas/llegada?codigo=' . rawurlencode($cita['codigo']);
+        $enlace = $this->absoluta($ruta);
         $this->view('citas/UI_Comprobante', [
             'cita'   => $cita,
             'qr'     => GeneradorQR::svg($enlace, 200),
