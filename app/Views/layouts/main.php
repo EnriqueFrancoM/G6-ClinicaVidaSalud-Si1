@@ -59,7 +59,7 @@ $destacarRecepcion = Session::hasPermission('CIT_GESTIONAR')
     </script>
     <link rel="stylesheet" href="<?= App::url('/assets/css/app.css') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/css/app.css') ?>">
 </head>
-<body class="app">
+<body class="app" data-usuario="<?= e((string) ($usuario['id_usuario'] ?? '')) ?>">
 <div class="shell">
     <aside class="sidebar">
         <div class="sidebar-inner">

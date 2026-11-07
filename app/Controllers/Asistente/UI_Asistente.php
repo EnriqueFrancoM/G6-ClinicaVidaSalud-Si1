@@ -41,7 +41,8 @@ class UI_Asistente extends Controller
         }
 
         try {
-            $respuesta = $asistente->responder($mensaje, $historial);
+            $voz = ($_POST['voz'] ?? '') === '1';
+            $respuesta = $asistente->responder($mensaje, $historial, $voz);
             echo json_encode(['ok' => true, 'mensaje' => $respuesta], JSON_UNESCAPED_UNICODE);
         } catch (\Throwable $e) {
             http_response_code(502);
