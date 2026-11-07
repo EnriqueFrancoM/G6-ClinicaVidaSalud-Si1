@@ -45,6 +45,8 @@ No agregue credenciales de PostgreSQL manualmente. Render genera y vincula
 | `WHATSAPP_TEMPLATE_IDIOMA`, `WHATSAPP_TEMPLATE_MODO`, `WHATSAPP_PREFIJO` | `render.yaml` | `es`, `campos`, `591`. |
 | `OPENROUTER_API_KEY` | Dashboard, secreto | Una clave para todas las cuentas. Vacía: el asistente no llama al modelo. |
 | `OPENROUTER_MODEL` | `render.yaml` | `openrouter/free`. Elige un modelo gratuito disponible. |
+| `GEMINI_API_KEY` | Dashboard, secreto | Respaldo si OpenRouter se queda sin cupo. Una clave para todas las cuentas. Vacía: no se llama a Gemini. |
+| `GEMINI_MODEL` | `render.yaml` | `libre`. Recorre los modelos gratuitos y, si uno llega a su límite por minuto, sigue con el siguiente. |
 
 La variable `SEED_INITIAL_PASSWORD` puede eliminarse después de inicializar la
 base. En arranques posteriores el script detecta el esquema existente y no la

@@ -13,16 +13,49 @@ class AsistenteOpenRouter
     // Elige un modelo gratuito que esté disponible y acepte herramientas. No gasta crédito.
     private const MODELO_LIBRE = 'openrouter/free';
 
+    public function __construct(private ?ClienteHttp $http = null)
+    {
+    }
+
     public function configurado(): bool
     {
-        return $this->clave() !== '';
+        return $this->clave() !== '' || trim((string) App::config('gemini.api_key', '')) !== '';
     }
 
     public function responder(string $mensaje, array $historial, bool $voz = false): string
     {
+        $gemini = trim((string) App::config('gemini.api_key', '')) !== '';
+        if ($this->clave() === '' && !$gemini) {
+            throw new \RuntimeException('El asistente no está configurado. Agregue OPENROUTER_API_KEY o GEMINI_API_KEY en el archivo .env.');
+        }
+
+        $porCupo = false;
+        if ($this->clave() !== '') {
+            try {
+                return $this->responderModelo($mensaje, $historial, $voz);
+            } catch (\RuntimeException $e) {
+                if (!$gemini || !$this->usarGemini($e->getMessage())) {
+                    throw $e;
+                }
+                $porCupo = true;
+            }
+        }
+
+        try {
+            return (new AsistenteGemini($this->http()))->responder($mensaje, $historial, $voz);
+        } catch (\RuntimeException $e) {
+            if ($porCupo) {
+                throw new \RuntimeException('OpenRouter no tiene cupo. ' . $e->getMessage());
+            }
+            throw $e;
+        }
+    }
+
+    private function responderModelo(string $mensaje, array $historial, bool $voz): string
+    {
         $clave = $this->clave();
         if ($clave === '') {
-            throw new \RuntimeException('El asistente no está configurado. Agregue OPENROUTER_API_KEY en el archivo .env.');
+            throw new \RuntimeException('El asistente no está configurado. Agregue OPENROUTER_API_KEY o GEMINI_API_KEY en el archivo .env.');
         }
 
         $herramientas = new HerramientasClinica();
@@ -124,7 +157,7 @@ class AsistenteOpenRouter
             return ['ok' => false, 'reintentar' => false, 'aviso' => 'No se pudo preparar la consulta.', 'mensaje' => []];
         }
 
-        $respuesta = (new ClienteHttp())->enviar('POST', self::URL, $json, [
+        $respuesta = $this->http()->enviar('POST', self::URL, $json, [
             'Authorization: Bearer ' . $clave,
             'Content-Type: application/json',
             'HTTP-Referer: ' . ((string) App::config('app.base_url', '') ?: 'http://127.0.0.1'),
@@ -175,25 +208,44 @@ class AsistenteOpenRouter
 
     private function sistema(array $definiciones, bool $voz): array
     {
+        return [
+            'role' => 'system',
+            'content' => self::instrucciones($definiciones, $voz),
+        ];
+    }
+
+    public static function instrucciones(array $definiciones, bool $voz): string
+    {
         $usuario = Session::user() ?? [];
         $nombres = array_map(static fn (array $item) => $item['function']['name'], $definiciones);
         $herramientas = $nombres === [] ? 'ninguna' : implode(', ', $nombres);
 
-        return [
-            'role' => 'system',
-            'content' => 'Eres el asistente de Clínica Vida Salud. Hoy es ' . date('Y-m-d') . ' en America/La_Paz. '
-                . 'La sesión es de ' . ($usuario['username'] ?? 'un usuario') . ', rol ' . ($usuario['rol'] ?? 'sin rol') . '. '
-                . 'Puedes usar solo estas operaciones: ' . $herramientas . '. '
-                . 'Crea, edita, consulta o da de baja únicamente cuando la persona lo pide y con los datos que falten preguntados antes. '
-                . 'Si piden una cita y falta un dato, pregunta una sola cosa y espera la respuesta: primero el día y la hora, después la especialidad, después el motivo y, si el cupo no lo trae, el médico. '
-                . 'No uses reservar_mi_cita ni programar_cita hasta tener especialidad, médico, fecha y hora de un cupo libre. Consulta los cupos antes, resume lo que vas a registrar y espera un sí. '
-                . ($voz ? 'Es una llamada: responde en una o dos frases, sin listas ni asteriscos. ' : '')
-                . 'Médicos, pacientes, especialidades y horarios no se borran: se desactivan y el historial queda. '
-                . 'Un día festivo es un bloqueo de alcance general, para todos los médicos. Un bloqueo de un médico usa alcance medico. Esos registros sí se quitan con quitar_dia_bloqueado. '
-                . 'Si una herramienta dice que hay citas futuras afectadas, pregunta una vez y, si la persona acepta, repite con confirmado true. '
-                . 'No inventes ids, horarios ni pacientes. No pidas ni muestres la clave de OpenRouter: es una sola clave del servidor para todas las cuentas. '
-                . 'Responde en español, breve, con el resultado de la herramienta.',
-        ];
+        return 'Eres el asistente de Clínica Vida Salud. Hoy es ' . date('Y-m-d') . ' en America/La_Paz. '
+            . 'La sesión es de ' . ($usuario['username'] ?? 'un usuario') . ', rol ' . ($usuario['rol'] ?? 'sin rol') . '. '
+            . 'Puedes usar solo estas operaciones: ' . $herramientas . '. '
+            . 'Crea, edita, consulta o da de baja únicamente cuando la persona lo pide y con los datos que falten preguntados antes. '
+            . 'Si piden una cita y falta un dato, pregunta una sola cosa y espera la respuesta: primero el día y la hora, después la especialidad, después el motivo y, si el cupo no lo trae, el médico. '
+            . 'No uses reservar_mi_cita ni programar_cita hasta tener especialidad, médico, fecha y hora de un cupo libre. Consulta los cupos antes, resume lo que vas a registrar y espera un sí. '
+            . ($voz ? 'Es una llamada: responde en una o dos frases, sin listas ni asteriscos. ' : '')
+            . 'Médicos, pacientes, especialidades y horarios no se borran: se desactivan y el historial queda. '
+            . 'Un día festivo es un bloqueo de alcance general, para todos los médicos. Un bloqueo de un médico usa alcance medico. Esos registros sí se quitan con quitar_dia_bloqueado. '
+            . 'Si una herramienta dice que hay citas futuras afectadas, pregunta una vez y, si la persona acepta, repite con confirmado true. '
+            . 'No inventes ids, horarios ni pacientes. No pidas ni muestres las claves de OpenRouter ni de Gemini: cada una es una sola clave del servidor para todas las cuentas. '
+            . 'Responde en español, breve, con el resultado de la herramienta.';
+    }
+
+    private function usarGemini(string $aviso): bool
+    {
+        if (preg_match('/\b401\b/', $aviso) === 1) {
+            return false;
+        }
+
+        return preg_match('/cupo|gratuito|Sin respuesta del proveedor/i', $aviso) === 1;
+    }
+
+    private function http(): ClienteHttp
+    {
+        return $this->http ??= new ClienteHttp();
     }
 
     private function argumentos(mixed $valor): array

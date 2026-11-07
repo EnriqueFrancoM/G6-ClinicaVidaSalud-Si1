@@ -7,7 +7,7 @@ use function App\Core\e;
 $listo = $listo ?? false;
 $cuenta = (string) ((Session::user() ?? [])['id_usuario'] ?? '');
 ?>
-<section class="chat" data-asistente data-usuario="<?= e($cuenta) ?>" data-url="<?= e(App::url('/asistente')) ?>" data-csrf="<?= e(Session::csrfToken()) ?>">
+<section class="chat" data-asistente data-usuario="<?= e($cuenta) ?>" data-url="<?= e(App::url('/asistente')) ?>" data-voz="<?= e(App::url('/asistente/voz')) ?>" data-csrf="<?= e(Session::csrfToken()) ?>">
     <div class="chat-barra">
         <button type="button" data-nueva>Nueva</button>
         <div class="chat-recientes" data-recientes></div>
@@ -28,7 +28,7 @@ $cuenta = (string) ((Session::user() ?? [])['id_usuario'] ?? '');
     </div>
     <div class="chat-pie">
         <?php if (!$listo): ?>
-            <p class="chat-aviso">El asistente no está configurado. Agregue OPENROUTER_API_KEY en el servidor. La misma clave vale para todas las cuentas.</p>
+            <p class="chat-aviso">El asistente no está configurado. Agregue OPENROUTER_API_KEY o GEMINI_API_KEY en el servidor. La misma clave vale para todas las cuentas.</p>
         <?php endif; ?>
         <p class="chat-estado" data-estado hidden></p>
         <form class="chat-form">

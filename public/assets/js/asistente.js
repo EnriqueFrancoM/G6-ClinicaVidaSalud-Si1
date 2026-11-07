@@ -23,35 +23,51 @@
     let reconocimiento = null;
     let soltarVoz = null;
     let ultimoDicho = "";
-    let pulsoVoz = null;
-    if (window.speechSynthesis) {
-        window.speechSynthesis.getVoices();
-    }
+    let reproductor = null;
+    let audioCtx = null;
+    let fuenteActual = null;
+    let generacionAudio = 0;
+    const silencioWav = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
-    function activarMotorVoz() {
-        if (!window.speechSynthesis) {
-            return;
-        }
-        window.speechSynthesis.resume();
-        if (pulsoVoz !== null) {
-            return;
-        }
-        // Chrome corta la voz sola a los quince segundos. Este pulso la reanuda.
-        pulsoVoz = window.setInterval(function () {
-            if (!window.speechSynthesis.speaking) {
-                return;
+    function prepararAudio() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) {
+            audioCtx = audioCtx || new Ctx();
+            const reanudar = audioCtx.resume();
+            if (reanudar && typeof reanudar.catch === "function") {
+                reanudar.catch(function () {});
             }
-            window.speechSynthesis.pause();
+        }
+        reproductor = reproductor || new Audio();
+        const marca = ++generacionAudio;
+        reproductor.src = silencioWav;
+        const intento = reproductor.play();
+        if (intento && typeof intento.then === "function") {
+            intento.then(function () {
+                if (generacionAudio === marca && reproductor) {
+                    reproductor.pause();
+                }
+            }).catch(function () {});
+        }
+        if (window.speechSynthesis) {
             window.speechSynthesis.resume();
-        }, 10000);
+            window.speechSynthesis.getVoices();
+        }
     }
 
     function soltarMotorVoz() {
-        if (pulsoVoz === null) {
-            return;
+        if (fuenteActual) {
+            try {
+                fuenteActual.stop();
+            } catch (error) {}
+            fuenteActual = null;
         }
-        window.clearInterval(pulsoVoz);
-        pulsoVoz = null;
+        if (reproductor) {
+            reproductor.pause();
+        }
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
     }
 
     function nuevoId() {
@@ -278,7 +294,174 @@
     function decir(texto) {
         const fraseTexto = paraVoz(texto);
         ultimoDicho = fraseTexto;
-        if (fraseTexto === "" || !window.speechSynthesis) {
+        if (fraseTexto === "" || !llamada) {
+            return Promise.resolve();
+        }
+        return decirServidor(fraseTexto).catch(function () {
+            if (!llamada) {
+                return;
+            }
+            return decirNavegador(fraseTexto);
+        });
+    }
+
+    function decirServidor(fraseTexto) {
+        const url = raiz.dataset.voz || "";
+        if (url === "") {
+            return Promise.reject(new Error("sin-voz"));
+        }
+        const datos = new FormData();
+        datos.append("_csrf", raiz.dataset.csrf || "");
+        datos.append("texto", fraseTexto);
+        return fetch(url, { method: "POST", body: datos, credentials: "same-origin" })
+            .then(function (respuesta) {
+                const tipo = respuesta.headers.get("content-type") || "";
+                if (!respuesta.ok || tipo.indexOf("audio/") !== 0) {
+                    throw new Error("sin-audio");
+                }
+                return respuesta.blob();
+            })
+            .then(function (blob) {
+                return reproducir(blob, fraseTexto);
+            });
+    }
+
+    function reproducir(blob, fraseTexto) {
+        if (audioCtx) {
+            return reproducirContexto(blob).catch(function () {
+                return reproducirElemento(blob, fraseTexto);
+            });
+        }
+        return reproducirElemento(blob, fraseTexto);
+    }
+
+    function reanudarContexto() {
+        if (!audioCtx) {
+            return Promise.reject(new Error("sin-audio"));
+        }
+        if (audioCtx.state === "running") {
+            return Promise.resolve();
+        }
+        return new Promise(function (resolve, reject) {
+            const reloj = window.setTimeout(function () { reject(new Error("sin-audio")); }, 1200);
+            let respuesta;
+            try {
+                respuesta = audioCtx.resume();
+            } catch (error) {
+                window.clearTimeout(reloj);
+                reject(error);
+                return;
+            }
+            Promise.resolve(respuesta).then(function () {
+                window.clearTimeout(reloj);
+                if (audioCtx.state === "running") {
+                    resolve();
+                } else {
+                    reject(new Error("sin-audio"));
+                }
+            }, function (error) {
+                window.clearTimeout(reloj);
+                reject(error);
+            });
+        });
+    }
+
+    function reproducirContexto(blob) {
+        return reanudarContexto().then(function () {
+            return blob.arrayBuffer();
+        }).then(function (datos) {
+            return audioCtx.decodeAudioData(datos);
+        }).then(function (buffer) {
+            return new Promise(function (resolve, reject) {
+                if (!llamada) {
+                    resolve();
+                    return;
+                }
+                const fuente = audioCtx.createBufferSource();
+                fuenteActual = fuente;
+                fuente.buffer = buffer;
+                fuente.connect(audioCtx.destination);
+                let listo = false;
+                function fin(fallo) {
+                    if (listo) {
+                        return;
+                    }
+                    listo = true;
+                    try {
+                        fuente.stop();
+                    } catch (error) {}
+                    if (fuenteActual === fuente) {
+                        fuenteActual = null;
+                    }
+                    if (soltarVoz === fin) {
+                        soltarVoz = null;
+                    }
+                    if (fallo) {
+                        reject(fallo);
+                    } else {
+                        resolve();
+                    }
+                }
+                soltarVoz = fin;
+                fuente.onended = function () { fin(); };
+                try {
+                    fuente.start(0);
+                } catch (error) {
+                    fin(error);
+                    return;
+                }
+                window.setTimeout(function () { fin(); }, Math.min(50000, buffer.duration * 1000 + 700));
+            });
+        });
+    }
+
+    function reproducirElemento(blob, fraseTexto) {
+        return new Promise(function (resolve, reject) {
+            if (!llamada) {
+                resolve();
+                return;
+            }
+            reproductor = reproductor || new Audio();
+            const marca = ++generacionAudio;
+            const url = URL.createObjectURL(blob);
+            let listo = false;
+            function fin(fallo) {
+                if (listo) {
+                    return;
+                }
+                listo = true;
+                URL.revokeObjectURL(url);
+                if (reproductor) {
+                    reproductor.onended = null;
+                    reproductor.onerror = null;
+                }
+                if (soltarVoz === fin) {
+                    soltarVoz = null;
+                }
+                if (fallo) {
+                    reject(fallo);
+                } else {
+                    resolve();
+                }
+            }
+            soltarVoz = fin;
+            reproductor.onended = function () { fin(); };
+            reproductor.onerror = function () { fin(new Error("sin-audio")); };
+            reproductor.src = url;
+            window.setTimeout(function () { fin(); }, Math.min(50000, 3000 + fraseTexto.length * 90));
+            const intento = reproductor.play();
+            if (intento && typeof intento.catch === "function") {
+                intento.catch(function () {
+                    if (generacionAudio === marca) {
+                        fin(new Error("sin-audio"));
+                    }
+                });
+            }
+        });
+    }
+
+    function decirNavegador(fraseTexto) {
+        if (!window.speechSynthesis) {
             return Promise.resolve();
         }
         return new Promise(function (resolve) {
@@ -294,15 +477,11 @@
             }
             frase.rate = 1;
             let listo = false;
-            let reloj = null;
             function fin() {
                 if (listo) {
                     return;
                 }
                 listo = true;
-                if (reloj !== null) {
-                    window.clearInterval(reloj);
-                }
                 if (soltarVoz === fin) {
                     soltarVoz = null;
                 }
@@ -317,14 +496,12 @@
                     fin();
                     return;
                 }
-                window.speechSynthesis.resume();
                 try {
                     window.speechSynthesis.speak(frase);
                 } catch (error) {
                     fin();
                 }
             }
-            // cancel() y speak() en el mismo instante dejan a Chrome mudo.
             if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
                 window.speechSynthesis.cancel();
                 window.setTimeout(lanzar, 80);
@@ -491,26 +668,17 @@
             soltar();
         }
         soltarMotorVoz();
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
-        }
     }
 
     async function iniciarLlamada() {
         const Motor = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!window.speechSynthesis || !Motor) {
+        if (!Motor) {
             const aviso = "Este navegador no puede hacer la llamada. Use Chrome o Edge, o escriba el mensaje.";
             turno(aviso, "asistente");
             historial.push({ role: "assistant", content: aviso });
             persistir();
             cortar();
             return;
-        }
-        if (window.speechSynthesis.getVoices().length === 0) {
-            await new Promise(function (resolve) {
-                window.speechSynthesis.addEventListener("voiceschanged", resolve, { once: true });
-                window.setTimeout(resolve, 400);
-            });
         }
         if (!llamada) {
             return;
@@ -608,7 +776,7 @@
         botonLlamada.setAttribute("aria-pressed", "true");
         botonLlamada.setAttribute("aria-label", "Colgar");
         campo.disabled = true;
-        activarMotorVoz();
+        prepararAudio();
         iniciarLlamada();
     });
 
