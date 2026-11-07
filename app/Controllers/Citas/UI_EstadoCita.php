@@ -3,6 +3,7 @@
 namespace App\Controllers\Citas;
 
 use App\Core\Controller;
+use App\Core\EnlaceOpaco;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\Cita;
@@ -45,13 +46,14 @@ class UI_EstadoCita extends Controller
     public function registrarLlegada(): void
     {
         $control = new CtrlEstadoCita();
-        $codigo = (string) $this->input('codigo', '');
+        $token = (string) $this->input('t', '');
+        $codigo = $this->codigoLlegada($token);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($control->registrarLlegada($codigo)) {
                 $this->mostrarResultado($control);
             }
             Session::flash('error_detalle', $control->mensaje);
-            $this->redirect('/citas/llegada?codigo=' . rawurlencode($codigo));
+            $this->redirect($this->rutaLlegada($codigo));
         }
 
         $cita = $codigo !== '' ? (new Cita())->buscarPorCodigo($codigo) : null;
@@ -59,6 +61,7 @@ class UI_EstadoCita extends Controller
             'codigo'  => $codigo,
             'cita'    => $cita,
             'mensaje' => Session::flash('error_detalle'),
+            'invalido' => $token !== '' && $codigo === '',
             'puede'   => $cita !== null
                 && in_array($cita['estado'], Cita::PENDIENTES, true)
                 && $cita['fecha'] === date('Y-m-d'),
@@ -77,6 +80,30 @@ class UI_EstadoCita extends Controller
     {
         Session::flash('error', $control->mensaje);
         $this->redirect('/citas/estado?codigo=' . rawurlencode((string) $this->input('codigo', '')));
+    }
+
+    private function codigoLlegada(string $token): string
+    {
+        if ($token !== '') {
+            $abierto = EnlaceOpaco::abrir($token);
+            if ($abierto !== null && ($abierto['uso'] ?? '') === 'L') {
+                return (string) ($abierto['datos'][0] ?? '');
+            }
+
+            return '';
+        }
+
+        return (string) $this->input('codigo', '');
+    }
+
+    private function rutaLlegada(string $codigo): string
+    {
+        $token = $codigo !== '' ? EnlaceOpaco::sellar('L', [$codigo]) : '';
+        if ($token !== '') {
+            return '/citas/llegada?t=' . rawurlencode($token);
+        }
+
+        return '/citas/llegada?codigo=' . rawurlencode($codigo);
     }
 
     private function sinPermiso(): never

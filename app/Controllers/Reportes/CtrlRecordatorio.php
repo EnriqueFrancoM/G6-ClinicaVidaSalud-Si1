@@ -6,6 +6,7 @@ use App\Controllers\Citas\CtrlCita;
 use App\Controllers\Citas\CtrlListaEspera;
 use App\Core\App;
 use App\Core\Database;
+use App\Core\EnlaceOpaco;
 use App\Core\Session;
 use App\Models\Bitacora;
 use App\Models\Cita;
@@ -111,13 +112,48 @@ class CtrlRecordatorio
 
     public static function enlace(int $idCita, string $respuesta, string $fecha, string $hora): string
     {
-        return App::url('/recordatorio/responder?' . http_build_query([
-            'c' => $idCita,
-            'r' => $respuesta,
-            'f' => $fecha,
-            'h' => $hora,
-            't' => self::firmar($idCita, $respuesta, $fecha, $hora),
-        ]));
+        $token = EnlaceOpaco::sellar('R', [(string) $idCita, $respuesta, $fecha, $hora]);
+        if ($token === '') {
+            return App::url('/recordatorio/responder?' . http_build_query([
+                'c' => $idCita,
+                'r' => $respuesta,
+                'f' => $fecha,
+                'h' => $hora,
+                't' => self::firmar($idCita, $respuesta, $fecha, $hora),
+            ]));
+        }
+
+        return App::url('/recordatorio/responder?t=' . rawurlencode($token));
+    }
+
+    // El enlace nuevo es un solo token. El anterior trae c, r, f, h y la firma en t.
+    public static function leerEnlace(string $token, string $cita, string $respuesta, string $fecha, string $hora): array
+    {
+        $abierto = EnlaceOpaco::abrir($token);
+        if ($abierto !== null && ($abierto['uso'] ?? '') === 'R' && count($abierto['datos']) >= 4) {
+            $id = (int) $abierto['datos'][0];
+            $accion = (string) $abierto['datos'][1];
+            $dia = (string) $abierto['datos'][2];
+            $momento = (string) $abierto['datos'][3];
+
+            return [
+                'id' => $id,
+                'respuesta' => $accion,
+                'fecha' => $dia,
+                'hora' => $momento,
+                'firma' => self::firmar($id, $accion, $dia, $momento),
+                'token' => $token,
+            ];
+        }
+
+        return [
+            'id' => (int) $cita,
+            'respuesta' => $respuesta,
+            'fecha' => $fecha,
+            'hora' => $hora,
+            'firma' => $token,
+            'token' => '',
+        ];
     }
 
     // Comprueba propósito, horario vigente y que la cita no haya pasado. No cambia datos.

@@ -20,7 +20,7 @@ $mensaje = $mensaje ?? null;
     <?php endif; ?>
 
     <?php if ($cita === null): ?>
-        <p class="alert error" role="alert"><?= $codigo === '' ? 'Falta el código de la cita.' : 'El comprobante no corresponde a ninguna cita.' ?></p>
+        <p class="alert error" role="alert"><?= !empty($invalido) ? 'El enlace no es válido.' : ($codigo === '' ? 'Falta el código de la cita.' : 'El comprobante no corresponde a ninguna cita.') ?></p>
     <?php else: ?>
         <article class="resumen-previo">
             <h2>Cita <?= e($cita['codigo']) ?></h2>

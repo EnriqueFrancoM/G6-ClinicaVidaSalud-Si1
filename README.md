@@ -76,7 +76,7 @@ Para publicar en Render, consulte [docs/deploy-render.md](docs/deploy-render.md)
 | P5 | CU20 Enviar recordatorios | `/recordatorios` y cron | `ServicioRecordatorios` → `CtrlRecordatorio.procesarPendientes()` |
 | P5 | CU22 Panel de indicadores | `/indicadores` | `UI_Indicadores` → `CtrlIndicador.calcularIndicadores()` |
 
-Mejoras: comprobante con QR (`/citas/comprobante`, RF24), prioridad pediátrica en la agenda (RF23) y enlace firmado para confirmar o cancelar desde el recordatorio (`/recordatorio/responder`, RF21).
+Mejoras: comprobante con QR (`/citas/comprobante`, RF24), prioridad pediátrica en la agenda (RF23) y enlace opaco para confirmar o cancelar desde el recordatorio (`/recordatorio/responder?t=`, RF21). El QR de llegada usa el mismo tipo de dirección: no muestra el código de la cita.
 
 **Base existente:** aplicar `database/03_ciclo2.sql` (en Render lo hace `scripts/inicializar-db.sh` al arrancar).
 

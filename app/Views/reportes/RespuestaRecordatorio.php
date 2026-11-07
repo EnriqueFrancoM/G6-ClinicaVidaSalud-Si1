@@ -7,6 +7,7 @@ use function App\Core\e;
 $pendiente = $pendiente ?? false;
 $cita = $cita ?? null;
 $respuesta = $respuesta ?? '';
+$token = $token ?? '';
 ?>
 <div class="registro-pagina respuesta-recordatorio">
     <a class="auth-brand" href="<?= App::url('/login') ?>">
@@ -30,11 +31,15 @@ $respuesta = $respuesta ?? '';
             </article>
             <form method="post" action="<?= App::url('/recordatorio/responder') ?>">
                 <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
-                <input type="hidden" name="c" value="<?= (int) $id ?>">
-                <input type="hidden" name="r" value="<?= e($respuesta) ?>">
-                <input type="hidden" name="f" value="<?= e($fecha) ?>">
-                <input type="hidden" name="h" value="<?= e($hora) ?>">
-                <input type="hidden" name="t" value="<?= e($firma) ?>">
+                <?php if ($token !== ''): ?>
+                    <input type="hidden" name="t" value="<?= e($token) ?>">
+                <?php else: ?>
+                    <input type="hidden" name="c" value="<?= (int) $id ?>">
+                    <input type="hidden" name="r" value="<?= e($respuesta) ?>">
+                    <input type="hidden" name="f" value="<?= e($fecha) ?>">
+                    <input type="hidden" name="h" value="<?= e($hora) ?>">
+                    <input type="hidden" name="t" value="<?= e($firma) ?>">
+                <?php endif; ?>
                 <button type="submit" class="btn-primary btn-chico"><?= $respuesta === 'cancelar' ? 'Cancelar la cita' : 'Confirmar asistencia' ?></button>
             </form>
         <?php else: ?>
