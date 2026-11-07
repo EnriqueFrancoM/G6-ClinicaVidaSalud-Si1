@@ -18,7 +18,7 @@ class AsistenteOpenRouter
         return $this->clave() !== '';
     }
 
-    public function responder(string $mensaje, array $historial): string
+    public function responder(string $mensaje, array $historial, bool $voz = false): string
     {
         $clave = $this->clave();
         if ($clave === '') {
@@ -27,7 +27,7 @@ class AsistenteOpenRouter
 
         $herramientas = new HerramientasClinica();
         $definiciones = $herramientas->definiciones();
-        $mensajes = [$this->sistema($definiciones)];
+        $mensajes = [$this->sistema($definiciones, $voz)];
         foreach (array_slice($historial, -12) as $item) {
             if (!is_array($item) || !in_array($item['role'] ?? '', ['user', 'assistant'], true)) {
                 continue;
@@ -173,7 +173,7 @@ class AsistenteOpenRouter
         return mb_substr($aviso, 0, 240);
     }
 
-    private function sistema(array $definiciones): array
+    private function sistema(array $definiciones, bool $voz): array
     {
         $usuario = Session::user() ?? [];
         $nombres = array_map(static fn (array $item) => $item['function']['name'], $definiciones);
@@ -185,6 +185,9 @@ class AsistenteOpenRouter
                 . 'La sesión es de ' . ($usuario['username'] ?? 'un usuario') . ', rol ' . ($usuario['rol'] ?? 'sin rol') . '. '
                 . 'Puedes usar solo estas operaciones: ' . $herramientas . '. '
                 . 'Crea, edita, consulta o da de baja únicamente cuando la persona lo pide y con los datos que falten preguntados antes. '
+                . 'Si piden una cita y falta un dato, pregunta una sola cosa y espera la respuesta: primero el día y la hora, después la especialidad, después el motivo y, si el cupo no lo trae, el médico. '
+                . 'No uses reservar_mi_cita ni programar_cita hasta tener especialidad, médico, fecha y hora de un cupo libre. Consulta los cupos antes, resume lo que vas a registrar y espera un sí. '
+                . ($voz ? 'Es una llamada: responde en una o dos frases, sin listas ni asteriscos. ' : '')
                 . 'Médicos, pacientes, especialidades y horarios no se borran: se desactivan y el historial queda. '
                 . 'Un día festivo es un bloqueo de alcance general, para todos los médicos. Un bloqueo de un médico usa alcance medico. Esos registros sí se quitan con quitar_dia_bloqueado. '
                 . 'Si una herramienta dice que hay citas futuras afectadas, pregunta una vez y, si la persona acepta, repite con confirmado true. '

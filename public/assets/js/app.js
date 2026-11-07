@@ -533,6 +533,22 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
     });
 })();
 
+// Las conversaciones del asistente quedan en este navegador, solo para la cuenta que inició sesión.
+(function () {
+    const cuenta = document.body && document.body.dataset.usuario;
+    if (!cuenta) {
+        return;
+    }
+    const propia = "vs-asistente:" + cuenta;
+    try {
+        Object.keys(localStorage).forEach((clave) => {
+            if (clave.startsWith("vs-asistente:") && clave !== propia) {
+                localStorage.removeItem(clave);
+            }
+        });
+    } catch (e) {}
+})();
+
 // Vista de celular: cada celda lleva el título de su columna para mostrarse como tarjeta.
 (function () {
     document.querySelectorAll(".tabla-responsive .cuentas").forEach((tabla) => {
