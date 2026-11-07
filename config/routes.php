@@ -39,6 +39,7 @@ return [
     // Asistente: la clave de OpenRouter es del servidor. Cada operación exige el permiso del rol.
     ['GET',  '/asistente', [UI_Asistente::class, 'abrir'], 'auth'],
     ['POST', '/asistente', [UI_Asistente::class, 'conversar'], 'auth'],
+    ['POST', '/asistente/voz', [UI_Asistente::class, 'hablar'], 'auth'],
 
     // CU05 mensaje 1 (desde el menú del perfil)
     ['GET',  '/cambiar-contrasena', [UI_CambiarContrasena::class, 'ingresar'], 'auth'],

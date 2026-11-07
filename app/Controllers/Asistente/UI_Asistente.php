@@ -4,6 +4,7 @@ namespace App\Controllers\Asistente;
 
 use App\Core\Controller;
 use App\Services\AsistenteOpenRouter;
+use App\Services\SintetizadorVoz;
 
 // Módulo de conversación. La clave de OpenRouter no sale al navegador.
 class UI_Asistente extends Controller
@@ -35,7 +36,7 @@ class UI_Asistente extends Controller
             http_response_code(503);
             echo json_encode([
                 'ok' => false,
-                'mensaje' => 'El asistente no está configurado. Agregue OPENROUTER_API_KEY en el archivo .env. La misma clave vale para todas las cuentas.',
+                'mensaje' => 'El asistente no está configurado. Agregue OPENROUTER_API_KEY o GEMINI_API_KEY en el archivo .env. La misma clave vale para todas las cuentas.',
             ], JSON_UNESCAPED_UNICODE);
             return;
         }
@@ -48,5 +49,33 @@ class UI_Asistente extends Controller
             http_response_code(502);
             echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
+    }
+
+    public function hablar(): void
+    {
+        $texto = trim((string) ($_POST['texto'] ?? ''));
+        if ($texto === '' || mb_strlen($texto) > 500) {
+            $this->rechazarVoz(422, 'El texto para la voz no es válido.');
+            return;
+        }
+
+        $wav = (new SintetizadorVoz())->sintetizar($texto);
+        if ($wav === null) {
+            $this->rechazarVoz(503, 'La voz del servidor no está disponible.');
+            return;
+        }
+
+        header('Content-Type: audio/wav');
+        header('Content-Length: ' . strlen($wav));
+        header('Cache-Control: no-store');
+        header('X-Content-Type-Options: nosniff');
+        echo $wav;
+    }
+
+    private function rechazarVoz(int $codigo, string $mensaje): void
+    {
+        http_response_code($codigo);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'mensaje' => $mensaje], JSON_UNESCAPED_UNICODE);
     }
 }

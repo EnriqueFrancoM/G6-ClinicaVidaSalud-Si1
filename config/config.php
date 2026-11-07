@@ -99,10 +99,15 @@ return [
     'recordatorio' => [
         'canal' => $canalRecordatorio,
     ],
-    // Una sola clave de OpenRouter para todas las cuentas. Vacía: el asistente no responde.
+    // Una sola clave de OpenRouter para todas las cuentas. Vacía: no se llama a OpenRouter.
+    // GEMINI_API_KEY es el respaldo gratuito si OpenRouter se queda sin cupo. Vacía: no se llama a Gemini.
     'openrouter' => [
         'api_key' => trim((string) $valorEntorno('OPENROUTER_API_KEY', '')),
         'model'   => trim((string) $valorEntorno('OPENROUTER_MODEL', 'openrouter/free')) ?: 'openrouter/free',
+    ],
+    'gemini' => [
+        'api_key' => trim((string) $valorEntorno('GEMINI_API_KEY', '')),
+        'model'   => trim((string) $valorEntorno('GEMINI_MODEL', 'libre')),
     ],
     'db' => [
         'host' => (string) $valorEntorno('DB_HOST', $partesDb['host'] ?? '127.0.0.1'),

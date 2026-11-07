@@ -1,7 +1,7 @@
 FROM php:8.2-apache-bookworm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev postgresql-client \
+    && apt-get install -y --no-install-recommends libpq-dev postgresql-client espeak-ng \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
