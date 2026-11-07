@@ -4,6 +4,7 @@ namespace App\Controllers\Portal;
 
 use App\Controllers\Citas\CtrlCita;
 use App\Controllers\Reportes\CtrlRecordatorio;
+use App\Core\App;
 use App\Core\Database;
 use App\Core\Session;
 use App\Models\Bitacora;
@@ -97,29 +98,38 @@ class CtrlReserva
         if (!$this->validarAcceso()) {
             return $this->error('Solo los pacientes pueden reservar en línea.');
         }
-        // Paso 4: validar paciente (titular de la sesión).
         $paciente = $this->titular();
         if ($paciente === null) {
             return $this->error('Complete su perfil antes de reservar una cita.');
         }
+        $listo = $this->validarReserva($datos, $paciente, (int) $this->usuarioActual['id_usuario']);
+        if ($listo === null) {
+            return false;
+        }
 
+        return $this->registrarReserva($listo);
+    }
+
+    private function validarReserva(array $datos, array $paciente, int $idUsuario): ?array
+    {
         $idEspecialidad = (int) ($datos['id_especialidad'] ?? 0);
         $idMedico = (int) ($datos['id_medico'] ?? 0);
         $fecha = trim((string) ($datos['fecha'] ?? ''));
         $hora = trim((string) ($datos['hora_inicio'] ?? ''));
-        $motivo = preg_replace('/\s+/u', ' ', trim((string) ($datos['motivo'] ?? '')));
-        if (!\App\Core\App::fechaIso($fecha) || $fecha < date('Y-m-d')) {
-            return $this->error('Elija una fecha válida desde hoy.', 'fecha');
+        $motivo = preg_replace('/\s+/u', ' ', trim((string) ($datos['motivo'] ?? ''))) ?? '';
+        if (!App::fechaIso($fecha) || $fecha < date('Y-m-d')) {
+            $this->error('Elija una fecha válida desde hoy.', 'fecha');
+            return null;
         }
         if (mb_strlen($motivo) > 200) {
-            return $this->error('El motivo admite hasta 200 caracteres.', 'motivo');
+            $this->error('El motivo admite hasta 200 caracteres.', 'motivo');
+            return null;
         }
         $regla = CtrlCita::validarReglas($paciente, $idEspecialidad, $idMedico);
         if ($regla !== null) {
-            return $this->error($regla, 'id_medico');
+            $this->error($regla, 'id_medico');
+            return null;
         }
-
-        // Paso 4: validar cupo (consultarCupos(médico, fecha)).
         $cupo = null;
         foreach ($this->consultarCupos($idMedico, $fecha) as $c) {
             if ($c['hora_inicio'] === $hora) {
@@ -127,34 +137,51 @@ class CtrlReserva
             }
         }
         if ($cupo === null) {
-            return $this->error('El horario elegido ya no está disponible. Elija otro.', 'hora_inicio');
+            $this->error('El horario elegido ya no está disponible. Elija otro.', 'hora_inicio');
+            return null;
         }
 
-        // Paso 5: registrar la reserva de forma atómica (reservarAtómicamente(datos)).
+        return [
+            'id_paciente'     => (int) $paciente['id_paciente'],
+            'id_usuario'      => $idUsuario,
+            'id_medico'       => $idMedico,
+            'id_especialidad' => $idEspecialidad,
+            'fecha'           => $fecha,
+            'hora_inicio'     => $cupo['hora_inicio'],
+            'hora_fin'        => $cupo['hora_fin'],
+            'motivo'          => $motivo,
+            'email'           => $paciente['email'] ?? null,
+        ];
+    }
+
+    private function registrarReserva(array $listo): bool
+    {
         $datosCita = [
-            'id_paciente' => (int) $paciente['id_paciente'], 'id_medico' => $idMedico, 'id_especialidad' => $idEspecialidad,
-            'id_usuario_registro' => (int) $this->usuarioActual['id_usuario'], 'fecha' => $fecha,
-            'hora_inicio' => $cupo['hora_inicio'], 'hora_fin' => $cupo['hora_fin'], 'motivo' => $motivo !== '' ? $motivo : null,
+            'id_paciente' => $listo['id_paciente'], 'id_medico' => $listo['id_medico'], 'id_especialidad' => $listo['id_especialidad'],
+            'id_usuario_registro' => $listo['id_usuario'], 'fecha' => $listo['fecha'],
+            'hora_inicio' => $listo['hora_inicio'], 'hora_fin' => $listo['hora_fin'],
+            'motivo' => $listo['motivo'] !== '' ? $listo['motivo'] : null,
         ];
         $db = Database::connection();
         $db->beginTransaction();
         try {
             $nueva = (new Cita())->reservarAtomicamente($datosCita);
             (new HistorialEstadoCita())->registrarInicial($nueva['id_cita'], $datosCita['id_usuario_registro'], 'Reserva en línea');
-            (new Recordatorio())->programar($nueva['id_cita'], $fecha, $cupo['hora_inicio'], $paciente['email']);
+            (new Recordatorio())->programar($nueva['id_cita'], $listo['fecha'], $listo['hora_inicio'], $listo['email']);
             (new Bitacora())->registrar($datosCita['id_usuario_registro'], 'RESERVAR', 'Portal', 'Reservó ' . $nueva['codigo']);
             $db->commit();
         } catch (\Throwable $e) {
-            $db->rollBack();
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             if (Cita::esCupoOcupado($e)) {
-                // Alternativa: reserva simultánea o cupo ya ocupado.
                 return $this->error('Otro paciente acaba de reservar ese horario. Elija otro.', 'hora_inicio');
             }
             throw $e;
         }
 
         $this->cita = (new Cita())->buscarPorId($nueva['id_cita']);
-        $this->mensaje = 'Reserva ' . $nueva['codigo'] . ' registrada para el ' . date('d/m/Y', strtotime($fecha)) . ' a las ' . $cupo['hora_inicio'] . '.';
+        $this->mensaje = 'Reserva ' . $nueva['codigo'] . ' registrada para el ' . date('d/m/Y', strtotime($listo['fecha'])) . ' a las ' . $listo['hora_inicio'] . '.';
 
         return true;
     }

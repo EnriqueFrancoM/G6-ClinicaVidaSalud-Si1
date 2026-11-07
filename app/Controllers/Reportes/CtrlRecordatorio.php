@@ -11,6 +11,7 @@ use App\Models\Bitacora;
 use App\Models\Cita;
 use App\Models\HistorialEstadoCita;
 use App\Models\Recordatorio;
+use App\Services\CanalRecordatorio;
 use App\Services\ProveedorNotificaciones;
 
 // CU20 control. Mensajes: procesarPendientes(datos), validarAcceso().
@@ -56,14 +57,20 @@ class CtrlRecordatorio
                     $resumen['descartados']++;
                     continue;
                 }
-                $canal = $r['canal'] === 'EMAIL' && $cita['paciente_email'] ? 'EMAIL' : 'SISTEMA';
+                $decision = CanalRecordatorio::efectivo(
+                    (string) $r['canal'],
+                    $cita['paciente_email'] ?? null,
+                    $cita['paciente_telefono'] ?? null
+                );
+                $canal = $decision['canal'];
 
                 // Paso 5: enviarMensaje(datos). Paso 6: registrar el resultado del intento.
                 $enviado = $proveedor->enviarMensaje([
                     'canal'        => $canal,
-                    'destinatario' => $cita['paciente_email'],
+                    'destinatario' => $decision['destinatario'],
                     'asunto'       => 'Recordatorio de su cita ' . $cita['codigo'] . ' – ' . App::config('app.name'),
                     'cuerpo'       => $this->cuerpoMensaje($cita),
+                    'parametros'   => $canal === 'WHATSAPP' ? $this->parametrosWhatsapp($cita) : [],
                 ]);
                 $recordatorios->marcarResultado((int) $r['id_recordatorio'], $enviado ? 'ENVIADO' : 'FALLIDO');
                 $resumen[$enviado ? 'enviados' : 'fallidos']++;
@@ -202,6 +209,26 @@ class CtrlRecordatorio
         }
 
         return $this->error('Respuesta no válida.');
+    }
+
+    // Modo campos: ocho variables de la plantilla aprobada, en este orden.
+    // Modo texto: un solo {{1}} con el mensaje completo.
+    private function parametrosWhatsapp(array $cita): array
+    {
+        if ((string) App::config('whatsapp.plantilla_modo', 'campos') === 'texto') {
+            return [$this->cuerpoMensaje($cita)];
+        }
+
+        return [
+            (string) $cita['paciente'],
+            (string) $cita['codigo'],
+            (string) $cita['especialidad'],
+            (string) $cita['medico'],
+            date('d/m/Y', strtotime((string) $cita['fecha'])),
+            (string) $cita['hora_inicio'],
+            self::enlace((int) $cita['id_cita'], 'confirmar', $cita['fecha'], $cita['hora_inicio']),
+            self::enlace((int) $cita['id_cita'], 'cancelar', $cita['fecha'], $cita['hora_inicio']),
+        ];
     }
 
     private function cuerpoMensaje(array $cita): string

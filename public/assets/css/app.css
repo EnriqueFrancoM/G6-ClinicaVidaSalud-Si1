@@ -2826,7 +2826,99 @@ ul.sin-cupos li { margin: 4px 0; }
 
 @media print {
     .comprobante { box-shadow: none; }
-    .toast, .fab { display: none !important; }
+    .toast, .fab, .asistente { display: none !important; }
+}
+
+/* Asistente: a la izquierda del contenido, lejos del aviso y del botón flotante. */
+.asistente {
+    position: fixed;
+    left: calc(248px + 16px);
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 36;
+    color: var(--ink);
+    font-size: 0.92rem;
+}
+.asistente-abrir,
+.asistente-form button,
+.asistente-cerrar {
+    border: 0;
+    border-radius: 999px;
+    background: var(--teal-700);
+    color: #fff;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+}
+.asistente-abrir { height: 44px; padding: 0 16px; box-shadow: 0 8px 24px rgba(15, 110, 104, 0.28); }
+.asistente-abrir:hover,
+.asistente-form button:hover,
+.asistente-cerrar:hover { background: var(--teal-800); }
+.asistente-abrir:focus-visible,
+.asistente-form button:focus-visible,
+.asistente-cerrar:focus-visible,
+.asistente-form textarea:focus-visible { outline: 2px solid var(--teal-500); outline-offset: 2px; }
+.asistente-panel {
+    position: absolute;
+    left: 0;
+    bottom: 52px;
+    display: flex;
+    flex-direction: column;
+    width: min(380px, calc(100vw - 32px));
+    height: min(480px, calc(100dvh - 120px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 16px 40px rgba(18, 34, 38, 0.18);
+}
+.asistente-panel[hidden] { display: none; }
+.asistente-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 12px 0 16px;
+}
+.asistente-cerrar { height: 32px; padding: 0 12px; background: transparent; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+.asistente-nota { margin: 8px 16px 0; color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
+.asistente-mensajes { flex: 1; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.asistente-burbuja { max-width: 92%; margin: 0; padding: 8px 12px; border-radius: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.asistente-burbuja.usuario { align-self: flex-end; background: var(--teal-700); color: #fff; }
+.asistente-burbuja.asistente { align-self: flex-start; background: var(--fill); color: var(--ink); }
+.asistente-burbuja.espera { color: var(--muted); }
+.asistente-form { display: flex; gap: 8px; align-items: flex-end; padding: 12px; border-top: 1px solid var(--line); }
+.asistente-form textarea {
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--fill);
+    color: var(--ink);
+    font: inherit;
+    resize: vertical;
+}
+.asistente-form button { height: 44px; padding: 0 14px; }
+.asistente-form button:disabled,
+.asistente-form textarea:disabled { opacity: 0.7; cursor: wait; }
+.sr-solo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+@media (max-width: 1024px) {
+    .asistente { left: calc(216px + 16px); }
+}
+@media (max-width: 860px) {
+    .asistente { left: max(16px, env(safe-area-inset-left)); }
+    .asistente-panel { width: min(380px, calc(100vw - 112px)); }
 }
 
 @media (max-width: 1100px) {

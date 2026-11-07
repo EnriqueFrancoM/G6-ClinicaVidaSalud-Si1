@@ -78,7 +78,7 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
                     <tr><td colspan="<?= $todos ? 7 : 6 ?>" class="vacio"><?= e($aviso ?? 'Sin citas.') ?></td></tr>
                 <?php endif; ?>
                 <?php foreach ($citas as $c): ?>
-                    <tr<?= $c['prioritaria'] ? ' class="fila-prioritaria"' : '' ?>>
+                    <tr<?= !empty($c['prioritaria']) ? ' class="fila-prioritaria"' : '' ?>>
                         <td data-label="Hora"><strong><?= e($c['hora_inicio']) ?></strong>–<?= e($c['hora_fin']) ?></td>
                         <?php if ($todos): ?><td data-label="Médico"><?= e($c['medico']) ?></td><?php endif; ?>
                         <td class="quien" data-label="Paciente">

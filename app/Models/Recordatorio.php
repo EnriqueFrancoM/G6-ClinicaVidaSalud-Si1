@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Services\CanalRecordatorio;
 
 // Entidad Recordatorio. CU20: buscarPendientes(instante), marcarResultado().
-// Canal EMAIL si el paciente tiene correo; si no, SISTEMA (aviso dentro del portal).
+// Canal WHATSAPP si hay teléfono y la API está configurada; si no, EMAIL; si no hay correo, SISTEMA.
 class Recordatorio extends Model
 {
     public const ESTADOS = ['PENDIENTE' => 'Pendiente', 'ENVIADO' => 'Enviado', 'FALLIDO' => 'Fallido'];
+
+    public const CANALES = ['EMAIL' => 'Correo', 'WHATSAPP' => 'WhatsApp', 'SISTEMA' => 'Portal'];
 
     // Horas antes de la cita en que se envía el recordatorio (RF20).
     public const HORAS_ANTES = 24;
@@ -16,10 +19,26 @@ class Recordatorio extends Model
     // CU11 / CU18: programa el recordatorio de una cita nueva. Si ya pasó el momento, queda para la próxima ejecución.
     public function programar(int $idCita, string $fecha, string $horaInicio, ?string $email): void
     {
+        $fila = $this->fetch(
+            "SELECT NULLIF(TRIM(p.email), '') AS email, NULLIF(TRIM(p.telefono), '') AS telefono
+               FROM cita c
+               JOIN paciente p ON p.id_paciente = c.id_paciente
+              WHERE c.id_cita = :cita",
+            ['cita' => $idCita]
+        ) ?: [];
+        $emailContacto = trim((string) ($email ?? ''));
+        if ($emailContacto === '') {
+            $emailContacto = trim((string) ($fila['email'] ?? ''));
+        }
+        $telefono = trim((string) ($fila['telefono'] ?? ''));
+        $canal = CanalRecordatorio::elegir(
+            $emailContacto !== '' ? $emailContacto : null,
+            $telefono !== '' ? $telefono : null
+        );
         $this->execute(
             "INSERT INTO recordatorio (id_cita, canal, fecha_programada)
              VALUES (:cita, :canal, GREATEST(LOCALTIMESTAMP, CAST(:fecha AS DATE) + CAST(:hora AS TIME) - make_interval(hours => :horas)))",
-            ['cita' => $idCita, 'canal' => $email ? 'EMAIL' : 'SISTEMA', 'fecha' => $fecha, 'hora' => $horaInicio, 'horas' => self::HORAS_ANTES]
+            ['cita' => $idCita, 'canal' => $canal, 'fecha' => $fecha, 'hora' => $horaInicio, 'horas' => self::HORAS_ANTES]
         );
     }
 
@@ -37,14 +56,7 @@ class Recordatorio extends Model
             return;
         }
 
-        $fila = $this->fetch(
-            'SELECT NULLIF(TRIM(p.email), \'\') AS email
-               FROM cita c
-               JOIN paciente p ON p.id_paciente = c.id_paciente
-              WHERE c.id_cita = :cita',
-            ['cita' => $idCita]
-        );
-        $this->programar($idCita, $fecha, $horaInicio, $fila['email'] ?? null);
+        $this->programar($idCita, $fecha, $horaInicio, null);
     }
 
     // CU20 mensaje buscarPendientes(instante): pendientes cuyo momento ya llegó. FOR UPDATE SKIP LOCKED:

@@ -51,11 +51,11 @@ La columna Prototipo remite a la lámina del documento. La pantalla en código e
 | CU17 Perfil del paciente | Registro público y perfil | `GET/POST /registro`, `GET/POST /portal/perfil` | `UI_PerfilPaciente` | `CtrlPerfil::guardarPerfil` | `Paciente`, `Usuario`, `ContactoEmergencia` | registro público; perfil `POR_PACIENTE` | **NO EJECUTADA** de caja negra |
 | CU18 Reservar en línea | Cupos y seguimiento | `GET/POST /portal/citas` | `UI_MisCitas` | `CtrlReserva` | `Cita`, `HorarioAtencion` | `POR_PACIENTE` | Misma regla de fecha inválida en código. Recorrido del paciente: **NO EJECUTADA** |
 | CU19 Reportes | Vista, PDF y Excel | `GET /reportes` | `UI_Reportes` | `CtrlReporte::generarReporte` | `ExportadorReporte` | `REP_GENERAR` | Período 2026-10-01 a 2026-11-30 devuelve filas. PDF empieza con `%PDF`. XLSX empieza con `PK` y contiene `xl/worksheets/sheet1.xml`. Fecha `2026-02-31` rechazada. Clic de descarga en el navegador: **NO EJECUTADA**. La prueba no escribió bitácora porque no envió `formato` |
-| CU20 Recordatorios | Envío y respuesta firmada | `GET/POST /recordatorios`, `GET/POST /recordatorio/responder` | `ServicioRecordatorios` | `CtrlRecordatorio` | `Recordatorio`, `ProveedorNotificaciones` | panel `REP_GENERAR`; el enlace es público y firmado | La firma cambia si cambian la acción o el horario. Un token de cancelar no confirma. Un token de otro horario responde «ya cambió». GET no aplica la respuesta; POST sí. Correo real: **NO EJECUTADA** |
+| CU20 Recordatorios | Envío y respuesta firmada | `GET/POST /recordatorios`, `GET/POST /recordatorio/responder` | `ServicioRecordatorios` | `CtrlRecordatorio` | `Recordatorio`, `ProveedorNotificaciones`, `CanalRecordatorio` | panel `REP_GENERAR`; el enlace es público y firmado | La firma cambia si cambian la acción o el horario. Un token de cancelar no confirma. Un token de otro horario responde «ya cambió». GET no aplica la respuesta; POST sí. Canal `EMAIL`, `WHATSAPP` o `SISTEMA`. Envío real por Brevo o WhatsApp: **NO EJECUTADA** |
 | CU21 Lista de espera | Alta y aceptación de oferta | `GET/POST /lista-espera` | `UI_ListaEspera` | `CtrlListaEspera` | `SolicitudEspera`, `HorarioAtencion`, `Cita` | `CIT_GESTIONAR` | Aceptar revalida el cupo, deja la solicitud `ASIGNADA` y una sola cita. La segunda aceptación no crea otra |
 | CU22 Indicadores | Panel del período | `GET /indicadores` | `UI_Indicadores` | `CtrlIndicador::calcularIndicadores` | consultas de `Cita` | `REP_GENERAR` | **NO EJECUTADA** de caja negra. La fecha inválida usa `App::fechaIso` |
 
-Comprobante (`GET /citas/comprobante`, `UI_Comprobante`, sesión): recepción (`CIT_GESTIONAR`) ve cualquiera; el médico solo el suyo; el paciente solo el propio. `AGE_CONSULTAR` ya no abre todos. Probado por reflexión sobre `puedeVer`, no con captura.
+Comprobante (`GET /citas/comprobante`, `UI_Comprobante`, sesión): recepción (`CIT_GESTIONAR`) ve cualquiera; el médico solo el suyo; el paciente solo el propio. `AGE_CONSULTAR` ya no abre todos. Probado por reflexión sobre `puedeVer`, no con captura. La reserva del portal se registra al confirmar, sin pasarela de pago.
 
 Las fronteras muestran el resultado con `mostrarResultado()`. En el código no existe `presentarResultado()`.
 
@@ -63,7 +63,7 @@ Las fronteras muestran el resultado con `mostrarResultado()`. En el código no e
 
 Aplicarlas en el documento. Este archivo no las escribe allí.
 
-1. Esquema auditado en `bd_vidasalud`: 16 tablas y 24 relaciones (claves foráneas). Tablas: `bitacora`, `bloqueo_agenda`, `cita`, `contacto_emergencia`, `especialidad`, `historial_estado_cita`, `horario_atencion`, `medico`, `medico_especialidad`, `paciente`, `permiso`, `recordatorio`, `rol`, `rol_permiso`, `solicitud_espera`, `usuario`. Incluir `usuario.bloqueo_hasta`. No eliminar `solicitud_espera` para forzar un conteo viejo de 15 tablas y 18 relaciones.
+1. Esquema auditado en `bd_vidasalud`: 16 tablas y 24 relaciones (claves foráneas). Tablas: `bitacora`, `bloqueo_agenda`, `cita`, `contacto_emergencia`, `especialidad`, `historial_estado_cita`, `horario_atencion`, `medico`, `medico_especialidad`, `paciente`, `permiso`, `recordatorio`, `rol`, `rol_permiso`, `solicitud_espera`, `usuario`. Incluir `usuario.bloqueo_hasta`. No eliminar `solicitud_espera` para forzar un conteo viejo de 15 tablas y 18 relaciones. `recordatorio.canal` admite `EMAIL`, `SISTEMA` y `WHATSAPP`. Eso no agrega tabla ni clave foránea.
 2. Los diagramas de secuencia deben decir `CtrlAutenticacion` y `CtrlUsuario`. En el código no están `AuthController` ni `UsuarioController`.
 3. Donde el diagrama diga `presentarResultado()`, debe decir `mostrarResultado()`.
 4. El modelo lógico y el físico son dos diagramas completos e integrados, no uno por paquete.
@@ -113,7 +113,7 @@ Contra el servidor ya levantado en `127.0.0.1:8080` (no se reinició):
 | PDF y Excel utilizables | Generados en proceso (`%PDF` y XLSX con hoja). Descarga en navegador: **NO EJECUTADA**. |
 | Caja negra de los CU importantes, con capturas | **NO EJECUTADA**. |
 
-No declarar cobros, voz ni IA como parte de este parcial. El alcance dice que no hay facturación, cobros ni pagos en línea. Un pasaje posterior del documento habla de pasarela de pago: contradice esa regla y no se implementa. WhatsApp figura como mejora; el recordatorio solo admite `EMAIL` y `SISTEMA`, y no hay proveedor de correo configurado para estas pruebas. No se envió correo ni se cobró nada.
+Voz e IA siguen fuera de este parcial. Correo con Brevo y recordatorio por WhatsApp o correo quedan listos por variables de entorno. Sin claves el correo no se envía y WhatsApp no se elige. El paciente reserva sin pago. No hay pasarela de pago. Envío real: **NO EJECUTADA**.
 
 ## Pendiente manual
 

@@ -10,7 +10,7 @@ use function App\Core\e;
     <header class="hoja-cabecera">
         <div>
             <h1>Recordatorios de citas</h1>
-            <p class="lede">Se envían <?= Recordatorio::HORAS_ANTES ?> h antes de cada cita, por correo o como aviso en el portal.
+            <p class="lede">Se envían <?= Recordatorio::HORAS_ANTES ?> h antes de cada cita, por WhatsApp, correo o aviso en el portal, según las variables de entorno.
                 La ejecución programada corre con <code>scripts/enviar-recordatorios.php</code>.</p>
         </div>
         <form method="post" action="<?= App::url('/recordatorios') ?>">
@@ -53,7 +53,7 @@ use function App\Core\e;
                         <span><?= e(date('d/m/Y', strtotime($r['fecha'])) . ' ' . $r['hora_inicio']) ?> · <?= e(Cita::ESTADOS[$r['estado_cita']] ?? $r['estado_cita']) ?></span>
                     </td>
                     <td data-label="Paciente"><strong><?= e($r['paciente']) ?></strong><span><?= e($r['email'] ?: 'sin correo') ?></span></td>
-                    <td data-label="Canal"><?= e($r['canal'] === 'EMAIL' ? 'Correo' : 'Portal') ?></td>
+                    <td data-label="Canal"><?= e(Recordatorio::CANALES[$r['canal']] ?? $r['canal']) ?></td>
                     <td data-label="Programado"><?= e($r['fecha_programada']) ?></td>
                     <td data-label="Envío"><span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span></td>
                 </tr>
