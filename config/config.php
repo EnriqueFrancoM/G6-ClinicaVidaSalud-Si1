@@ -30,6 +30,17 @@ return [
         'base_url' => rtrim((string) $valorEntorno('APP_URL', $valorEntorno('RENDER_EXTERNAL_URL', '')), '/'),
         'debug'    => filter_var($valorEntorno('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN),
         'timezone' => 'America/La_Paz',
+        // Firma de los enlaces de confirmar/cancelar de los recordatorios (CU20, RF21).
+        'key'      => (string) $valorEntorno('APP_KEY', ''),
+    ],
+    // CU20 ProveedorNotificaciones: servidor SMTP para los recordatorios por correo.
+    'mail' => [
+        'host'       => (string) $valorEntorno('MAIL_HOST', ''),
+        'port'       => (int) $valorEntorno('MAIL_PORT', 587),
+        'user'       => (string) $valorEntorno('MAIL_USER', ''),
+        'pass'       => (string) $valorEntorno('MAIL_PASS', ''),
+        'from'       => (string) $valorEntorno('MAIL_FROM', ''),
+        'encryption' => (string) $valorEntorno('MAIL_ENCRYPTION', 'tls'),
     ],
     'db' => [
         'host' => (string) $valorEntorno('DB_HOST', $partesDb['host'] ?? '127.0.0.1'),

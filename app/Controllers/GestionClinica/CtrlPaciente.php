@@ -111,7 +111,8 @@ class CtrlPaciente
     }
 
     // Paso 7: formatos. E2: fecha de nacimiento futura, teléfono o correo inválidos.
-    private function validar(array $datos): ?array
+    // También la usa CU17 (CtrlPerfil) para los mismos datos del paciente.
+    public function validar(array $datos): ?array
     {
         $texto = fn (string $campo) => preg_replace('/\s+/u', ' ', trim((string) ($datos[$campo] ?? '')));
         $opcional = fn (string $campo) => $texto($campo) !== '' ? $texto($campo) : null;

@@ -6,7 +6,7 @@ use App\Core\Model;
 
 // Entidad Medico. CU03: listar() para el vínculo con un usuario.
 // CU08: buscar(filtro), existeRegistro(), insertar(), actualizar(), cambiarEstado().
-// CU09: verificarActivo().
+// CU09: verificarActivo(). CU15: validarMédico(id).
 class Medico extends Model
 {
     public function listar(): array
@@ -63,6 +63,37 @@ class Medico extends Model
     {
         $fila = $this->fetch('SELECT estado FROM medico WHERE id_medico = :id', ['id' => $idMedico]);
         return $fila !== null && in_array($fila['estado'], [true, 't', '1', 1], true);
+    }
+
+    // CU15 mensaje validarMédico(id): el médico existe (activo o no, para consultar su agenda histórica).
+    public function validarMedico(int $idMedico): ?array
+    {
+        return $this->fetch(
+            "SELECT id_medico, id_usuario, codigo, nombres || ' ' || apellidos AS nombre, estado FROM medico WHERE id_medico = :id",
+            ['id' => $idMedico]
+        );
+    }
+
+    // CU15 paso 3: el médico vinculado al usuario de la sesión (su agenda es la única que puede ver).
+    public function obtenerPorUsuario(int $idUsuario): ?array
+    {
+        return $this->fetch(
+            "SELECT id_medico, codigo, nombres || ' ' || apellidos AS nombre FROM medico WHERE id_usuario = :usuario",
+            ['usuario' => $idUsuario]
+        );
+    }
+
+    // CU11 / CU18: el médico está activo y atiende la especialidad (RN04, RN15).
+    public function atiendeEspecialidad(int $idMedico, int $idEspecialidad): bool
+    {
+        $fila = $this->fetch(
+            'SELECT 1 FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+               JOIN especialidad e ON e.id_especialidad = me.id_especialidad
+              WHERE m.id_medico = :medico AND me.id_especialidad = :especialidad AND m.estado = TRUE AND e.estado = TRUE',
+            ['medico' => $idMedico, 'especialidad' => $idEspecialidad]
+        );
+        return $fila !== null;
     }
 
     // CU08 E1: ¿el n.º de registro profesional ya está registrado en otro médico?

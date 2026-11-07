@@ -354,8 +354,13 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
         if (form.dataset.confirmado === "1") {
             return;
         }
+        // Un formulario puede tener varios botones (p. ej. CU14, uno por estado): se confirma el pulsado
+        // y un botón sin data-confirmar envía directo.
+        if (event.submitter && !event.submitter.matches("[data-confirmar]")) {
+            return;
+        }
         event.preventDefault();
-        const boton = form.querySelector("[data-confirmar]");
+        const boton = event.submitter || form.querySelector("[data-confirmar]");
         const dialogo = document.getElementById("confirma");
         if (!dialogo || !boton) {
             form.dataset.confirmado = "1";
@@ -601,4 +606,27 @@ document.querySelectorAll("form:has([data-confirmar])").forEach((form) => {
 
     document.body.classList.add("con-fab");
     document.body.append(caja);
+})();
+
+// CU11 / CU18 / CU21: el médico se elige entre los que atienden la especialidad seleccionada.
+(function () {
+    document.querySelectorAll("[data-especialidad]").forEach((especialidad) => {
+        const medico = especialidad.form && especialidad.form.querySelector("[data-medico]");
+        if (!medico) {
+            return;
+        }
+        const filtrar = () => {
+            const id = especialidad.value;
+            medico.querySelectorAll("option[data-especialidades]").forEach((opcion) => {
+                const atiende = id === "" || opcion.dataset.especialidades.split(",").includes(id);
+                opcion.hidden = !atiende;
+                opcion.disabled = !atiende;
+                if (!atiende && opcion.selected) {
+                    medico.value = "";
+                }
+            });
+        };
+        especialidad.addEventListener("change", filtrar);
+        filtrar();
+    });
 })();

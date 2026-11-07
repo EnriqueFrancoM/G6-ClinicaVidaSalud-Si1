@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Core\Model;
 
 // Entidad Bitacora. CU01: registrar("LOGIN", ip). CU02: registrar("LOGOUT", ip).
-// CU06: filtrar(filtros), exportarCSV(filtros).
+// CU06: filtrar(filtros), exportarCSV(filtros). CU14: registrarCambio(datos).
 class Bitacora extends Model
 {
     public function registrar(?int $idUsuario, string $accion, string $modulo, ?string $detalle = null): void
@@ -20,6 +20,17 @@ class Bitacora extends Model
                 'detalle'    => $detalle,
                 'ip'         => self::ipCliente(),
             ]
+        );
+    }
+
+    // CU14 mensaje registrarCambio(datos): deja constancia del cambio de estado de una cita.
+    public function registrarCambio(array $datos): void
+    {
+        $this->registrar(
+            (int) $datos['id_usuario'],
+            'CAMBIAR_ESTADO',
+            'Citas',
+            $datos['codigo'] . ': ' . $datos['estado_anterior'] . ' → ' . $datos['estado_nuevo']
         );
     }
 

@@ -21,6 +21,18 @@ $menu = [
     ['MED_GESTIONAR', '/medicos',        'Médicos',         'M8 21v-2a4 4 0 0 1 8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
     ['HOR_GESTIONAR', '/horarios',       'Horarios',        'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z'],
     ['PAC_GESTIONAR', '/pacientes',      'Pacientes',       'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 19a5 5 0 0 1 10 0M13 19a4 4 0 0 1 8 0'],
+    // P3 Gestión de Citas
+    ['CIT_GESTIONAR', '/citas/programar', 'Programar cita', 'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M12 12v5M9.5 14.5h5'],
+    ['AGE_CONSULTAR', '/agenda',          'Agenda médica',  'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M8 13h3M8 16h6'],
+    ['CIT_GESTIONAR', '/citas/historial', 'Historial de citas', 'M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4M12 8v4l3 2'],
+    ['CIT_GESTIONAR', '/lista-espera',    'Lista de espera', 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'],
+    // P4 Portal del Paciente
+    ['POR_PACIENTE',  '/portal/citas',    'Mis citas',      'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M9 14l2 2 4-4'],
+    ['POR_PACIENTE',  '/portal/perfil',   'Mi perfil',      'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0'],
+    // P5 Reportes y Notificaciones
+    ['REP_GENERAR',   '/reportes',        'Reportes',       'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6'],
+    ['REP_GENERAR',   '/indicadores',     'Indicadores',    'M4 20V10M10 20V4M16 20v-7M22 20H2'],
+    ['REP_GENERAR',   '/recordatorios',   'Recordatorios',  'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0'],
 ];
 ?>
 <!DOCTYPE html>
