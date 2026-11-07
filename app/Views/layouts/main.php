@@ -21,6 +21,7 @@ $gruposMenu = [
         ['CIT_GESTIONAR', '/lista-espera',    'Lista de espera', 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', false],
         ['POR_PACIENTE',  '/portal/citas',    'Mis citas',      'M5 5h14v15H5zM5 9h14M9 3v4M15 3v4M9 14l2 2 4-4', false],
         ['POR_PACIENTE',  '/portal/perfil',   'Mi perfil',      'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0', false],
+        ['auth',          '/asistente',       'Asistente',      'M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z', false],
     ],
     'Gestión clínica' => [
         ['PAC_GESTIONAR', '/pacientes',      'Pacientes',       'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 19a5 5 0 0 1 10 0M13 19a4 4 0 0 1 8 0', false],
@@ -171,23 +172,6 @@ $destacarRecepcion = Session::hasPermission('CIT_GESTIONAR')
         </div>
     </form>
 </dialog>
-<div class="asistente" data-asistente data-url="<?= e(App::url('/asistente')) ?>" data-csrf="<?= e(Session::csrfToken()) ?>">
-    <button type="button" class="asistente-abrir" aria-expanded="false" aria-controls="asistente-panel">Asistente</button>
-    <section class="asistente-panel" id="asistente-panel" hidden>
-        <header class="asistente-cabecera">
-            <strong>Asistente</strong>
-            <button type="button" class="asistente-cerrar" aria-label="Cerrar">Cerrar</button>
-        </header>
-        <p class="asistente-nota">Puede consultar, crear, editar o dar de baja lo que su rol permite. Médicos, pacientes y horarios se desactivan. Un día festivo sí se quita.</p>
-        <div class="asistente-mensajes" role="log" aria-live="polite"></div>
-        <form class="asistente-form">
-            <label class="sr-solo" for="asistente-mensaje">Mensaje</label>
-            <textarea id="asistente-mensaje" name="mensaje" maxlength="2000" rows="2" placeholder="Por ejemplo: lista los médicos de pediatría" required></textarea>
-            <button type="submit">Enviar</button>
-        </form>
-    </section>
-</div>
 <script src="<?= App::url('/assets/js/app.js') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/js/app.js') ?>"></script>
-<script src="<?= App::url('/assets/js/asistente.js') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/js/asistente.js') ?>"></script>
 </body>
 </html>

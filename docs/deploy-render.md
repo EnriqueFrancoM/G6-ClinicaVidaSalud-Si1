@@ -44,7 +44,7 @@ No agregue credenciales de PostgreSQL manualmente. Render genera y vincula
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TEMPLATE` | Dashboard, secreto | Cloud API. La plantilla cubre el aviso de 24 h. |
 | `WHATSAPP_TEMPLATE_IDIOMA`, `WHATSAPP_TEMPLATE_MODO`, `WHATSAPP_PREFIJO` | `render.yaml` | `es`, `campos`, `591`. |
 | `OPENROUTER_API_KEY` | Dashboard, secreto | Una clave para todas las cuentas. Vacía: el asistente no llama al modelo. |
-| `OPENROUTER_MODEL` | `render.yaml` | `openai/gpt-4o-mini`. |
+| `OPENROUTER_MODEL` | `render.yaml` | `openrouter/free`. Elige un modelo gratuito disponible. |
 
 La variable `SEED_INITIAL_PASSWORD` puede eliminarse después de inicializar la
 base. En arranques posteriores el script detecta el esquema existente y no la
