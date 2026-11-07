@@ -79,16 +79,16 @@ $pendiente = fn (array $c) => in_array($c['estado'], Cita::PENDIENTES, true);
                 <?php endif; ?>
                 <?php foreach ($citas as $c): ?>
                     <tr<?= $c['prioritaria'] ? ' class="fila-prioritaria"' : '' ?>>
-                        <td><strong><?= e($c['hora_inicio']) ?></strong>–<?= e($c['hora_fin']) ?></td>
-                        <?php if ($todos): ?><td><?= e($c['medico']) ?></td><?php endif; ?>
-                        <td class="quien">
+                        <td data-label="Hora"><strong><?= e($c['hora_inicio']) ?></strong>–<?= e($c['hora_fin']) ?></td>
+                        <?php if ($todos): ?><td data-label="Médico"><?= e($c['medico']) ?></td><?php endif; ?>
+                        <td class="quien" data-label="Paciente">
                             <strong><?= e($c['paciente']) ?></strong>
                             <span><?= e($c['codigo']) ?> · <?= e($c['paciente_codigo']) ?><?= $c['prioritaria'] ? ' · ' : '' ?></span>
                             <?php if ($c['prioritaria']): ?><span class="marca prioridad">Prioritaria</span><?php endif; ?>
                         </td>
-                        <td><?= e($c['especialidad']) ?></td>
-                        <td><?= e($c['motivo'] ?: '—') ?></td>
-                        <td><span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(Cita::ESTADOS[$c['estado']]) ?></span></td>
+                        <td data-label="Especialidad"><?= e($c['especialidad']) ?></td>
+                        <td data-label="Motivo"><?= e($c['motivo'] ?: '—') ?></td>
+                        <td data-label="Estado"><span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(Cita::ESTADOS[$c['estado']]) ?></span></td>
                         <td class="acciones">
                             <?php if ($pendiente($c) && ($puedeGestionar || $puedeAtender)): ?>
                                 <a class="btn-icono" href="<?= App::url('/citas/estado?codigo=' . rawurlencode($c['codigo'])) ?>" title="Asistencia y estado" aria-label="Estado de <?= e($c['codigo']) ?>"><?= vs_icono('activar') ?></a>

@@ -81,7 +81,11 @@ $exportar = fn (string $formato) => App::url('/reportes?' . http_build_query(arr
                     <tr><td colspan="<?= count($resultado['columnas']) ?>" class="vacio"><?= e($aviso ?? 'Sin resultados.') ?></td></tr>
                 <?php endif; ?>
                 <?php foreach ($resultado['filas'] as $fila): ?>
-                    <tr><?php foreach ($fila as $valor): ?><td><?= e((string) $valor) ?></td><?php endforeach; ?></tr>
+                    <tr>
+                        <?php foreach ($fila as $i => $valor): ?>
+                            <td<?= $i === 0 ? ' class="quien"' : '' ?> data-label="<?= e((string) ($resultado['columnas'][$i] ?? '')) ?>"><?= $i === 0 ? '<strong>' . e((string) $valor) . '</strong>' : e((string) $valor) ?></td>
+                        <?php endforeach; ?>
+                    </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>

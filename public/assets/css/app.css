@@ -1158,6 +1158,9 @@ body.app {
 /* ——— CU09 ——— */
 .selector-medico { margin-bottom: 20px; padding-bottom: 8px; }
 .dos-columnas.columnas-iguales { grid-template-columns: 1fr 1fr; }
+@media (max-width: 800px) {
+    .dos-columnas.columnas-iguales { grid-template-columns: 1fr; }
+}
 .selector-medico select, .columnas-iguales .field input:not([type="checkbox"])[type="time"] { height: 44px; }
 .confirmacion { margin: 0 0 18px; padding: 14px 16px; border: 1px solid #fdba74; border-radius: 14px; background: #fff7ed; color: #9a3412; }
 .confirmacion p { margin: 0 0 10px; }
@@ -2450,7 +2453,7 @@ body.app,
     /* Los "Nuevo …" y "Agregar horario" viven en el botón flotante. */
     [data-fab] { display: none !important; }
     .acciones-horario:not(:has(> :not([data-fab]))) { display: none; }
-    body.con-fab .content { padding-bottom: 104px; }
+    body.con-fab .content { padding-bottom: 132px; }
     body.con-fab .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
 
     .fab {
@@ -2652,6 +2655,13 @@ body.app,
 }
 .resumen-previo h2 { margin: 0; font-size: 1rem; }
 .resumen-previo dl { display: grid; grid-template-columns: 8.5rem 1fr; gap: 4px 12px; margin: 10px 0 0; }
+@media (max-width: 640px) {
+    .resumen-previo dl { grid-template-columns: 1fr; gap: 0; }
+    .resumen-previo dt { margin-top: 8px; }
+    .filtros.filtros-cita > .field,
+    .filtros.filtros-reporte > .field:last-of-type,
+    .filtros.filtros-indicadores > .field:last-of-type { grid-column: 1 / -1; }
+}
 .resumen-previo dt { color: var(--muted); }
 .resumen-previo dd { margin: 0; font-weight: 650; }
 .sin-cupos { margin-top: 8px; }
@@ -2765,7 +2775,20 @@ ul.sin-cupos li { margin: 4px 0; }
 .hoja .subtitulo small { color: var(--muted); font-weight: 500; }
 .acciones-cita { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .acciones-cita form { display: inline-flex; gap: 6px; margin: 0; }
-.acciones-cita .btn-borde { height: 32px; font-size: 0.8rem; }
+.acciones-cita .btn-borde { height: 36px; font-size: 0.8rem; }
+.acciones-cita .btn-icono {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    text-decoration: none;
+}
+.acciones-cita .btn-icono .ico { width: 16px; height: 16px; }
 .mis-citas li { grid-template-columns: 4.5rem 1fr auto; }
 
 /* Comprobante con QR (RF24) */
@@ -2794,7 +2817,8 @@ ul.sin-cupos li { margin: 4px 0; }
 .stat-row.indicadores small { display: block; margin-top: 8px; color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
 .indicadores-tablas { align-items: start; }
 .indicadores-tablas .tabla-responsive .cuentas { min-width: 0; }
-.barra { display: inline-block; width: 70px; height: 8px; margin-right: 6px; border-radius: 99px; vertical-align: middle;
+.indicadores-tablas td:has(.barra) { white-space: nowrap; }
+.barra { display: inline-block; width: 52px; height: 8px; margin-right: 6px; border-radius: 99px; vertical-align: middle;
     background: linear-gradient(90deg, var(--teal-600) var(--valor), var(--fill) var(--valor)); }
 .detalle-ejecucion { margin: 0 0 16px; padding: 12px 14px 12px 32px; border-radius: 12px; background: var(--fill); color: var(--muted); font-size: 0.82rem; }
 .hoja-cabecera form { margin: 0; }
@@ -2812,6 +2836,16 @@ ul.sin-cupos li { margin: 4px 0; }
     .filtros-cita > .btn-primary,
     .filtros-reporte > .btn-primary,
     .filtros-indicadores > .btn-primary { grid-column: 1 / -1; justify-self: stretch; }
+}
+/* El panel resta el menú: en 1280 los 7 filtros de reportes empujan el botón fuera de la tarjeta. */
+@media (max-width: 1560px) {
+    .filtros.filtros-reporte { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .filtros.filtros-reporte > .btn-primary {
+        grid-column: 1 / -1;
+        justify-self: start;
+        width: auto;
+        margin-bottom: 18px;
+    }
 }
 
 @media (max-width: 768px) {

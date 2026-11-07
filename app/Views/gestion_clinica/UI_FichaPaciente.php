@@ -71,13 +71,13 @@ foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
                 <?php endif; ?>
                 <?php foreach ($p['historial'] as $c): ?>
                     <tr>
-                        <td><?= e($c['codigo']) ?></td>
-                        <td><?= e($fecha($c['fecha'])) ?></td>
-                        <td><?= e($c['hora_inicio']) ?></td>
-                        <td><?= e($c['medico']) ?></td>
-                        <td><?= e($c['especialidad']) ?></td>
-                        <td><?= e($valor($c['estado'] === 'CANCELADA' && $c['motivo_cancelacion'] ? $c['motivo'] . ' — cancelada: ' . $c['motivo_cancelacion'] : $c['motivo'])) ?></td>
-                        <td><span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(match ($c['estado']) {
+                        <td class="quien" data-label="Código"><?= e($c['codigo']) ?></td>
+                        <td data-label="Fecha"><?= e($fecha($c['fecha'])) ?></td>
+                        <td data-label="Hora"><?= e($c['hora_inicio']) ?></td>
+                        <td data-label="Médico"><?= e($c['medico']) ?></td>
+                        <td data-label="Especialidad"><?= e($c['especialidad']) ?></td>
+                        <td data-label="Motivo"><?= e($valor($c['estado'] === 'CANCELADA' && $c['motivo_cancelacion'] ? $c['motivo'] . ' — cancelada: ' . $c['motivo_cancelacion'] : $c['motivo'])) ?></td>
+                        <td data-label="Estado"><span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(match ($c['estado']) {
                             'PROGRAMADA' => 'Programada',
                             'CONFIRMADA' => 'Confirmada',
                             'ATENDIDA' => 'Atendida',
