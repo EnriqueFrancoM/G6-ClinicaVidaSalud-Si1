@@ -34,6 +34,7 @@ class UI_GestionarUsuarios extends Controller
             'filtros'    => ['buscar' => $nombre, 'rol' => $idRol, 'estado' => $this->input('estado', '')],
             'form'       => $form,
             'campoError' => Session::flash('campo_error'),
+            'errorForm'  => is_array($form) ? ($_SESSION['_flash']['error'] ?? null) : null,
             'idSesion'   => (int) (Session::user()['id_usuario'] ?? 0),
         ]);
     }

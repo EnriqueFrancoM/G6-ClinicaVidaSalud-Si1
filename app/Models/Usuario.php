@@ -165,21 +165,28 @@ class Usuario extends Model
     public function insertar(array $datos, string $passwordHash): int
     {
         $this->db->beginTransaction();
-        $fila = $this->fetch(
-            'INSERT INTO usuario (id_rol, username, email, password_hash, estado, primer_ingreso)
-             VALUES (:id_rol, :username, :email, :hash, :estado, TRUE)
-             RETURNING id_usuario',
-            [
-                'id_rol'   => $datos['id_rol'],
-                'username' => $datos['username'],
-                'email'    => $datos['email'],
-                'hash'     => $passwordHash,
-                'estado'   => $datos['estado'] ? 'true' : 'false',
-            ]
-        );
-        $idUsuario = (int) $fila['id_usuario'];
-        $this->vincular($idUsuario, $datos['vinculo']);
-        $this->db->commit();
+        try {
+            $fila = $this->fetch(
+                'INSERT INTO usuario (id_rol, username, email, password_hash, estado, primer_ingreso)
+                 VALUES (:id_rol, :username, :email, :hash, :estado, TRUE)
+                 RETURNING id_usuario',
+                [
+                    'id_rol'   => $datos['id_rol'],
+                    'username' => $datos['username'],
+                    'email'    => $datos['email'],
+                    'hash'     => $passwordHash,
+                    'estado'   => $datos['estado'] ? 'true' : 'false',
+                ]
+            );
+            $idUsuario = (int) $fila['id_usuario'];
+            $this->vincular($idUsuario, $datos['vinculo']);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
 
         return $idUsuario;
     }
@@ -187,20 +194,38 @@ class Usuario extends Model
     public function actualizar(int $idUsuario, array $datos): void
     {
         $this->db->beginTransaction();
+        try {
+            $this->execute(
+                'UPDATE usuario
+                    SET id_rol = :id_rol, username = :username, email = :email, estado = :estado
+                  WHERE id_usuario = :id',
+                [
+                    'id'       => $idUsuario,
+                    'id_rol'   => $datos['id_rol'],
+                    'username' => $datos['username'],
+                    'email'    => $datos['email'],
+                    'estado'   => $datos['estado'] ? 'true' : 'false',
+                ]
+            );
+            $this->vincular($idUsuario, $datos['vinculo']);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    // Nueva clave temporal: primer ingreso otra vez y se levantan los intentos fallidos.
+    public function asignarClaveTemporal(int $idUsuario, string $passwordHash): void
+    {
         $this->execute(
             'UPDATE usuario
-                SET id_rol = :id_rol, username = :username, email = :email, estado = :estado
+                SET password_hash = :hash, primer_ingreso = TRUE, intentos_fallidos = 0, bloqueo_hasta = NULL
               WHERE id_usuario = :id',
-            [
-                'id'       => $idUsuario,
-                'id_rol'   => $datos['id_rol'],
-                'username' => $datos['username'],
-                'email'    => $datos['email'],
-                'estado'   => $datos['estado'] ? 'true' : 'false',
-            ]
+            ['hash' => $passwordHash, 'id' => $idUsuario]
         );
-        $this->vincular($idUsuario, $datos['vinculo']);
-        $this->db->commit();
     }
 
     // CU03 E3: los usuarios no se eliminan, se activan o desactivan.

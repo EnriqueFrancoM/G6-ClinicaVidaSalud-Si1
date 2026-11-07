@@ -2,12 +2,14 @@
 
 namespace App\Controllers\Seguridad;
 
+use App\Core\App;
 use App\Core\Session;
 use App\Models\Bitacora;
 use App\Models\Medico;
 use App\Models\Paciente;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Services\ProveedorNotificaciones;
 
 // CU03 control. Mensajes: listarUsuarios(), guardarUsuario(datos).
 class CtrlUsuario
@@ -44,6 +46,9 @@ class CtrlUsuario
         if (($datos['accion'] ?? '') === 'estado') {
             return $this->cambiarEstado($usuarios, $idUsuario, (bool) ($datos['estado'] ?? false));
         }
+        if (($datos['accion'] ?? '') === 'reenviar') {
+            return $this->reenviarClave($usuarios, $idUsuario);
+        }
 
         $limpio = $this->validar($datos);
         if ($limpio === null) {
@@ -70,10 +75,18 @@ class CtrlUsuario
         $bitacora = new Bitacora();
         if ($idUsuario === 0) {
             // Paso 7: contraseña temporal cifrada con password_hash() y primer ingreso.
+            // Primero se confirma el alta. El correo sale después, como en un alta real:
+            // si el correo falla, la cuenta ya existe y se puede reenviar la clave.
             $temporal = $this->generarClaveTemporal();
-            $usuarios->insertar($limpio, password_hash($temporal, PASSWORD_DEFAULT));
-            $bitacora->registrar($this->idSesion(), 'USUARIO', 'Seguridad', 'Registró ' . $limpio['username']);
-            $this->mensaje = 'Usuario registrado. Contraseña temporal: ' . $temporal . ' (deberá cambiarla en el primer ingreso).';
+            try {
+                $usuarios->insertar($limpio, password_hash($temporal, PASSWORD_DEFAULT));
+            } catch (\Throwable $e) {
+                error_log('[CtrlUsuario] ' . $e->getMessage());
+                $this->mensaje = 'No se pudo guardar el usuario. Revise los datos e intente de nuevo.';
+                return false;
+            }
+            $this->anotar($bitacora, 'Registró ' . $limpio['username']);
+            $this->mensaje = $this->avisarClave($limpio['email'], $limpio['username'], $temporal, true);
             return true;
         }
 
@@ -81,11 +94,85 @@ class CtrlUsuario
             $this->mensaje = 'El usuario no existe.';
             return false;
         }
-        $usuarios->actualizar($idUsuario, $limpio);
-        $bitacora->registrar($this->idSesion(), 'USUARIO', 'Seguridad', 'Modificó ' . $limpio['username']);
+        try {
+            $usuarios->actualizar($idUsuario, $limpio);
+        } catch (\Throwable $e) {
+            error_log('[CtrlUsuario] ' . $e->getMessage());
+            $this->mensaje = 'No se pudo guardar el usuario. Revise los datos e intente de nuevo.';
+            return false;
+        }
+        $this->anotar($bitacora, 'Modificó ' . $limpio['username']);
         $this->mensaje = 'Usuario actualizado correctamente.';
 
         return true;
+    }
+
+    private function reenviarClave(Usuario $usuarios, int $idUsuario): bool
+    {
+        $fila = $usuarios->buscarPorId($idUsuario);
+        if ($fila === null) {
+            $this->mensaje = 'El usuario no existe.';
+            return false;
+        }
+        if (!$fila['estado']) {
+            $this->mensaje = 'Active la cuenta antes de reenviar la clave.';
+            return false;
+        }
+        if ($idUsuario === $this->idSesion()) {
+            $this->mensaje = 'No puede reenviar la clave de su propia cuenta.';
+            return false;
+        }
+
+        $temporal = $this->generarClaveTemporal();
+        $usuarios->asignarClaveTemporal($idUsuario, password_hash($temporal, PASSWORD_DEFAULT));
+        $this->anotar(new Bitacora(), 'Reenvió la clave temporal de ' . $fila['username']);
+        $this->mensaje = $this->avisarClave($fila['email'], $fila['username'], $temporal, false);
+
+        return true;
+    }
+
+    // El alta ya quedó guardado. La clave va al correo y no se escribe en la bitácora.
+    private function avisarClave(string $email, string $username, string $temporal, bool $alta): string
+    {
+        $proveedor = new ProveedorNotificaciones();
+        $enviado = $proveedor->enviarMensaje([
+            'canal'        => 'EMAIL',
+            'destinatario' => $email,
+            'asunto'       => 'Tu acceso a ' . App::config('app.name'),
+            'cuerpo'       => $this->cuerpoClave($email, $username, $temporal),
+        ]);
+        if ($enviado) {
+            $this->anotar(new Bitacora(), 'Envió la clave temporal a ' . $email);
+            return $alta
+                ? 'Usuario registrado. La clave temporal se envió a ' . $email . '.'
+                : 'Se envió una nueva clave temporal a ' . $email . '.';
+        }
+
+        $motivo = $proveedor->detalle !== '' ? $proveedor->detalle : 'el correo no está configurado';
+        return ($alta ? 'Usuario registrado, pero el correo no se envió' : 'La clave cambió, pero el correo no se envió')
+            . ' (' . $motivo . '). Clave temporal: ' . $temporal . '. Puede reenviarla desde la lista.';
+    }
+
+    private function cuerpoClave(string $email, string $username, string $temporal): string
+    {
+        $nombre = (string) App::config('app.name');
+
+        return "Hola,\n\n"
+            . "Un administrador creó tu cuenta en {$nombre}. Usá estos datos en el primer ingreso:\n\n"
+            . "Usuario: {$username}\n"
+            . "Correo: {$email}\n"
+            . "Clave temporal: {$temporal}\n\n"
+            . "Al ingresar, el sistema te va a pedir que elijas una clave nueva. No compartas esta clave.\n\n"
+            . 'Ingresar: ' . App::url('/login') . "\n";
+    }
+
+    private function anotar(Bitacora $bitacora, string $detalle): void
+    {
+        try {
+            $bitacora->registrar($this->idBitacora(), 'USUARIO', 'Seguridad', $detalle);
+        } catch (\Throwable $e) {
+            error_log('[CtrlUsuario] bitácora ' . $e->getMessage());
+        }
     }
 
     private function cambiarEstado(Usuario $usuarios, int $idUsuario, bool $activo): bool
@@ -102,12 +189,7 @@ class CtrlUsuario
         }
 
         $usuarios->cambiarEstado($idUsuario, $activo);
-        (new Bitacora())->registrar(
-            $this->idSesion(),
-            'USUARIO',
-            'Seguridad',
-            ($activo ? 'Activó ' : 'Desactivó ') . $fila['username']
-        );
+        $this->anotar(new Bitacora(), ($activo ? 'Activó ' : 'Desactivó ') . $fila['username']);
         $this->mensaje = $activo ? 'Usuario activado.' : 'Usuario desactivado.';
 
         return true;
@@ -181,12 +263,30 @@ class CtrlUsuario
         return null;
     }
 
+    // Cumple la política de primer ingreso: 8+, mayúscula, minúscula, número y símbolo.
     private function generarClaveTemporal(): string
     {
-        $caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-        $clave = '';
-        for ($i = 0; $i < 10; $i++) {
-            $clave .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+        $grupos = [
+            'ABCDEFGHJKLMNPQRSTUVWXYZ',
+            'abcdefghijkmnpqrstuvwxyz',
+            '23456789',
+            '!@#$%*?',
+        ];
+        $caracteres = [];
+        foreach ($grupos as $grupo) {
+            $caracteres[] = $grupo[random_int(0, strlen($grupo) - 1)];
+        }
+        $todos = implode('', $grupos);
+        while (count($caracteres) < 12) {
+            $caracteres[] = $todos[random_int(0, strlen($todos) - 1)];
+        }
+        for ($i = count($caracteres) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$caracteres[$i], $caracteres[$j]] = [$caracteres[$j], $caracteres[$i]];
+        }
+        $clave = implode('', $caracteres);
+        if (!(new Usuario())->validarPolitica($clave)) {
+            return $this->generarClaveTemporal();
         }
 
         return $clave;
@@ -195,5 +295,12 @@ class CtrlUsuario
     private function idSesion(): int
     {
         return (int) ($this->usuarioSesion['id_usuario'] ?? 0);
+    }
+
+    private function idBitacora(): ?int
+    {
+        $id = $this->idSesion();
+
+        return $id > 0 ? $id : null;
     }
 }

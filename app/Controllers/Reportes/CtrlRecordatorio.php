@@ -100,6 +100,79 @@ class CtrlRecordatorio
         return $resumen;
     }
 
+    // Envío de un recordatorio desde la lista. También reintenta uno FALLIDO.
+    public function enviarUno(int $idRecordatorio): bool
+    {
+        $recordatorios = new Recordatorio();
+        if ($recordatorios->obtener($idRecordatorio) === null) {
+            $this->mensaje = 'El recordatorio no existe.';
+            return false;
+        }
+
+        $db = Database::connection();
+        $db->beginTransaction();
+        $cita = null;
+        $enviado = false;
+        $detalle = '';
+        try {
+            $fila = $recordatorios->bloquear($idRecordatorio);
+            if ($fila === null) {
+                $db->rollBack();
+                $this->mensaje = 'El recordatorio no existe.';
+                return false;
+            }
+            if ($fila['estado_envio'] === 'ENVIADO') {
+                $db->rollBack();
+                $this->mensaje = 'Ese recordatorio ya fue enviado.';
+                return false;
+            }
+
+            $cita = (new Cita())->validarCitaVigente((int) $fila['id_cita']);
+            if ($cita === null) {
+                $recordatorios->marcarResultado($idRecordatorio, 'FALLIDO', true);
+                $db->commit();
+                $this->mensaje = 'La cita ya no está vigente. El recordatorio quedó como fallido.';
+                return false;
+            }
+
+            $decision = CanalRecordatorio::efectivo(
+                (string) $fila['canal'],
+                $cita['paciente_email'] ?? null,
+                $cita['paciente_telefono'] ?? null
+            );
+            $proveedor = new ProveedorNotificaciones();
+            $enviado = $proveedor->enviarMensaje([
+                'canal'        => $decision['canal'],
+                'destinatario' => $decision['destinatario'],
+                'asunto'       => 'Recordatorio de su cita ' . $cita['codigo'] . ' – ' . App::config('app.name'),
+                'cuerpo'       => $this->cuerpoMensaje($cita),
+                'parametros'   => $decision['canal'] === 'WHATSAPP' ? $this->parametrosWhatsapp($cita) : [],
+            ]);
+            $detalle = $proveedor->detalle;
+            $recordatorios->marcarResultado($idRecordatorio, $enviado ? 'ENVIADO' : 'FALLIDO', true);
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log('[CtrlRecordatorio] ' . $e->getMessage());
+            $this->mensaje = 'No se pudo enviar el recordatorio.';
+            return false;
+        }
+
+        (new Bitacora())->registrar(
+            (int) ($this->usuarioActual['id_usuario'] ?? 0) ?: null,
+            'RECORDATORIOS',
+            'Reportes',
+            $cita['codigo'] . ': ' . $detalle
+        );
+        $this->mensaje = $enviado
+            ? $cita['codigo'] . ': ' . $detalle
+            : 'No se envió ' . $cita['codigo'] . '. ' . $detalle;
+
+        return $enviado;
+    }
+
     // RF21: la firma ata la cita, la acción y el horario. No sirve para la acción contraria ni tras reprogramar.
     public static function firmar(int $idCita, string $respuesta, string $fecha, string $hora): string
     {

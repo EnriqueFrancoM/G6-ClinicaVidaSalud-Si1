@@ -9,11 +9,27 @@ if (is_file($envFile)) {
 
 $valorEntorno = static function (string $clave, mixed $predeterminado = null) use ($env): mixed {
     if (array_key_exists($clave, $env)) {
-        return $env[$clave];
+        $valor = $env[$clave];
+    } else {
+        $valor = getenv($clave);
+        if ($valor === false) {
+            return $predeterminado;
+        }
+    }
+    if (!is_string($valor)) {
+        return $valor;
+    }
+    $valor = trim($valor);
+    $largo = strlen($valor);
+    if ($largo >= 2) {
+        $abre = $valor[0];
+        $cierra = $valor[$largo - 1];
+        if (($abre === '"' && $cierra === '"') || ($abre === "'" && $cierra === "'")) {
+            $valor = substr($valor, 1, -1);
+        }
     }
 
-    $valor = getenv($clave);
-    return $valor === false ? $predeterminado : $valor;
+    return $valor;
 };
 
 // Render entrega la conexión privada como DATABASE_URL. En local se siguen
@@ -23,9 +39,9 @@ $partesDb = $databaseUrl !== '' ? parse_url($databaseUrl) : [];
 $partesDb = is_array($partesDb) ? $partesDb : [];
 $decodificar = static fn (mixed $valor): string => is_string($valor) ? rawurldecode($valor) : '';
 
-// Correo: MAIL_HOST explícito gana. Si no hay, el relay SMTP de Brevo arma el servidor
-// con el login SMTP y la clave SMTP (xsmtpsib-). La clave REST (xkeysib-) no sirve para SMTP;
-// con esa clave y un remitente verificado el envío usa la API HTTPS.
+// Correo: si hay clave REST de Brevo (xkeysib-) y un remitente verificado, se usa la API
+// HTTPS. En Render el SMTP del puerto 587 se corta. El relay SMTP (MAIL_HOST o
+// BREVO_SMTP_USER + clave xsmtpsib-) queda como respaldo cuando no hay API.
 $mailHost = trim((string) $valorEntorno('MAIL_HOST', ''));
 $mailPort = (int) $valorEntorno('MAIL_PORT', 587);
 $mailUser = trim((string) $valorEntorno('MAIL_USER', ''));
@@ -80,7 +96,7 @@ return [
         'from_name'  => $mailFromName,
         'encryption' => $mailEncryption,
     ],
-    // API HTTPS de Brevo. Solo se usa si no quedó un servidor SMTP (MAIL_HOST o BREVO_SMTP_*).
+    // API HTTPS de Brevo. Si la clave y el remitente están puestos, tiene prioridad sobre SMTP.
     'brevo' => [
         'api_key'     => $brevoApiKey,
         'sender_email'=> $brevoSender,

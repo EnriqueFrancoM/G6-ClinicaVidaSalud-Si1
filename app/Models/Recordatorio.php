@@ -74,11 +74,35 @@ class Recordatorio extends Model
     }
 
     // CU20 paso 6: registra el resultado del intento (ENVIADO o FALLIDO).
-    public function marcarResultado(int $idRecordatorio, string $estado): void
+    public function marcarResultado(int $idRecordatorio, string $estado, bool $reintento = false): void
     {
+        $condicion = $reintento
+            ? "estado_envio IN ('PENDIENTE', 'FALLIDO')"
+            : "estado_envio = 'PENDIENTE'";
         $this->execute(
-            "UPDATE recordatorio SET estado_envio = :estado WHERE id_recordatorio = :id AND estado_envio = 'PENDIENTE'",
+            "UPDATE recordatorio SET estado_envio = :estado WHERE id_recordatorio = :id AND $condicion",
             ['id' => $idRecordatorio, 'estado' => $estado]
+        );
+    }
+
+    public function obtener(int $idRecordatorio): ?array
+    {
+        return $this->fetch(
+            'SELECT id_recordatorio, id_cita, canal, estado_envio
+               FROM recordatorio
+              WHERE id_recordatorio = :id',
+            ['id' => $idRecordatorio]
+        );
+    }
+
+    public function bloquear(int $idRecordatorio): ?array
+    {
+        return $this->fetch(
+            'SELECT id_recordatorio, id_cita, canal, estado_envio
+               FROM recordatorio
+              WHERE id_recordatorio = :id
+                FOR UPDATE',
+            ['id' => $idRecordatorio]
         );
     }
 

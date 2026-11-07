@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Core\App;
 
 // CU20 ProveedorNotificaciones. Mensaje: enviarMensaje(datos).
-// EMAIL: SMTP (MAIL_* o relay de Brevo) o, si no hay servidor, la API HTTPS de Brevo.
+// EMAIL: API HTTPS de Brevo si hay clave y remitente. Si no, SMTP (MAIL_* o relay de Brevo).
+// En Render el puerto 587 se corta, por eso la API va primero.
 // WHATSAPP: Meta Cloud API. SISTEMA: aviso dentro del portal del paciente.
 // Sin proveedor configurado el envío falla de forma controlada (el recordatorio queda FALLIDO).
 class ProveedorNotificaciones
@@ -30,10 +31,18 @@ class ProveedorNotificaciones
             return false;
         }
 
+        $asunto = (string) ($datos['asunto'] ?? '');
+        $cuerpo = (string) ($datos['cuerpo'] ?? '');
+        $clave = trim((string) App::config('brevo.api_key', ''));
+        $remitente = trim((string) App::config('brevo.sender_email', ''));
+        if ($clave !== '' && filter_var($remitente, FILTER_VALIDATE_EMAIL) !== false) {
+            return $this->brevoApi($destino, $asunto, $cuerpo);
+        }
+
         $smtp = App::config('mail');
         if (!empty($smtp['host'])) {
             try {
-                $this->smtp($smtp, $destino, (string) $datos['asunto'], (string) $datos['cuerpo']);
+                $this->smtp($smtp, $destino, $asunto, $cuerpo);
                 $this->detalle = 'Correo aceptado por el servidor SMTP.';
                 return true;
             } catch (\Throwable $e) {
@@ -43,7 +52,8 @@ class ProveedorNotificaciones
             }
         }
 
-        return $this->brevoApi($destino, (string) ($datos['asunto'] ?? ''), (string) ($datos['cuerpo'] ?? ''));
+        $this->detalle = 'Proveedor de correo no configurado.';
+        return false;
     }
 
     private function brevoApi(string $destino, string $asunto, string $cuerpo): bool
