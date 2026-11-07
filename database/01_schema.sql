@@ -191,7 +191,7 @@ CREATE UNIQUE INDEX ux_solicitud_vigente ON solicitud_espera (id_paciente, id_es
 CREATE TABLE recordatorio (
     id_recordatorio  SERIAL PRIMARY KEY,
     id_cita          INT         NOT NULL REFERENCES cita(id_cita) ON UPDATE CASCADE ON DELETE CASCADE,
-    canal            VARCHAR(15) NOT NULL DEFAULT 'EMAIL' CHECK (canal IN ('EMAIL','SISTEMA')),
+    canal            VARCHAR(15) NOT NULL DEFAULT 'EMAIL' CHECK (canal IN ('EMAIL','SISTEMA','WHATSAPP')),
     fecha_programada TIMESTAMP   NOT NULL,
     estado_envio     VARCHAR(15) NOT NULL DEFAULT 'PENDIENTE' CHECK (estado_envio IN ('PENDIENTE','ENVIADO','FALLIDO'))
 );

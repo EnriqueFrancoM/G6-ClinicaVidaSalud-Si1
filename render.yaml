@@ -27,6 +27,33 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
+      - key: MAIL_FROM_NAME
+        sync: false
+      # Brevo: SMTP (login + clave xsmtpsib-) o API REST (xkeysib- + remitente). MAIL_HOST gana si existe.
+      - key: BREVO_SMTP_USER
+        sync: false
+      - key: BREVO_SMTP_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: Clínica Vida Salud
+      - key: RECORDATORIO_CANAL
+        value: auto
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_TEMPLATE
+        sync: false
+      - key: WHATSAPP_TEMPLATE_IDIOMA
+        value: es
+      - key: WHATSAPP_TEMPLATE_MODO
+        value: campos
+      - key: WHATSAPP_PREFIJO
+        value: "591"
 
 databases:
   - name: clinica-vida-salud-db

@@ -35,6 +35,14 @@ No agregue credenciales de PostgreSQL manualmente. Render genera y vincula
 | `APP_DEBUG` | `render.yaml` | `false`. |
 | `PORT` | Render | Automática; no crearla manualmente. |
 | `RENDER_EXTERNAL_URL` | Render | Automática; se usa como URL base. |
+| `APP_KEY` | `render.yaml` | Generada por Render. Firma los enlaces del recordatorio. |
+| `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` | Dashboard, secreto | SMTP propio. Si `MAIL_HOST` tiene valor, no se usa el SMTP de Brevo. |
+| `BREVO_SMTP_USER`, `BREVO_SMTP_KEY` | Dashboard, secreto | Relay `smtp-relay.brevo.com:587`. La clave es la SMTP (`xsmtpsib-`). |
+| `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` | Dashboard, secreto | API REST de Brevo si no hay SMTP. El remitente debe estar verificado. |
+| `BREVO_SENDER_NAME` | `render.yaml` | `Clínica Vida Salud`. |
+| `RECORDATORIO_CANAL` | `render.yaml` | `auto`, `email` o `whatsapp`. |
+| `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TEMPLATE` | Dashboard, secreto | Cloud API. La plantilla cubre el aviso de 24 h. |
+| `WHATSAPP_TEMPLATE_IDIOMA`, `WHATSAPP_TEMPLATE_MODO`, `WHATSAPP_PREFIJO` | `render.yaml` | `es`, `campos`, `591`. |
 
 La variable `SEED_INITIAL_PASSWORD` puede eliminarse después de inicializar la
 base. En arranques posteriores el script detecta el esquema existente y no la

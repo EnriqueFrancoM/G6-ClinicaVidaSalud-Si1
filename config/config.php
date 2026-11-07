@@ -23,6 +23,43 @@ $partesDb = $databaseUrl !== '' ? parse_url($databaseUrl) : [];
 $partesDb = is_array($partesDb) ? $partesDb : [];
 $decodificar = static fn (mixed $valor): string => is_string($valor) ? rawurldecode($valor) : '';
 
+// Correo: MAIL_HOST explícito gana. Si no hay, el relay SMTP de Brevo arma el servidor
+// con el login SMTP y la clave SMTP (xsmtpsib-). La clave REST (xkeysib-) no sirve para SMTP;
+// con esa clave y un remitente verificado el envío usa la API HTTPS.
+$mailHost = trim((string) $valorEntorno('MAIL_HOST', ''));
+$mailPort = (int) $valorEntorno('MAIL_PORT', 587);
+$mailUser = trim((string) $valorEntorno('MAIL_USER', ''));
+$mailPass = (string) $valorEntorno('MAIL_PASS', '');
+$mailFrom = trim((string) $valorEntorno('MAIL_FROM', ''));
+$mailEncryption = strtolower(trim((string) $valorEntorno('MAIL_ENCRYPTION', 'tls')));
+$mailFromName = trim((string) $valorEntorno('MAIL_FROM_NAME', ''));
+$brevoApiKey = trim((string) $valorEntorno('BREVO_API_KEY', ''));
+$brevoSender = trim((string) $valorEntorno('BREVO_SENDER_EMAIL', ''));
+$brevoSenderName = trim((string) $valorEntorno('BREVO_SENDER_NAME', ''));
+$brevoSmtpUser = trim((string) $valorEntorno('BREVO_SMTP_USER', ''));
+$brevoSmtpKey = (string) $valorEntorno('BREVO_SMTP_KEY', '');
+if ($mailHost === '' && $brevoSmtpUser !== '' && $brevoSmtpKey !== '') {
+    $mailHost = 'smtp-relay.brevo.com';
+    $mailPort = (int) $valorEntorno('BREVO_SMTP_PORT', 587);
+    $mailUser = $brevoSmtpUser;
+    $mailPass = $brevoSmtpKey;
+    $mailEncryption = 'tls';
+    if ($mailFrom === '') {
+        $mailFrom = $brevoSender !== '' ? $brevoSender : $brevoSmtpUser;
+    }
+    if ($mailFromName === '') {
+        $mailFromName = $brevoSenderName;
+    }
+}
+
+$canalRecordatorio = strtolower(trim((string) $valorEntorno('RECORDATORIO_CANAL', 'auto')));
+if (!in_array($canalRecordatorio, ['auto', 'email', 'whatsapp'], true)) {
+    $canalRecordatorio = 'auto';
+}
+$modoPlantilla = strtolower(trim((string) $valorEntorno('WHATSAPP_TEMPLATE_MODO', 'campos')));
+if (!in_array($modoPlantilla, ['campos', 'texto'], true)) {
+    $modoPlantilla = 'campos';
+}
 return [
     'app' => [
         'name'     => (string) $valorEntorno('APP_NAME', 'Clínica Vida Salud'),
@@ -33,14 +70,34 @@ return [
         // Firma de los enlaces de confirmar/cancelar de los recordatorios (CU20, RF21).
         'key'      => (string) $valorEntorno('APP_KEY', ''),
     ],
-    // CU20 ProveedorNotificaciones: servidor SMTP para los recordatorios por correo.
+    // CU20 ProveedorNotificaciones. Sin host y sin API de Brevo el correo no se envía.
     'mail' => [
-        'host'       => (string) $valorEntorno('MAIL_HOST', ''),
-        'port'       => (int) $valorEntorno('MAIL_PORT', 587),
-        'user'       => (string) $valorEntorno('MAIL_USER', ''),
-        'pass'       => (string) $valorEntorno('MAIL_PASS', ''),
-        'from'       => (string) $valorEntorno('MAIL_FROM', ''),
-        'encryption' => (string) $valorEntorno('MAIL_ENCRYPTION', 'tls'),
+        'host'       => $mailHost,
+        'port'       => $mailPort,
+        'user'       => $mailUser,
+        'pass'       => $mailPass,
+        'from'       => $mailFrom,
+        'from_name'  => $mailFromName,
+        'encryption' => $mailEncryption,
+    ],
+    // API HTTPS de Brevo. Solo se usa si no quedó un servidor SMTP (MAIL_HOST o BREVO_SMTP_*).
+    'brevo' => [
+        'api_key'     => $brevoApiKey,
+        'sender_email'=> $brevoSender,
+        'sender_name' => $brevoSenderName,
+    ],
+    // Meta Cloud API. Sin token o sin id de número, el recordatorio no elige WhatsApp.
+    'whatsapp' => [
+        'token'            => trim((string) $valorEntorno('WHATSAPP_TOKEN', '')),
+        'phone_number_id'  => trim((string) $valorEntorno('WHATSAPP_PHONE_NUMBER_ID', '')),
+        'template'         => trim((string) $valorEntorno('WHATSAPP_TEMPLATE', '')),
+        'idioma'           => trim((string) $valorEntorno('WHATSAPP_TEMPLATE_IDIOMA', 'es')),
+        'plantilla_modo'   => $modoPlantilla,
+        'prefijo'          => trim((string) $valorEntorno('WHATSAPP_PREFIJO', '591')),
+    ],
+    // auto: WhatsApp si está configurado y hay teléfono; si no, correo; si no, portal.
+    'recordatorio' => [
+        'canal' => $canalRecordatorio,
     ],
     'db' => [
         'host' => (string) $valorEntorno('DB_HOST', $partesDb['host'] ?? '127.0.0.1'),

@@ -36,3 +36,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_solicitud_vigente ON solicitud_espera (id_p
 INSERT INTO especialidad (nombre, descripcion)
 SELECT 'Traumatología', 'Lesiones y enfermedades del sistema musculoesquelético'
  WHERE NOT EXISTS (SELECT 1 FROM especialidad WHERE LOWER(TRIM(nombre)) = 'traumatología');
+
+-- CU20: el recordatorio también puede salir por WhatsApp. No borra filas ni tablas.
+DO $$
+DECLARE
+    definicion text;
+    nombre text;
+BEGIN
+    SELECT c.conname, pg_get_constraintdef(c.oid)
+      INTO nombre, definicion
+      FROM pg_constraint c
+     WHERE c.conrelid = 'public.recordatorio'::regclass
+       AND c.contype = 'c'
+       AND pg_get_constraintdef(c.oid) ILIKE '%canal%'
+     LIMIT 1;
+
+    IF nombre IS NULL THEN
+        ALTER TABLE recordatorio
+            ADD CONSTRAINT recordatorio_canal_check
+            CHECK (canal IN ('EMAIL', 'SISTEMA', 'WHATSAPP'));
+    ELSIF definicion NOT ILIKE '%WHATSAPP%' THEN
+        EXECUTE format('ALTER TABLE recordatorio DROP CONSTRAINT %I', nombre);
+        ALTER TABLE recordatorio
+            ADD CONSTRAINT recordatorio_canal_check
+            CHECK (canal IN ('EMAIL', 'SISTEMA', 'WHATSAPP'));
+    END IF;
+END $$;
+
+-- Quita las columnas de la reserva pagada. No borra filas, tablas ni claves foráneas.
+DROP INDEX IF EXISTS ux_cita_stripe_session;
+ALTER TABLE cita DROP COLUMN IF EXISTS stripe_session;
+ALTER TABLE cita DROP COLUMN IF EXISTS reserva_pagada;

@@ -80,7 +80,7 @@ Mejoras: comprobante con QR (`/citas/comprobante`, RF24), prioridad pediátrica 
 
 **Base existente:** aplicar `database/03_ciclo2.sql` (en Render lo hace `scripts/inicializar-db.sh` al arrancar).
 
-**Recordatorios (actor Tiempo):** programar `php scripts/enviar-recordatorios.php` cada 15 minutos con cron (o el Programador de tareas de Windows). Para enviar correos completar `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` y `MAIL_FROM` en `.env`; sin servidor SMTP los recordatorios por correo quedan como FALLIDO (fallo controlado) y los pacientes sin correo reciben el aviso en el portal. `APP_KEY` firma los enlaces de confirmar/cancelar.
+**Recordatorios (actor Tiempo):** programar `php scripts/enviar-recordatorios.php` cada 15 minutos con cron (o el Programador de tareas de Windows). El canal lo define `RECORDATORIO_CANAL` (`auto`, `email` o `whatsapp`). `auto` usa WhatsApp si `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` están puestos y el paciente tiene teléfono; si no, correo; si no hay correo, el aviso queda en el portal. El correo sale por `MAIL_*` o, si `MAIL_HOST` está vacío, por el SMTP de Brevo (`BREVO_SMTP_USER` y `BREVO_SMTP_KEY`) o por la API (`BREVO_API_KEY` y `BREVO_SENDER_EMAIL`). Sin proveedor el envío queda FALLIDO: no se simula un éxito. La plantilla de WhatsApp (`WHATSAPP_TEMPLATE`) es necesaria para el aviso de 24 h. `APP_KEY` firma los enlaces de confirmar y cancelar. La lista completa está en `.env.example`. El paciente reserva sin pago.
 
 ## Cómo agregar un caso de uso
 
