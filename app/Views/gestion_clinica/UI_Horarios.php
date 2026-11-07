@@ -203,11 +203,11 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                         <?php endif; ?>
                         <?php foreach ($horarios as $h): ?>
                             <tr<?= (int) $form['id_horario'] === (int) $h['id_horario'] ? ' class="seleccionado"' : '' ?>>
-                                <td><?= e($dias[(int) $h['dia_semana']] ?? 'Día ' . $h['dia_semana']) ?></td>
-                                <td><?= e($h['hora_inicio']) ?></td>
-                                <td><?= e($h['hora_fin']) ?></td>
-                                <td><?= (int) $h['duracion_cita_min'] ?> min</td>
-                                <td><span class="estado-pill<?= $h['estado'] ? '' : ' bloqueada' ?>"><?= $h['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
+                                <td class="quien" data-label="Día"><?= e($dias[(int) $h['dia_semana']] ?? 'Día ' . $h['dia_semana']) ?></td>
+                                <td data-label="Inicio"><?= e($h['hora_inicio']) ?></td>
+                                <td data-label="Fin"><?= e($h['hora_fin']) ?></td>
+                                <td data-label="Duración"><?= (int) $h['duracion_cita_min'] ?> min</td>
+                                <td data-label="Estado"><span class="estado-pill<?= $h['estado'] ? '' : ' bloqueada' ?>"><?= $h['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                                 <td class="acciones">
                                     <a class="btn-icono" href="<?= App::url('/horarios?medico=' . $idMedico . '&editar=' . (int) $h['id_horario']) ?>" title="Editar" aria-label="Editar horario del <?= e($dias[(int) $h['dia_semana']] ?? '') ?>"><?= vs_icono('editar') ?></a>
                                     <?php if ($h['estado']): ?>
@@ -274,9 +274,9 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                         <?php endif; ?>
                         <?php foreach ($bloqueos ?? [] as $b): ?>
                             <tr>
-                                <td><?= e(date('d/m/Y', strtotime($b['fecha']))) ?></td>
-                                <td><?= e($b['motivo']) ?></td>
-                                <td><?= $b['id_medico'] === null ? 'Todos (feriado)' : 'Este médico' ?></td>
+                                <td class="quien" data-label="Fecha"><?= e(date('d/m/Y', strtotime($b['fecha']))) ?></td>
+                                <td data-label="Motivo"><?= e($b['motivo']) ?></td>
+                                <td data-label="Aplica a"><?= $b['id_medico'] === null ? 'Todos (feriado)' : 'Este médico' ?></td>
                                 <td class="acciones">
                                     <form method="post" action="<?= App::url('/horarios/bloqueo/quitar') ?>">
                                         <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">

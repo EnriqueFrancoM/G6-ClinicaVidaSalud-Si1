@@ -71,7 +71,7 @@ $nActivos = count(array_filter($roles, fn ($rol) => $activo($rol['estado'])));
                                         $marcado = isset($tiene[$codigo]);
                                         $fijo = $esAdmin && in_array($codigo, $candado, true);
                                         ?>
-                                        <td>
+                                        <td data-label="<?= e($permiso['nombre']) ?>">
                                             <?php if ($fijo): ?>
                                                 <input type="hidden" name="matriz[<?= $idRol ?>][]" value="<?= (int) $permiso['id_permiso'] ?>">
                                             <?php endif; ?>

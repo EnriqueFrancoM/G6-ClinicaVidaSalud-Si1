@@ -43,20 +43,20 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
             <?php endif; ?>
             <?php foreach ($solicitudes as $i => $s): ?>
                 <tr>
-                    <td class="quien">
+                    <td class="quien" data-label="Paciente">
                         <strong><?= e($s['paciente']) ?></strong>
                         <span><?= e($s['paciente_codigo']) ?> · <?= e($s['telefono']) ?></span>
                     </td>
-                    <td><?= e($s['especialidad']) ?></td>
-                    <td>
+                    <td data-label="Especialidad"><?= e($s['especialidad']) ?></td>
+                    <td data-label="Preferencias">
                         <?= e($s['medico_preferido'] ?: 'Cualquier médico') ?>
                         <?php if ($s['fecha_desde'] || $s['fecha_hasta']): ?>
                             <br><small><?= e(trim(($s['fecha_desde'] ? 'desde ' . $fecha($s['fecha_desde']) : '') . ' ' . ($s['fecha_hasta'] ? 'hasta ' . $fecha($s['fecha_hasta']) : ''))) ?></small>
                         <?php endif; ?>
                         <?php if ($s['preferencias']): ?><br><small><?= e($s['preferencias']) ?></small><?php endif; ?>
                     </td>
-                    <td><?= e($s['ingreso']) ?></td>
-                    <td>
+                    <td data-label="Ingreso"><?= e($s['ingreso']) ?></td>
+                    <td data-label="Estado">
                         <span class="estado-pill estado-espera-<?= e(strtolower($s['estado'])) ?>"><?= e(SolicitudEspera::ESTADOS[$s['estado']]) ?></span>
                         <?php if ($s['estado'] === 'OFERTADA'): ?>
                             <br><small>Oferta: <?= e($fecha($s['oferta_fecha']) . ' ' . $s['oferta_inicio'] . ' · ' . $s['oferta_medico']) ?><br>Responder hasta <?= e($s['oferta_vence']) ?></small>

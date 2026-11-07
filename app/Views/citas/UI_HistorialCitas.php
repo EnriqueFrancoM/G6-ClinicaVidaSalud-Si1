@@ -50,13 +50,13 @@ $citas = $historial['citas'] ?? [];
                 <?php endif; ?>
                 <?php foreach ($citas as $c): ?>
                     <tr>
-                        <td><strong><?= e($c['codigo']) ?></strong></td>
-                        <td><?= e(date('d/m/Y', strtotime($c['fecha']))) ?></td>
-                        <td><?= e($c['hora_inicio']) ?></td>
-                        <td><?= e($c['medico']) ?></td>
-                        <td><?= e($c['especialidad']) ?></td>
-                        <td><?= e($c['estado'] === 'CANCELADA' && $c['motivo_cancelacion'] ? ($c['motivo'] ? $c['motivo'] . ' — ' : '') . 'Cancelada: ' . $c['motivo_cancelacion'] : ($c['motivo'] ?: '—')) ?></td>
-                        <td>
+                        <td class="quien" data-label="Código"><strong><?= e($c['codigo']) ?></strong></td>
+                        <td data-label="Fecha"><?= e(date('d/m/Y', strtotime($c['fecha']))) ?></td>
+                        <td data-label="Hora"><?= e($c['hora_inicio']) ?></td>
+                        <td data-label="Médico"><?= e($c['medico']) ?></td>
+                        <td data-label="Especialidad"><?= e($c['especialidad']) ?></td>
+                        <td data-label="Motivo"><?= e($c['estado'] === 'CANCELADA' && $c['motivo_cancelacion'] ? ($c['motivo'] ? $c['motivo'] . ' — ' : '') . 'Cancelada: ' . $c['motivo_cancelacion'] : ($c['motivo'] ?: '—')) ?></td>
+                        <td data-label="Estado">
                             <span class="estado-pill estado-<?= e(strtolower($c['estado'])) ?>"><?= e(Cita::ESTADOS[$c['estado']]) ?></span>
                             <?php if ($c['cambios'] !== []): ?>
                                 <details class="cambios">

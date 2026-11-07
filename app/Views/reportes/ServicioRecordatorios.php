@@ -48,14 +48,14 @@ use function App\Core\e;
             <?php endif; ?>
             <?php foreach ($recordatorios as $r): ?>
                 <tr>
-                    <td class="quien">
+                    <td class="quien" data-label="Cita">
                         <strong><?= e($r['codigo']) ?></strong>
                         <span><?= e(date('d/m/Y', strtotime($r['fecha'])) . ' ' . $r['hora_inicio']) ?> · <?= e(Cita::ESTADOS[$r['estado_cita']] ?? $r['estado_cita']) ?></span>
                     </td>
-                    <td class="quien"><strong><?= e($r['paciente']) ?></strong><span><?= e($r['email'] ?: 'sin correo') ?></span></td>
-                    <td><?= e($r['canal'] === 'EMAIL' ? 'Correo' : 'Portal') ?></td>
-                    <td><?= e($r['fecha_programada']) ?></td>
-                    <td><span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span></td>
+                    <td data-label="Paciente"><strong><?= e($r['paciente']) ?></strong><span><?= e($r['email'] ?: 'sin correo') ?></span></td>
+                    <td data-label="Canal"><?= e($r['canal'] === 'EMAIL' ? 'Correo' : 'Portal') ?></td>
+                    <td data-label="Programado"><?= e($r['fecha_programada']) ?></td>
+                    <td data-label="Envío"><span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

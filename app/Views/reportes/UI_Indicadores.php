@@ -83,9 +83,9 @@ $barra = fn (?float $v) => $v === null ? 0 : max(0, min(100, $v));
                         <?php endif; ?>
                         <?php foreach ($i['porMedico'] as $m): ?>
                             <tr>
-                                <td><?= e($m['medico']) ?></td>
-                                <td><?= (int) $m['ocupadas'] ?> / <?= (int) $m['cupos'] ?></td>
-                                <td><span class="barra" style="--valor: <?= $barra($m['indicador']) ?>%"></span> <?= e($porcentaje($m['indicador'])) ?></td>
+                                <td class="quien" data-label="Médico"><?= e($m['medico']) ?></td>
+                                <td data-label="Citas / cupos"><?= (int) $m['ocupadas'] ?> / <?= (int) $m['cupos'] ?></td>
+                                <td data-label="Ocupación"><span class="barra" style="--valor: <?= $barra($m['indicador']) ?>%"></span> <?= e($porcentaje($m['indicador'])) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -103,9 +103,9 @@ $barra = fn (?float $v) => $v === null ? 0 : max(0, min(100, $v));
                         <?php endif; ?>
                         <?php foreach ($i['demanda'] as $d): ?>
                             <tr>
-                                <td><?= e($d['especialidad']) ?></td>
-                                <td><?= (int) $d['citas'] ?></td>
-                                <td><span class="barra" style="--valor: <?= $barra($d['indicador']) ?>%"></span> <?= e($porcentaje($d['indicador'])) ?></td>
+                                <td class="quien" data-label="Especialidad"><?= e($d['especialidad']) ?></td>
+                                <td data-label="Citas"><?= (int) $d['citas'] ?></td>
+                                <td data-label="Participación"><span class="barra" style="--valor: <?= $barra($d['indicador']) ?>%"></span> <?= e($porcentaje($d['indicador'])) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
