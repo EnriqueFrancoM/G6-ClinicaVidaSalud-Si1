@@ -5,9 +5,16 @@ namespace App\Controllers\Asistente;
 use App\Core\Controller;
 use App\Services\AsistenteOpenRouter;
 
-// Conversación del panel. La clave de OpenRouter no sale al navegador.
+// Módulo de conversación. La clave de OpenRouter no sale al navegador.
 class UI_Asistente extends Controller
 {
+    public function abrir(): void
+    {
+        $this->view('asistente/UI_Asistente', [
+            'listo' => (new AsistenteOpenRouter())->configurado(),
+        ]);
+    }
+
     public function conversar(): void
     {
         header('Content-Type: application/json; charset=utf-8');

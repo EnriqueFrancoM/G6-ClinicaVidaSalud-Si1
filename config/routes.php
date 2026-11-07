@@ -37,6 +37,7 @@ return [
     ['GET',  '/dashboard', [UI_PanelPrincipal::class, 'mostrarMenuSegunRol'], 'auth'],
     ['POST', '/logout',    [UI_PanelPrincipal::class, 'seleccionarCerrarSesion'], 'auth'],
     // Asistente: la clave de OpenRouter es del servidor. Cada operación exige el permiso del rol.
+    ['GET',  '/asistente', [UI_Asistente::class, 'abrir'], 'auth'],
     ['POST', '/asistente', [UI_Asistente::class, 'conversar'], 'auth'],
 
     // CU05 mensaje 1 (desde el menú del perfil)

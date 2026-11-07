@@ -10,6 +10,8 @@ class AsistenteOpenRouter
 {
     private const URL = 'https://openrouter.ai/api/v1/chat/completions';
     private const RONDAS = 6;
+    // Elige un modelo gratuito que esté disponible y acepte herramientas. No gasta crédito.
+    private const MODELO_LIBRE = 'openrouter/free';
 
     public function configurado(): bool
     {
@@ -38,8 +40,9 @@ class AsistenteOpenRouter
         $mensajes[] = ['role' => 'user', 'content' => $mensaje];
 
         $ultimoHecho = '';
+        $modelo = $this->modelo();
         for ($ronda = 0; $ronda < self::RONDAS; $ronda++) {
-            $respuesta = $this->completar($clave, $mensajes, $definiciones);
+            $respuesta = $this->completar($clave, $mensajes, $definiciones, $modelo);
             $llamadas = $respuesta['tool_calls'] ?? [];
             $texto = trim((string) ($respuesta['content'] ?? ''));
             if ($llamadas === []) {
@@ -75,10 +78,40 @@ class AsistenteOpenRouter
         return $ultimoHecho !== '' ? $ultimoHecho : 'La consulta necesitó demasiados pasos. Pida una parte más concreta.';
     }
 
-    private function completar(string $clave, array $mensajes, array $definiciones): array
+    private function modelo(): string
+    {
+        $pedido = trim((string) App::config('openrouter.model', self::MODELO_LIBRE));
+        if ($pedido === '' || $pedido === 'openai/gpt-4o-mini') {
+            return self::MODELO_LIBRE;
+        }
+
+        return $pedido;
+    }
+
+    private function completar(string $clave, array $mensajes, array $definiciones, string $modelo): array
+    {
+        $modelos = [$modelo];
+        if ($modelo !== self::MODELO_LIBRE) {
+            $modelos[] = self::MODELO_LIBRE;
+        }
+
+        foreach ($modelos as $candidato) {
+            $intento = $this->pedir($clave, $mensajes, $definiciones, $candidato);
+            if ($intento['ok'] === true) {
+                return $intento['mensaje'];
+            }
+            if ($intento['reintentar'] !== true) {
+                throw new \RuntimeException($intento['aviso']);
+            }
+        }
+
+        throw new \RuntimeException('Ningún modelo gratuito está disponible ahora. El cupo se renueva a la medianoche UTC.');
+    }
+
+    private function pedir(string $clave, array $mensajes, array $definiciones, string $modelo): array
     {
         $cuerpo = [
-            'model' => (string) App::config('openrouter.model', 'openai/gpt-4o-mini'),
+            'model' => $modelo,
             'messages' => $mensajes,
             'temperature' => 0.2,
         ];
@@ -88,7 +121,7 @@ class AsistenteOpenRouter
         }
         $json = json_encode($cuerpo, JSON_UNESCAPED_UNICODE);
         if ($json === false) {
-            throw new \RuntimeException('No se pudo preparar la consulta.');
+            return ['ok' => false, 'reintentar' => false, 'aviso' => 'No se pudo preparar la consulta.', 'mensaje' => []];
         }
 
         $respuesta = (new ClienteHttp())->enviar('POST', self::URL, $json, [
@@ -100,19 +133,44 @@ class AsistenteOpenRouter
 
         $datos = json_decode($respuesta['cuerpo'], true);
         if (!is_array($datos) || $respuesta['codigo'] < 200 || $respuesta['codigo'] >= 300) {
-            $aviso = is_array($datos) ? (string) ($datos['error']['message'] ?? '') : '';
-            if ($aviso === '' || str_contains($aviso, $clave)) {
-                $aviso = 'OpenRouter respondió HTTP ' . $respuesta['codigo'] . '.';
-            }
-            throw new \RuntimeException(mb_substr($aviso, 0, 240));
+            $crudo = is_array($datos) ? (string) ($datos['error']['message'] ?? '') : '';
+            $aviso = $this->aviso($respuesta['codigo'], $crudo, $clave);
+
+            return ['ok' => false, 'reintentar' => $this->reintentar($respuesta['codigo'], $crudo), 'aviso' => $aviso, 'mensaje' => []];
         }
 
         $mensaje = $datos['choices'][0]['message'] ?? null;
         if (!is_array($mensaje)) {
-            throw new \RuntimeException('OpenRouter no devolvió una respuesta.');
+            return ['ok' => false, 'reintentar' => true, 'aviso' => 'OpenRouter no devolvió una respuesta.', 'mensaje' => []];
         }
 
-        return $mensaje;
+        return ['ok' => true, 'reintentar' => false, 'aviso' => '', 'mensaje' => $mensaje];
+    }
+
+    private function reintentar(int $codigo, string $aviso): bool
+    {
+        if ($codigo === 401) {
+            return false;
+        }
+        if (preg_match('/limit|quota|credit|rate|endpoint|unavailable|provider|model/i', $aviso)) {
+            return true;
+        }
+
+        return $codigo === 402 || $codigo === 404 || $codigo === 408 || $codigo === 429 || $codigo >= 500;
+    }
+
+    private function aviso(int $codigo, string $aviso, string $clave): string
+    {
+        if ($aviso === '' || ($clave !== '' && str_contains($aviso, $clave))) {
+            return 'OpenRouter respondió HTTP ' . $codigo . '.';
+        }
+        $aviso = preg_replace('#https?://\S+#', '', $aviso) ?? $aviso;
+        $aviso = trim((string) preg_replace('/\s+/', ' ', $aviso));
+        if (preg_match('/limit|quota|credit|rate/i', $aviso)) {
+            return 'Ese modelo no tiene cupo. Se usa un modelo gratuito disponible.';
+        }
+
+        return mb_substr($aviso, 0, 240);
     }
 
     private function sistema(array $definiciones): array

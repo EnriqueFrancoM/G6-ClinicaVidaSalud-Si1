@@ -57,7 +57,7 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
-        value: openai/gpt-4o-mini
+        value: openrouter/free
 
 databases:
   - name: clinica-vida-salud-db
