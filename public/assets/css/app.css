@@ -503,7 +503,17 @@ body.app {
 .sidebar a:hover { background: #f9fafb; color: #111827; }
 .sidebar a:hover svg { transform: translateX(3px); }
 .sidebar a.active { background: #e7f4f2; color: #0f4f4c; font-weight: 650; }
+.sidebar a.menu-destacado:not(.active) { color: #0f4f4c; font-weight: 650; background: #f3faf9; }
 .sidebar a[hidden] { display: none; }
+.menu-grupo { margin-top: 14px; }
+.menu-grupo-titulo {
+    margin: 0 4px 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3a8;
+}
 
 .workspace {
     display: flex;
@@ -683,6 +693,7 @@ body.app {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 16px;
+    margin-bottom: 18px;
 }
 
 .stat-stack {
@@ -694,8 +705,8 @@ body.app {
 .stat-card,
 .panel-card,
 .user-card {
-    background: #fff;
-    border: 1px solid rgba(243, 244, 246, 0.9);
+    background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 24px;
     box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
 }
@@ -744,7 +755,7 @@ body.app {
 .stat-card:nth-child(2)::before { background: var(--gold); }
 .stat-card:nth-child(3)::before { background: var(--teal-800); }
 .stat-card > * { position: relative; z-index: 1; }
-.stat-card span { color: #6b7280; font-size: 0.78rem; }
+.stat-card span { color: var(--muted); font-size: 0.78rem; }
 .stat-card strong {
     display: block;
     margin-top: 8px;
@@ -779,7 +790,7 @@ body.app {
 .modulo-vacio { min-height: 148px; }
 .stat-card.modulo-vacio { min-height: 96px; }
 .panel-card h2 { margin: 0; font-size: 1rem; }
-.panel-card header p { margin: 4px 0 0; color: #6b7280; font-size: 0.78rem; }
+.panel-card header p { margin: 4px 0 0; color: var(--muted); font-size: 0.78rem; }
 
 .bars {
     display: flex;
@@ -827,7 +838,7 @@ body.app {
 .bar.cancelada > span { background: #9b1c1c; }
 .bar.inasistencia > span { background: #d1d5db; }
 .bar strong { margin-top: 8px; font-size: 0.85rem; }
-.bar small { color: #6b7280; font-size: 0.68rem; }
+.bar small { color: var(--muted); font-size: 0.68rem; }
 
 .agenda { list-style: none; margin: 18px 0 0; padding: 0; }
 .agenda li {
@@ -1702,12 +1713,16 @@ body.app,
     background: #142328;
     color: #eef6f6;
 }
-[data-theme="dark"] .sidebar a.active {
+[data-theme="dark"] .sidebar a.active,
+[data-theme="dark"] .sidebar a.menu-destacado:not(.active) {
     background: rgba(20, 184, 166, 0.18);
     color: #5eead4;
-    border-left: 3px solid #2dd4bf;
     font-weight: 650;
 }
+[data-theme="dark"] .sidebar a.active {
+    border-left: 3px solid #2dd4bf;
+}
+[data-theme="dark"] .menu-grupo-titulo { color: #7d949c; }
 
 /* Campos de Formulario */
 [data-theme="dark"] .menu-search input,
@@ -2575,4 +2590,371 @@ body.app,
     .cuentas td.marcas { flex-wrap: wrap; justify-content: flex-end; gap: 6px; white-space: normal; }
     .cuentas td.marcas::before { margin-right: auto; }
     .marcas .marca { margin-right: 0; }
+}
+
+/* ——— Ciclo #2: P3 Gestión de Citas, P4 Portal del Paciente, P5 Reportes ——— */
+.filtros.filtros-cita { grid-template-columns: minmax(180px, 1.3fr) minmax(150px, 1fr) minmax(200px, 1.5fr) minmax(140px, 0.8fr) auto; align-items: end; }
+.filtros.filtros-codigo { grid-template-columns: minmax(180px, 320px) auto; align-items: end; justify-content: start; }
+.filtros.filtros-reporte { grid-template-columns: minmax(200px, 1.6fr) repeat(2, minmax(130px, 0.8fr)) repeat(3, minmax(130px, 1fr)) auto; align-items: end; }
+.filtros.filtros-indicadores { grid-template-columns: repeat(2, minmax(130px, 0.8fr)) repeat(2, minmax(150px, 1fr)) auto; align-items: end; }
+.filtros-cita > .btn-primary,
+.filtros-codigo > .btn-primary,
+.filtros-codigo > .btn-borde,
+.filtros-reporte > .btn-primary,
+.filtros-indicadores > .btn-primary { height: 44px; margin-bottom: 18px; justify-self: start; }
+.filtros-codigo > .btn-borde { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; }
+
+/* Horarios libres como opciones (CU11, CU12, CU18) */
+.form-cupos { margin-top: 8px; }
+.cupos { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin: 4px 0 18px; padding: 2px; border-radius: 12px; }
+.cupos.is-invalid { box-shadow: 0 0 0 2px #e4b4b4; }
+.cupo { position: relative; cursor: pointer; }
+.cupo input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.cupo span {
+    display: grid;
+    place-items: center;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+.cupo:hover span { border-color: var(--teal-500); }
+.cupo input:checked + span { background: var(--teal-700); border-color: var(--teal-700); color: #fff; }
+.cupo input:focus-visible + span { outline: 2px solid var(--teal-500); outline-offset: 2px; }
+.cupo input:disabled + span { opacity: 0.5; cursor: not-allowed; font-size: 0.78rem; }
+.cupos-con-medico { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.cupos-con-medico .cupo span {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 12px;
+    place-items: start;
+    line-height: 1.25;
+}
+.cupos-con-medico .cupo span small {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.cupos-con-medico .cupo input:checked + span small { color: #fff; }
+.error-campo { margin: 6px 0 0; color: var(--danger); font-size: 0.86rem; }
+.resumen-previo {
+    margin: 8px 0 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--teal-700);
+    border-radius: 14px;
+    background: var(--surface);
+}
+.resumen-previo h2 { margin: 0; font-size: 1rem; }
+.resumen-previo dl { display: grid; grid-template-columns: 8.5rem 1fr; gap: 4px 12px; margin: 10px 0 0; }
+.resumen-previo dt { color: var(--muted); }
+.resumen-previo dd { margin: 0; font-weight: 650; }
+.sin-cupos { margin-top: 8px; }
+.sin-cupos .subtitulo { margin: 16px 0 8px; }
+ul.sin-cupos { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+ul.sin-cupos li { margin: 4px 0; }
+.cupos-opciones { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.opcion-cupo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 68px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--fill);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+.opcion-cupo::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-left: auto;
+    border-top: 2px solid var(--muted);
+    border-right: 2px solid var(--muted);
+    transform: rotate(45deg);
+    flex: none;
+}
+.opcion-marca {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    flex: none;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--teal-100);
+    color: var(--teal-800);
+    line-height: 1.05;
+}
+.opcion-marca b { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.opcion-marca small {
+    color: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.opcion-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.opcion-texto strong { font-weight: 650; font-variant-numeric: tabular-nums; }
+.opcion-texto small { color: var(--muted); font-size: 0.78rem; }
+.opcion-cupo:hover { border-color: var(--teal-500); background: var(--surface); }
+.opcion-cupo:hover::after { border-color: var(--teal-500); }
+.opcion-cupo:focus-visible { outline: 2px solid var(--teal-700); outline-offset: 2px; }
+[data-theme="dark"] .opcion-marca { color: var(--teal-300); }
+
+.resultado-cita {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+    margin: 0 0 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ok);
+    border-radius: 14px;
+    background: var(--ok-bg);
+}
+.resultado-cita p { margin: 0; color: var(--muted); }
+.resultado-cita .acciones-cabecera { margin-top: 10px; }
+.codigo-cita { font-family: var(--display); font-size: 2rem; letter-spacing: 0.02em; color: var(--ink); }
+.ficha.ficha-cita { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; }
+.ficha dd small { color: var(--muted); }
+
+/* Agenda: prioridad pediátrica (RF23) */
+.cuentas tr.fila-prioritaria td { background: rgba(228, 194, 122, 0.14); }
+.marca.prioridad { color: #7a5b16; background: #f8f1de; margin-left: 4px; }
+[data-theme="dark"] .marca.prioridad { color: #fde047; background: rgba(245, 158, 11, 0.18); }
+
+/* Historial de cambios de estado (CU16) */
+.cambios { margin-top: 6px; font-size: 0.78rem; }
+.cambios summary { cursor: pointer; color: var(--teal-700); font-weight: 600; }
+.cambios ol { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+.cambios li { margin: 3px 0; }
+.cambios time { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Lista de espera (CU21) y recordatorios (CU20) */
+.acciones-espera { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.acciones-espera .btn-chico,
+.acciones-espera .btn-borde { height: 32px; padding: 0 12px; font-size: 0.8rem; }
+.estado-espera-activa { background: #e7f4f2; color: #0f4f4c; }
+.estado-espera-ofertada { background: #f8f1de; color: #7a5b16; }
+.estado-espera-asignada { background: var(--ok-bg); color: var(--ok); }
+.estado-espera-cancelada { background: var(--danger-bg); color: var(--danger); }
+.envio-pendiente { background: #f8f1de; color: #7a5b16; }
+.envio-enviado { background: var(--ok-bg); color: var(--ok); }
+.envio-fallido { background: var(--danger-bg); color: var(--danger); }
+[data-theme="dark"] .estado-espera-activa { background: rgba(20, 184, 166, 0.18); color: #5eead4; }
+[data-theme="dark"] .estado-espera-ofertada,
+[data-theme="dark"] .envio-pendiente { background: rgba(245, 158, 11, 0.18); color: #fde047; }
+
+.btn-primary.btn-peligro-solido { background: var(--danger); }
+.btn-primary.btn-peligro-solido:hover { background: #7f1616; }
+[data-theme="dark"] .btn-primary.btn-peligro-solido { background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%); }
+
+/* Mis citas (CU18) */
+.bloque-reserva { margin: 0 0 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; }
+.bloque-reserva > .subtitulo { margin-top: 0; }
+.hoja .subtitulo { margin: 22px 0 8px; font-size: 1rem; color: var(--ink); }
+.hoja .subtitulo small { color: var(--muted); font-weight: 500; }
+.acciones-cita { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.acciones-cita form { display: inline-flex; gap: 6px; margin: 0; }
+.acciones-cita .btn-borde { height: 32px; font-size: 0.8rem; }
+.mis-citas li { grid-template-columns: 4.5rem 1fr auto; }
+
+/* Comprobante con QR (RF24) */
+.comprobante-cuerpo { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: start; }
+.comprobante-qr { display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.comprobante-qr svg { display: block; width: 200px; height: 200px; }
+.comprobante-qr .codigo-cita { color: #102226; font-size: 1.5rem; }
+.eyebrow-cita { margin: 0 0 10px; color: var(--teal-700); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* Registro del paciente y respuesta al recordatorio (fuera del panel de acceso) */
+.auth-page:has(.registro-pagina) { height: auto; min-height: 100dvh; overflow: auto; background: var(--canvas); }
+.registro-pagina { width: min(980px, 100%); margin: 0 auto; padding: 28px 20px 48px; }
+.registro-pagina > .auth-brand { display: inline-flex; margin: 0 0 18px; color: var(--ink); text-decoration: none; }
+.respuesta-recordatorio { width: min(560px, 100%); }
+.respuesta-recordatorio .hoja { padding-bottom: 24px; }
+.respuesta-recordatorio h1 { margin: 0 0 14px; font-family: var(--display); font-weight: 500; }
+
+/* Reportes e indicadores (CU19, CU22) */
+.reporte-cabecera { margin-top: 10px; align-items: flex-end; }
+.reporte-cabecera h2 { margin: 0; font-size: 1.15rem; }
+.reporte-cabecera .nota { margin: 4px 0 0; color: var(--muted); font-size: 0.8rem; }
+.reporte-cabecera .btn-borde { gap: 6px; height: 38px; }
+.reporte-cabecera .btn-borde .ico { width: 16px; height: 16px; }
+.ficha.resumen-reporte { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--fill); }
+.stat-row.indicadores { margin: 4px 0 20px; }
+.stat-row.indicadores small { display: block; margin-top: 8px; color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.indicadores-tablas { align-items: start; }
+.indicadores-tablas .tabla-responsive .cuentas { min-width: 0; }
+.barra { display: inline-block; width: 70px; height: 8px; margin-right: 6px; border-radius: 99px; vertical-align: middle;
+    background: linear-gradient(90deg, var(--teal-600) var(--valor), var(--fill) var(--valor)); }
+.detalle-ejecucion { margin: 0 0 16px; padding: 12px 14px 12px 32px; border-radius: 12px; background: var(--fill); color: var(--muted); font-size: 0.82rem; }
+.hoja-cabecera form { margin: 0; }
+.hoja code { padding: 1px 5px; border-radius: 6px; background: var(--fill); font-size: 0.85em; }
+
+@media print {
+    .comprobante { box-shadow: none; }
+    .toast, .fab { display: none !important; }
+}
+
+@media (max-width: 1100px) {
+    .filtros.filtros-cita,
+    .filtros.filtros-reporte,
+    .filtros.filtros-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .filtros-cita > .btn-primary,
+    .filtros-reporte > .btn-primary,
+    .filtros-indicadores > .btn-primary { grid-column: 1 / -1; justify-self: stretch; }
+}
+
+@media (max-width: 768px) {
+    .filtros.filtros-codigo { grid-template-columns: minmax(0, 1fr) auto; }
+    .filtros-codigo > .btn-primary,
+    .filtros-codigo > .btn-borde { width: auto; margin-bottom: 0; align-self: end; }
+    .comprobante-cuerpo { grid-template-columns: 1fr; justify-items: center; }
+    .comprobante-cuerpo > div:last-child { width: 100%; }
+    .mis-citas li { grid-template-columns: 3.5rem minmax(0, 1fr); }
+    .mis-citas .acciones-cita { grid-column: 1 / -1; justify-content: flex-start; }
+    .reporte-cabecera { flex-direction: column; align-items: stretch; }
+    .ficha.ficha-cita { grid-template-columns: 1fr 1fr; }
+}
+
+/* Administración: el mismo resumen visual que indicadores, ficha y agenda. */
+.acceso-admin {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    min-height: 118px;
+}
+.acceso-admin strong {
+    font-family: var(--display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+}
+.acceso-admin small {
+    display: block;
+    margin-top: auto;
+    padding-top: 10px;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+.panel-dia { display: flex; flex-direction: column; gap: 16px; }
+.panel-dia > .hoja { margin: 0; }
+.panel-card .flujo { margin-top: 18px; }
+.panel-card .visita-hora { margin: 10px 0 0; }
+.visita-nombre {
+    margin: 6px 0 0;
+    font-family: var(--display);
+    font-size: 1.45rem;
+    letter-spacing: -0.03em;
+}
+.visita-detalle { margin: 4px 0 12px; color: var(--muted); font-size: 0.84rem; }
+.panel-card .subtitulo { margin-top: 22px; }
+.quien-persona {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.quien-persona .persona-marca {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+}
+.quien-persona > div { min-width: 0; }
+.quien-persona strong,
+.quien-persona > div > span { display: block; }
+.rol-meta {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.matriz-roles input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+.detalle-bitacora {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+.desc-corta { color: var(--muted); max-width: 36rem; }
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .panel-card {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+[data-theme="dark"] .agenda li { border-top-color: var(--line); }
+[data-theme="dark"] .agenda li:hover { background: var(--fill); }
+[data-theme="dark"] .flujo .track { background: var(--fill); }
+[data-theme="dark"] .chart-total,
+[data-theme="dark"] .visita-hora,
+[data-theme="dark"] .visita h2 { color: var(--ink); }
+
+.portal-inicio { display: flex; flex-direction: column; gap: 16px; }
+.portal-inicio > .hoja { margin: 0; }
+.proxima-cita { max-width: 28rem; }
+.tarjeta-medico .persona { margin-bottom: 0; }
+.tarjeta-medico .persona h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+}
+.tarjeta-medico .persona p { margin: 4px 0 0; }
+.tarjetas-medicos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+.tarjeta-medico {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+.tarjeta-horarios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.tarjeta-horarios a {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+.tarjeta-horarios a:hover { border-color: var(--teal-700); color: var(--teal-700); }
+.portal-inicio a:focus-visible,
+.tarjeta-horarios a:focus-visible {
+    outline: 2px solid var(--teal-700);
+    outline-offset: 2px;
+}
+[data-theme="dark"] .tarjeta-medico { background: var(--surface); }
+@media (max-width: 640px) {
+    .tarjetas-medicos { grid-template-columns: 1fr; }
+    .portal-inicio .hoja-cabecera { align-items: flex-start; }
+    .tarjeta-horarios a { min-height: 44px; display: inline-flex; align-items: center; }
 }

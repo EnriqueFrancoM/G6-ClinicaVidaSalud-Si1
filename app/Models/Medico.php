@@ -6,7 +6,7 @@ use App\Core\Model;
 
 // Entidad Medico. CU03: listar() para el vínculo con un usuario.
 // CU08: buscar(filtro), existeRegistro(), insertar(), actualizar(), cambiarEstado().
-// CU09: verificarActivo().
+// CU09: verificarActivo(). CU15: validarMédico(id).
 class Medico extends Model
 {
     public function listar(): array
@@ -58,11 +58,80 @@ class Medico extends Model
         return $filas;
     }
 
+    // Portal del paciente: médicos activos, con horario activo y especialidad activa.
+    // No incluye teléfono ni correo.
+    public function directorioConHorario(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT m.id_medico, m.nombres, m.apellidos, m.nro_registro_prof,
+                    e.id_especialidad, e.nombre AS especialidad
+               FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+               JOIN especialidad e ON e.id_especialidad = me.id_especialidad AND e.estado = TRUE
+              WHERE m.estado = TRUE
+                AND EXISTS (
+                    SELECT 1 FROM horario_atencion h
+                     WHERE h.id_medico = m.id_medico AND h.estado = TRUE
+                )
+              ORDER BY m.apellidos, m.nombres, e.nombre"
+        );
+        $grupos = [];
+        foreach ($filas as $fila) {
+            $id = (int) $fila['id_medico'];
+            if (!isset($grupos[$id])) {
+                $grupos[$id] = [
+                    'id_medico'       => $id,
+                    'nombres'         => $fila['nombres'],
+                    'apellidos'       => $fila['apellidos'],
+                    'registro'        => $fila['nro_registro_prof'],
+                    'especialidades'  => [],
+                ];
+            }
+            $grupos[$id]['especialidades'][] = [
+                'id_especialidad' => (int) $fila['id_especialidad'],
+                'nombre'          => $fila['especialidad'],
+            ];
+        }
+
+        return array_values($grupos);
+    }
+
     // CU09 mensaje 6 / E4: solo un médico activo puede recibir nuevos horarios.
     public function verificarActivo(int $idMedico): bool
     {
         $fila = $this->fetch('SELECT estado FROM medico WHERE id_medico = :id', ['id' => $idMedico]);
         return $fila !== null && in_array($fila['estado'], [true, 't', '1', 1], true);
+    }
+
+    // CU15 mensaje validarMédico(id): el médico existe (activo o no, para consultar su agenda histórica).
+    public function validarMedico(int $idMedico): ?array
+    {
+        return $this->fetch(
+            "SELECT id_medico, id_usuario, codigo, nombres || ' ' || apellidos AS nombre, estado FROM medico WHERE id_medico = :id",
+            ['id' => $idMedico]
+        );
+    }
+
+    // CU15 paso 3: el médico vinculado al usuario de la sesión (su agenda es la única que puede ver).
+    public function obtenerPorUsuario(int $idUsuario): ?array
+    {
+        return $this->fetch(
+            "SELECT id_medico, codigo, nombres || ' ' || apellidos AS nombre FROM medico WHERE id_usuario = :usuario",
+            ['usuario' => $idUsuario]
+        );
+    }
+
+    // CU11 / CU18: el médico está activo y atiende la especialidad (RN04, RN15).
+    public function atiendeEspecialidad(int $idMedico, int $idEspecialidad): bool
+    {
+        $fila = $this->fetch(
+            'SELECT 1 FROM medico m
+               JOIN medico_especialidad me ON me.id_medico = m.id_medico
+               JOIN especialidad e ON e.id_especialidad = me.id_especialidad
+              WHERE m.id_medico = :medico AND me.id_especialidad = :especialidad AND m.estado = TRUE AND e.estado = TRUE',
+            ['medico' => $idMedico, 'especialidad' => $idEspecialidad]
+        );
+        return $fila !== null;
     }
 
     // CU08 E1: ¿el n.º de registro profesional ya está registrado en otro médico?

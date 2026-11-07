@@ -75,6 +75,6 @@ $ultimoIntento = Session::flash('login_last_attempt') === '1';
             <button class="btn-primary" type="submit" name="btnIngresar">Iniciar sesión</button>
         </form>
 
-        <p class="auth-note">¿Olvidó su contraseña? Contacte al administrador.</p>
+        <p class="auth-note">¿Es paciente y no tiene cuenta? <a href="<?= App::url('/registro') ?>">Regístrese</a><br>¿Olvidó su contraseña? Contacte al administrador.</p>
     </section>
 </div>

@@ -47,7 +47,8 @@ INSERT INTO especialidad (nombre, descripcion) VALUES
  ('Pediatría','Atención de niños de 0 a 14 años'),
  ('Ginecología','Salud integral de la mujer'),
  ('Odontología','Salud bucal'),
- ('Cardiología','Diagnóstico y tratamiento de enfermedades del corazón');
+ ('Cardiología','Diagnóstico y tratamiento de enfermedades del corazón'),
+ ('Traumatología','Lesiones y enfermedades del sistema musculoesquelético');
 
 INSERT INTO medico (id_usuario, codigo, nro_registro_prof, nombres, apellidos, telefono, email) VALUES
  (4,'MED-001','CMB-12345','Juan','Pérez Rojas','71011223','jperez@vidasalud.bo'),

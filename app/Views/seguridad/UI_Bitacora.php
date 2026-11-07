@@ -27,9 +27,18 @@ $etiquetaModulo = static function (array $fila): string {
 ?>
 <section class="hoja" data-ui="UI_Bitacora">
     <header class="hoja-cabecera">
-        <h1>Registro de actividades</h1>
+        <div>
+            <h1>Registro de actividades</h1>
+            <p class="lede">Solo lectura. Al abrir se muestran los movimientos de hoy; el filtro abre el historial.</p>
+        </div>
         <a class="btn-borde" id="btnExportar" href="<?= App::url('/bitacora/exportar?' . http_build_query($consulta)) ?>">Exportar CSV</a>
     </header>
+    <div class="stat-row">
+        <article class="stat-card lift-card"><span>En el filtro</span><strong><?= (int) $total ?></strong></article>
+        <article class="stat-card lift-card"><span>En esta página</span><strong><?= count($registros) ?></strong></article>
+        <article class="stat-card lift-card"><span>En la base</span><strong><?= (int) $totalGeneral ?></strong></article>
+        <article class="stat-card lift-card"><span>Páginas</span><strong><?= $paginas ?></strong></article>
+    </div>
     <?php if ($soloHoy): ?>
         <p class="aviso-rango">Al abrir la bitácora se muestran solo los movimientos de hoy: <?= (int) $total ?>. En la base hay <?= (int) $totalGeneral ?>.
             <?php if ($totalGeneral > $total): ?><a href="<?= App::url('/bitacora/filtrar') ?>">Ver historial completo</a><?php endif; ?>
@@ -89,11 +98,14 @@ $etiquetaModulo = static function (array $fila): string {
                     : (str_contains($accion, 'LOGIN') || str_contains($accion, 'ACTIV') ? ' tono-ok' : '');
                 ?>
                 <tr>
-                    <td><?= e(date('d/m/Y H:i', strtotime($fila['fecha_hora']))) ?></td>
-                    <td class="quien"><strong><?= e($fila['usuario']) ?></strong></td>
-                    <td><?= e($etiquetaModulo($fila)) ?></td>
-                    <td class="accion<?= e($tono) ?>"><?= e(trim($accion . ' ' . ($fila['detalle'] ?? ''))) ?></td>
-                    <td><?= e($fila['ip']) ?></td>
+                    <td class="quien" data-label="Fecha"><?= e(date('d/m/Y H:i', strtotime($fila['fecha_hora']))) ?></td>
+                    <td data-label="Usuario"><strong><?= e($fila['usuario']) ?></strong></td>
+                    <td data-label="Módulo"><?= e($etiquetaModulo($fila)) ?></td>
+                    <td data-label="Acción">
+                        <span class="estado-pill<?= $tono === ' tono-alerta' ? ' bloqueada' : '' ?>"><?= e($accion) ?></span>
+                        <?php if (!empty($fila['detalle'])): ?><span class="detalle-bitacora"><?= e($fila['detalle']) ?></span><?php endif; ?>
+                    </td>
+                    <td data-label="IP"><?= e($fila['ip']) ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

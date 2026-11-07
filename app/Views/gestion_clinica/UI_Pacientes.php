@@ -11,12 +11,36 @@ $pacientes = $pacientes ?? [];
 $campoError = $campoError ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
+$edadDe = function (?string $nacimiento): ?int {
+    if ($nacimiento === null || $nacimiento === '') {
+        return null;
+    }
+    return (new DateTime($nacimiento))->diff(new DateTime('today'))->y;
+};
+$inicialesDe = function (string $texto): string {
+    $partes = preg_split('/\s+/', trim($texto)) ?: [];
+    $iniciales = '';
+    foreach (array_slice(array_filter($partes), 0, 2) as $parte) {
+        $iniciales .= mb_strtoupper(mb_substr($parte, 0, 1));
+    }
+    return $iniciales !== '' ? $iniciales : 'P';
+};
+$activos = count(array_filter($pacientes, fn ($fila) => $fila['estado']));
+$conCorreo = count(array_filter($pacientes, fn ($fila) => !empty($fila['email'])));
 ?>
 <section class="hoja" data-ui="UI_Pacientes">
     <header class="hoja-cabecera">
-        <h1>Búsqueda de pacientes</h1>
+        <div>
+            <h1>Búsqueda de pacientes</h1>
+            <p class="lede">Ficha, contacto y acceso al historial de citas. La desactivación conserva el historial.</p>
+        </div>
         <a class="btn-primary btn-chico" data-fab href="<?= App::url('/pacientes?nuevo=1') ?>">Nuevo paciente</a>
     </header>
+    <div class="stat-row">
+        <article class="stat-card lift-card"><span>En esta vista</span><strong><?= count($pacientes) ?></strong></article>
+        <article class="stat-card lift-card"><span>Activos</span><strong><?= $activos ?></strong></article>
+        <article class="stat-card lift-card"><span>Con correo</span><strong><?= $conCorreo ?></strong></article>
+    </div>
 
     <form class="filtros filtros-bitacora filtros-medicos" method="get" action="<?= App::url('/pacientes') ?>">
         <label class="field">
@@ -48,16 +72,31 @@ $fecha = fn (?string $f) => $f ? date('d/m/Y', strtotime($f)) : '';
                 <tr><td colspan="6" class="vacio">No se encontraron pacientes. Regístrelo con Nuevo paciente.</td></tr>
             <?php endif; ?>
             <?php foreach ($pacientes as $p): ?>
-                <?php $nombre = $p['nombres'] . ' ' . $p['apellidos']; ?>
+                <?php
+                $nombre = $p['nombres'] . ' ' . $p['apellidos'];
+                $edad = $edadDe($p['fecha_nacimiento'] ?? null);
+                $detalle = $p['codigo'];
+                if ($edad !== null) {
+                    $detalle .= ' · ' . $edad . ' años';
+                }
+                if (!empty($p['tipo_sangre'])) {
+                    $detalle .= ' · ' . $p['tipo_sangre'];
+                }
+                ?>
                 <tr>
                     <td class="quien">
-                        <a href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente']) ?>"><strong><?= e($nombre) ?></strong></a>
-                        <span><?= e($p['codigo']) ?></span>
+                        <div class="quien-persona">
+                            <span class="persona-marca" aria-hidden="true"><?= e($inicialesDe($nombre)) ?></span>
+                            <div>
+                                <a href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente']) ?>"><strong><?= e($nombre) ?></strong></a>
+                                <span><?= e($detalle) ?></span>
+                            </div>
+                        </div>
                     </td>
-                    <td><?= e((string) $p['ci']) ?></td>
-                    <td><?= e($fecha($p['fecha_nacimiento'])) ?></td>
-                    <td><?= e($p['telefono']) ?></td>
-                    <td><span class="estado-pill<?= $p['estado'] ? '' : ' bloqueada' ?>"><?= $p['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
+                    <td data-label="CI"><?= e((string) $p['ci']) ?></td>
+                    <td data-label="Nacimiento"><?= e($fecha($p['fecha_nacimiento'])) ?></td>
+                    <td data-label="Teléfono"><?= e($p['telefono']) ?></td>
+                    <td data-label="Estado"><span class="estado-pill<?= $p['estado'] ? '' : ' bloqueada' ?>"><?= $p['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
                         <a class="btn-icono" href="<?= App::url('/pacientes?editar=' . (int) $p['id_paciente']) ?>" title="Editar" aria-label="Editar a <?= e($nombre) ?>"><?= vs_icono('editar') ?></a>
                         <a class="btn-icono" href="<?= App::url('/pacientes/ficha?id=' . (int) $p['id_paciente'] . '&historial=1') ?>" title="Historial" aria-label="Historial de <?= e($nombre) ?>"><?= vs_icono('historial') ?></a>

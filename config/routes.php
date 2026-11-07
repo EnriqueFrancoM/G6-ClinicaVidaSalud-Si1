@@ -2,10 +2,23 @@
 // Tabla de rutas: [método, ruta, clase@operación, permiso requerido]
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
+use App\Controllers\Citas\UI_AgendaMedica;
+use App\Controllers\Citas\UI_CancelarCita;
+use App\Controllers\Citas\UI_Comprobante;
+use App\Controllers\Citas\UI_EstadoCita;
+use App\Controllers\Citas\UI_HistorialCitas;
+use App\Controllers\Citas\UI_ListaEspera;
+use App\Controllers\Citas\UI_ProgramarCita;
+use App\Controllers\Citas\UI_ReprogramarCita;
 use App\Controllers\GestionClinica\UI_Especialidades;
 use App\Controllers\GestionClinica\UI_Horarios;
 use App\Controllers\GestionClinica\UI_Medicos;
 use App\Controllers\GestionClinica\UI_Pacientes;
+use App\Controllers\Portal\UI_MisCitas;
+use App\Controllers\Portal\UI_PerfilPaciente;
+use App\Controllers\Reportes\ServicioRecordatorios;
+use App\Controllers\Reportes\UI_Indicadores;
+use App\Controllers\Reportes\UI_Reportes;
 use App\Controllers\Seguridad\UI_Bitacora;
 use App\Controllers\Seguridad\UI_CambiarContrasena;
 use App\Controllers\Seguridad\UI_GestionarUsuarios;
@@ -60,5 +73,48 @@ return [
     ['POST', '/pacientes',       [UI_Pacientes::class, 'registrarOModificar'], 'PAC_GESTIONAR'],
     ['GET',  '/pacientes/ficha', [UI_Pacientes::class, 'mostrarFicha'],        'PAC_GESTIONAR'],
 
-    // Próximos casos de uso (Ciclo 2):
+    // P3 Gestión de Citas — CU11 solicitar(programar) → programar(datos)
+    ['GET',  '/citas/programar', [UI_ProgramarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    ['POST', '/citas/programar', [UI_ProgramarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    // CU12 solicitar(reprogramar) → reprogramar(datos)
+    ['GET',  '/citas/reprogramar', [UI_ReprogramarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    ['POST', '/citas/reprogramar', [UI_ReprogramarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    // CU13 solicitar(cancelar) → cancelar(datos)
+    ['GET',  '/citas/cancelar', [UI_CancelarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    ['POST', '/citas/cancelar', [UI_CancelarCita::class, 'solicitar'], 'CIT_GESTIONAR'],
+    // CU14 solicitar(cambiarEstado) → cambiarEstado(datos). Recepción (CIT_GESTIONAR) o médico (CIT_ATENDER):
+    // lo comprueba CtrlEstadoCita.validarAcceso().
+    ['GET',  '/citas/estado', [UI_EstadoCita::class, 'solicitar'], 'auth'],
+    ['POST', '/citas/estado', [UI_EstadoCita::class, 'solicitar'], 'auth'],
+    // RF24: el QR abre la confirmación. La llegada solo cambia con POST.
+    ['GET',  '/citas/llegada',     [UI_EstadoCita::class, 'registrarLlegada'], 'CIT_GESTIONAR'],
+    ['POST', '/citas/llegada',     [UI_EstadoCita::class, 'registrarLlegada'], 'CIT_GESTIONAR'],
+    ['GET',  '/citas/comprobante', [UI_Comprobante::class, 'mostrar'],         'auth'],
+    // CU15 solicitar(consultarAgenda) → consultarAgenda(datos)
+    ['GET',  '/agenda', [UI_AgendaMedica::class, 'solicitar'], 'AGE_CONSULTAR'],
+    // CU16 solicitar(consultarHistorial) → consultarHistorial(datos)
+    ['GET',  '/citas/historial', [UI_HistorialCitas::class, 'solicitar'], 'CIT_GESTIONAR'],
+    // CU21 solicitar(registrarSolicitud) → registrarSolicitud(datos)
+    ['GET',  '/lista-espera', [UI_ListaEspera::class, 'solicitar'], 'CIT_GESTIONAR'],
+    ['POST', '/lista-espera', [UI_ListaEspera::class, 'solicitar'], 'CIT_GESTIONAR'],
+
+    // P4 Portal del Paciente — CU17 solicitar(guardarPerfil) → guardarPerfil(datos); /registro es el paso 1
+    ['GET',  '/registro',      [UI_PerfilPaciente::class, 'solicitar'], null],
+    ['POST', '/registro',      [UI_PerfilPaciente::class, 'solicitar'], null],
+    ['GET',  '/portal/perfil', [UI_PerfilPaciente::class, 'solicitar'], 'POR_PACIENTE'],
+    ['POST', '/portal/perfil', [UI_PerfilPaciente::class, 'solicitar'], 'POR_PACIENTE'],
+    // CU18 solicitar(reservar) → reservar(datos)
+    ['GET',  '/portal/citas', [UI_MisCitas::class, 'solicitar'], 'POR_PACIENTE'],
+    ['POST', '/portal/citas', [UI_MisCitas::class, 'solicitar'], 'POR_PACIENTE'],
+
+    // P5 Reportes y Notificaciones — CU19 solicitar(generarReporte) → generarReporte(datos)
+    ['GET',  '/reportes', [UI_Reportes::class, 'solicitar'], 'REP_GENERAR'],
+    // CU20 solicitar(procesarPendientes) → procesarPendientes(datos); seguimiento de recordatorios (PN12)
+    ['GET',  '/recordatorios', [ServicioRecordatorios::class, 'solicitar'], 'REP_GENERAR'],
+    ['POST', '/recordatorios', [ServicioRecordatorios::class, 'solicitar'], 'REP_GENERAR'],
+    // RF21: el enlace firmado muestra la confirmación. Confirmar o cancelar solo con POST.
+    ['GET',  '/recordatorio/responder', [ServicioRecordatorios::class, 'responder'], null],
+    ['POST', '/recordatorio/responder', [ServicioRecordatorios::class, 'responder'], null],
+    // CU22 solicitar(calcularIndicadores) → calcularIndicadores(datos)
+    ['GET',  '/indicadores', [UI_Indicadores::class, 'solicitar'], 'REP_GENERAR'],
 ];

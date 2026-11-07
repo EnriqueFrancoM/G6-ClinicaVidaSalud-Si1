@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Model;
 
 // Entidad BloqueoAgenda. CU09 («extend» Registrar bloqueo de agenda): listarPorMedico(), existeBloqueo(), insertar(), eliminar().
+// CU22: descontarBloqueos(filtros).
 // id_medico NULL = feriado general (aplica a todos los médicos).
 class BloqueoAgenda extends Model
 {
@@ -37,6 +38,34 @@ class BloqueoAgenda extends Model
         $this->execute(
             'INSERT INTO bloqueo_agenda (id_medico, fecha, motivo) VALUES (:medico, :fecha, :motivo)',
             ['medico' => $idMedico, 'fecha' => $fecha, 'motivo' => $motivo]
+        );
+    }
+
+    // CU22 mensaje descontarBloqueos(filtros): cupos que no se ofrecieron por bloqueos o feriados en el período,
+    // por médico. Se restan de la capacidad de HorarioAtencion.obtenerCapacidad().
+    public function descontarBloqueos(array $filtros): array
+    {
+        return $this->fetchAll(
+            "SELECT h.id_medico, SUM(FLOOR(EXTRACT(EPOCH FROM (h.hora_fin - h.hora_inicio)) / 60 / h.duracion_cita_min))::int AS cupos
+               FROM horario_atencion h
+               JOIN medico m ON m.id_medico = h.id_medico AND m.estado = TRUE
+               JOIN (SELECT DISTINCT b.fecha, b.id_medico FROM bloqueo_agenda b
+                      WHERE b.fecha BETWEEN CAST(:desde AS DATE) AND CAST(:hasta AS DATE)) b
+                 ON EXTRACT(ISODOW FROM b.fecha) = h.dia_semana AND (b.id_medico IS NULL OR b.id_medico = h.id_medico)
+              WHERE h.estado = TRUE
+                AND (CAST(:medico AS INT) IS NULL OR h.id_medico = CAST(:medico AS INT))
+                AND (CAST(:especialidad AS INT) IS NULL OR EXISTS (
+                     SELECT 1 FROM medico_especialidad x WHERE x.id_medico = h.id_medico AND x.id_especialidad = CAST(:especialidad AS INT)))
+                -- un feriado general y un bloqueo propio el mismo día no se descuentan dos veces
+                AND NOT (b.id_medico IS NOT NULL AND EXISTS (
+                     SELECT 1 FROM bloqueo_agenda g WHERE g.fecha = b.fecha AND g.id_medico IS NULL))
+           GROUP BY h.id_medico",
+            [
+                'desde'        => $filtros['desde'],
+                'hasta'        => $filtros['hasta'],
+                'medico'       => !empty($filtros['id_medico']) ? (int) $filtros['id_medico'] : null,
+                'especialidad' => !empty($filtros['id_especialidad']) ? (int) $filtros['id_especialidad'] : null,
+            ]
         );
     }
 

@@ -11,13 +11,22 @@ $mostrarForm = $mostrarForm ?? false;
 $campoError = $campoError ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 $nueva = $form === null || (int) $form['id_especialidad'] === 0;
+$activas = count(array_filter($especialidades, fn ($fila) => $fila['estado']));
 ?>
 <div data-ui="UI_Especialidades">
     <section class="hoja">
         <header class="hoja-cabecera">
-            <h1>Especialidades</h1>
+            <div>
+                <h1>Especialidades</h1>
+                <p class="lede">Catálogo que usan médicos, horarios, citas e indicadores.</p>
+            </div>
             <a class="btn-primary btn-chico" data-fab href="<?= App::url('/especialidades?nuevo=1') ?>">Nueva especialidad</a>
         </header>
+        <div class="stat-row">
+            <article class="stat-card lift-card"><span>En el catálogo</span><strong><?= count($especialidades) ?></strong></article>
+            <article class="stat-card lift-card"><span>Activas</span><strong><?= $activas ?></strong></article>
+            <article class="stat-card lift-card"><span>Inactivas</span><strong><?= count($especialidades) - $activas ?></strong></article>
+        </div>
         <div class="tabla-responsive">
         <table class="cuentas" id="tablaEspecialidades">
             <thead>
@@ -35,10 +44,10 @@ $nueva = $form === null || (int) $form['id_especialidad'] === 0;
                 <?php endif; ?>
                 <?php foreach ($especialidades as $fila): ?>
                     <tr<?= $form !== null && (int) $form['id_especialidad'] === (int) $fila['id_especialidad'] ? ' class="seleccionado"' : '' ?>>
-                        <td><?= e(sprintf('ESP-%02d', $fila['id_especialidad'])) ?></td>
+                        <td data-label="Código"><?= e(sprintf('ESP-%02d', $fila['id_especialidad'])) ?></td>
                         <td class="quien"><strong><?= e($fila['nombre']) ?></strong></td>
-                        <td><?= e((string) $fila['descripcion']) ?></td>
-                        <td><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activa' : 'Inactiva' ?></span></td>
+                        <td class="desc-corta" data-label="Descripción"><?= e(trim((string) $fila['descripcion']) !== '' ? (string) $fila['descripcion'] : '—') ?></td>
+                        <td data-label="Estado"><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activa' : 'Inactiva' ?></span></td>
                         <td class="acciones">
                             <a class="btn-icono" href="<?= App::url('/especialidades?editar=' . (int) $fila['id_especialidad']) ?>" title="Editar" aria-label="Editar <?= e($fila['nombre']) ?>"><?= vs_icono('editar') ?></a>
                             <form method="post" action="<?= App::url('/especialidades') ?>">

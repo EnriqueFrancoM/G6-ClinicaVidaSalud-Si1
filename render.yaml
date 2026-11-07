@@ -16,6 +16,17 @@ services:
           property: connectionString
       - key: SEED_INITIAL_PASSWORD
         sync: false
+      - key: APP_KEY
+        generateValue: true
+      # CU20: correo de recordatorios (opcional; sin él los envíos por correo quedan FALLIDO)
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
 
 databases:
   - name: clinica-vida-salud-db

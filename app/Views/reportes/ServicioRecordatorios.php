@@ -1,0 +1,64 @@
+<?php
+
+use App\Core\App;
+use App\Core\Session;
+use App\Models\Cita;
+use App\Models\Recordatorio;
+use function App\Core\e;
+?>
+<section class="hoja" data-ui="ServicioRecordatorios">
+    <header class="hoja-cabecera">
+        <div>
+            <h1>Recordatorios de citas</h1>
+            <p class="lede">Se envían <?= Recordatorio::HORAS_ANTES ?> h antes de cada cita, por correo o como aviso en el portal.
+                La ejecución programada corre con <code>scripts/enviar-recordatorios.php</code>.</p>
+        </div>
+        <form method="post" action="<?= App::url('/recordatorios') ?>">
+            <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+            <button type="submit" class="btn-primary btn-chico" name="btnProcesar">Procesar pendientes ahora</button>
+        </form>
+    </header>
+
+    <?php if ($detalle !== []): ?>
+        <ul class="detalle-ejecucion">
+            <?php foreach ($detalle as $linea): ?><li><?= e($linea) ?></li><?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+
+    <form class="filtros filtros-codigo" method="get" action="<?= App::url('/recordatorios') ?>">
+        <label class="field">
+            <span>Estado de envío</span>
+            <select name="estado" data-autoenviar>
+                <option value="">Todos</option>
+                <?php foreach (Recordatorio::ESTADOS as $valor => $texto): ?>
+                    <option value="<?= $valor ?>"<?= $estado === $valor ? ' selected' : '' ?>><?= e($texto) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+    </form>
+
+    <div class="tabla-responsive">
+    <table class="cuentas" id="tablaRecordatorios">
+        <thead>
+            <tr><th>Cita</th><th>Paciente</th><th>Canal</th><th>Programado</th><th>Envío</th></tr>
+        </thead>
+        <tbody>
+            <?php if ($recordatorios === []): ?>
+                <tr><td colspan="5" class="vacio">No hay recordatorios.</td></tr>
+            <?php endif; ?>
+            <?php foreach ($recordatorios as $r): ?>
+                <tr>
+                    <td class="quien">
+                        <strong><?= e($r['codigo']) ?></strong>
+                        <span><?= e(date('d/m/Y', strtotime($r['fecha'])) . ' ' . $r['hora_inicio']) ?> · <?= e(Cita::ESTADOS[$r['estado_cita']] ?? $r['estado_cita']) ?></span>
+                    </td>
+                    <td class="quien"><strong><?= e($r['paciente']) ?></strong><span><?= e($r['email'] ?: 'sin correo') ?></span></td>
+                    <td><?= e($r['canal'] === 'EMAIL' ? 'Correo' : 'Portal') ?></td>
+                    <td><?= e($r['fecha_programada']) ?></td>
+                    <td><span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    </div>
+</section>

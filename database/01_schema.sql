@@ -160,6 +160,33 @@ CREATE TABLE historial_estado_cita (
     observacion     VARCHAR(200)
 );
 
+-- CU21 Gestionar lista de espera (mejora M2, RF22). Entidad SolicitudEspera:
+-- fecha_ingreso (orden de la cola), preferencias y estado. Al liberarse un cupo
+-- compatible se ofrece al primero de la cola con plazo de respuesta (oferta_hasta).
+CREATE TABLE solicitud_espera (
+    id_solicitud        SERIAL PRIMARY KEY,
+    id_paciente         INT          NOT NULL REFERENCES paciente(id_paciente) ON UPDATE CASCADE,
+    id_especialidad     INT          NOT NULL REFERENCES especialidad(id_especialidad) ON UPDATE CASCADE,
+    id_medico           INT          REFERENCES medico(id_medico) ON UPDATE CASCADE, -- NULL = cualquier médico
+    fecha_desde         DATE,
+    fecha_hasta         DATE,
+    preferencias        VARCHAR(200),
+    fecha_ingreso       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado              VARCHAR(15)  NOT NULL DEFAULT 'ACTIVA'
+                        CHECK (estado IN ('ACTIVA','OFERTADA','ASIGNADA','CANCELADA')),
+    oferta_id_medico    INT          REFERENCES medico(id_medico) ON UPDATE CASCADE,
+    oferta_fecha        DATE,
+    oferta_hora_inicio  TIME,
+    oferta_hora_fin     TIME,
+    oferta_hasta        TIMESTAMP,
+    id_cita             INT          REFERENCES cita(id_cita) ON UPDATE CASCADE,
+    id_usuario_registro INT          NOT NULL REFERENCES usuario(id_usuario) ON UPDATE CASCADE,
+    CONSTRAINT ck_solicitud_rango CHECK (fecha_hasta IS NULL OR fecha_desde IS NULL OR fecha_hasta >= fecha_desde)
+);
+-- Una sola solicitud vigente por paciente y especialidad (CU21: solicitud no duplicada)
+CREATE UNIQUE INDEX ux_solicitud_vigente ON solicitud_espera (id_paciente, id_especialidad)
+    WHERE estado IN ('ACTIVA','OFERTADA');
+
 -- ---------- P5 Reportes y Notificaciones ----------
 CREATE TABLE recordatorio (
     id_recordatorio  SERIAL PRIMARY KEY,

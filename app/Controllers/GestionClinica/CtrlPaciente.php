@@ -111,7 +111,8 @@ class CtrlPaciente
     }
 
     // Paso 7: formatos. E2: fecha de nacimiento futura, teléfono o correo inválidos.
-    private function validar(array $datos): ?array
+    // También la usa CU17 (CtrlPerfil) para los mismos datos del paciente.
+    public function validar(array $datos): ?array
     {
         $texto = fn (string $campo) => preg_replace('/\s+/u', ' ', trim((string) ($datos[$campo] ?? '')));
         $opcional = fn (string $campo) => $texto($campo) !== '' ? $texto($campo) : null;
@@ -132,7 +133,7 @@ class CtrlPaciente
         if ($texto('apellidos') === '' || mb_strlen($texto('apellidos')) > 60) {
             return $this->invalido('apellidos', 'Ingrese los apellidos (máximo 60 caracteres).');
         }
-        if (\DateTime::createFromFormat('!Y-m-d', $fecha)?->format('Y-m-d') !== $fecha) {
+        if (!\App\Core\App::fechaIso($fecha)) {
             return $this->invalido('fecha_nacimiento', 'Ingrese una fecha de nacimiento válida.');
         }
         if ($fecha > date('Y-m-d')) {

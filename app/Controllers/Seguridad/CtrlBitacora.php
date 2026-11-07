@@ -54,7 +54,7 @@ class CtrlBitacora
     {
         foreach (['desde', 'hasta'] as $campo) {
             $valor = (string) ($filtros[$campo] ?? '');
-            if ($valor !== '' && \DateTime::createFromFormat('!Y-m-d', $valor)?->format('Y-m-d') !== $valor) {
+            if ($valor !== '' && !\App\Core\App::fechaIso($valor)) {
                 $this->campoError = $campo;
                 $this->mensaje = 'Ingrese una fecha válida.';
                 return false;

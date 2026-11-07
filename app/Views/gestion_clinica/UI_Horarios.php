@@ -77,6 +77,11 @@ $celda = function (int $dia, int $hora) use ($activos, $minutos): ?array {
                 </button>
             </div>
         </header>
+        <div class="stat-row">
+            <article class="stat-card lift-card"><span>Horarios activos</span><strong><?= count($activos) ?></strong></article>
+            <article class="stat-card lift-card"><span>Días con atención</span><strong><?= count(array_unique(array_map(fn ($h) => (int) $h['dia_semana'], $activos))) ?></strong></article>
+            <article class="stat-card lift-card"><span>Bloqueos próximos</span><strong><?= count($bloqueos ?? []) ?></strong></article>
+        </div>
 
         <div class="semana-scroll">
             <table class="semana">

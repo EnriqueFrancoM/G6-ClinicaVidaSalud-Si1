@@ -24,6 +24,66 @@ class Especialidad extends Model
         return $this->fetchAll('SELECT id_especialidad, nombre FROM especialidad WHERE estado = TRUE ORDER BY nombre');
     }
 
+    // CU11 / CU18 (RN15): especialidades activas con al menos un médico activo con horario.
+    public function listarConMedicoActivo(): array
+    {
+        return $this->fetchAll(
+            'SELECT DISTINCT e.id_especialidad, e.nombre
+               FROM especialidad e
+               JOIN medico_especialidad me ON me.id_especialidad = e.id_especialidad
+               JOIN medico m ON m.id_medico = me.id_medico AND m.estado = TRUE
+               JOIN horario_atencion h ON h.id_medico = m.id_medico AND h.estado = TRUE
+              WHERE e.estado = TRUE
+              ORDER BY e.nombre'
+        );
+    }
+
+    // Catálogo del portal: especialidades activas y cuántos médicos tienen horario.
+    public function catalogoReserva(): array
+    {
+        $filas = $this->fetchAll(
+            "SELECT e.id_especialidad, e.nombre, e.descripcion,
+                    (SELECT COUNT(DISTINCT m.id_medico)
+                       FROM medico_especialidad me
+                       JOIN medico m ON m.id_medico = me.id_medico AND m.estado = TRUE
+                       JOIN horario_atencion h ON h.id_medico = m.id_medico AND h.estado = TRUE
+                      WHERE me.id_especialidad = e.id_especialidad) AS medicos
+               FROM especialidad e
+              WHERE e.estado = TRUE
+              ORDER BY e.nombre"
+        );
+        foreach ($filas as &$fila) {
+            $fila['id_especialidad'] = (int) $fila['id_especialidad'];
+            $fila['medicos'] = (int) $fila['medicos'];
+        }
+
+        return $filas;
+    }
+
+    // Especialidades activas del catálogo que todavía no se pueden reservar (RN15):
+    // no tienen un médico activo con horario. No se inventan cupos.
+    public function sinCobertura(): array
+    {
+        return $this->fetchAll(
+            'SELECT e.id_especialidad, e.nombre, e.descripcion
+               FROM especialidad e
+              WHERE e.estado = TRUE
+                AND NOT EXISTS (
+                    SELECT 1
+                      FROM medico_especialidad me
+                      JOIN medico m ON m.id_medico = me.id_medico AND m.estado = TRUE
+                      JOIN horario_atencion h ON h.id_medico = m.id_medico AND h.estado = TRUE
+                     WHERE me.id_especialidad = e.id_especialidad
+                )
+              ORDER BY e.nombre'
+        );
+    }
+
+    public function buscarPorId(int $idEspecialidad): ?array
+    {
+        return $this->fetch('SELECT id_especialidad, nombre, estado FROM especialidad WHERE id_especialidad = :id', ['id' => $idEspecialidad]);
+    }
+
     // CU07 paso 5 / E1: compara sin espacios sobrantes y sin distinguir mayúsculas
     // (igual que el índice único ux_especialidad_nombre).
     public function existeNombreNormalizado(string $nombre, ?int $excluirId = null): bool

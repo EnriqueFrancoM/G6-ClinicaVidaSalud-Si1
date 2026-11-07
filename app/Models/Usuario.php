@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Core\App;
 use App\Core\Model;
 
-// Entidad Usuario. CU01: buscarPorUsuario(usuario), verificarClave(clave).
+// Entidad Usuario. CU01: buscarPorUsuario(usuario), verificarClave(clave). CU17: validarTitular(sesión).
 class Usuario extends Model
 {
     public function buscarPorUsuario(string $usuario): ?array
@@ -230,6 +230,45 @@ class Usuario extends Model
         $fila['estado'] = self::activo($fila['estado']);
 
         return $fila;
+    }
+
+    // CU17 mensaje validarTitular(sesión): la cuenta de la sesión es de rol Paciente y está activa.
+    // Devuelve el usuario con el id_paciente de su ficha (null si aún no la completó), o null si no es titular.
+    public function validarTitular(array $sesion): ?array
+    {
+        $fila = $this->fetch(
+            "SELECT u.id_usuario, u.username, u.email, u.estado, p.id_paciente
+               FROM usuario u
+               JOIN rol r ON r.id_rol = u.id_rol
+          LEFT JOIN paciente p ON p.id_usuario = u.id_usuario
+              WHERE u.id_usuario = :id AND r.nombre = 'Paciente'",
+            ['id' => (int) ($sesion['id_usuario'] ?? 0)]
+        );
+        if ($fila === null || !self::activo($fila['estado'])) {
+            return null;
+        }
+        $fila['id_paciente'] = $fila['id_paciente'] !== null ? (int) $fila['id_paciente'] : null;
+
+        return $fila;
+    }
+
+    // CU17 paso 1: registro del paciente en el portal (rol Paciente, contraseña elegida por él).
+    public function registrarPaciente(string $username, string $email, string $passwordHash): int
+    {
+        $fila = $this->fetch(
+            "INSERT INTO usuario (id_rol, username, email, password_hash, estado, primer_ingreso)
+             SELECT id_rol, :username, :email, :hash, TRUE, FALSE FROM rol WHERE nombre = 'Paciente'
+             RETURNING id_usuario",
+            ['username' => $username, 'email' => $email, 'hash' => $passwordHash]
+        );
+
+        return (int) $fila['id_usuario'];
+    }
+
+    // CU17: el correo de la cuenta acompaña al de la ficha del paciente.
+    public function actualizarEmail(int $idUsuario, string $email): void
+    {
+        $this->execute('UPDATE usuario SET email = :email WHERE id_usuario = :id', ['email' => $email, 'id' => $idUsuario]);
     }
 
     // Vínculo opcional con un médico o paciente: ['tipo' => 'medico'|'paciente'|null, 'id' => int].
