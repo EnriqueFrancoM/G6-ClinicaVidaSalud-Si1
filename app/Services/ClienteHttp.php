@@ -5,20 +5,20 @@ namespace App\Services;
 // POST o GET contra un proveedor externo. Solo HTTPS. No sigue redirecciones.
 class ClienteHttp
 {
-    public function enviar(string $metodo, string $url, string $cuerpo, array $cabeceras): array
+    public function enviar(string $metodo, string $url, string $cuerpo, array $cabeceras, int $espera = 15): array
     {
         if (!preg_match('#\Ahttps://#', $url)) {
             throw new \RuntimeException('Solo se permiten llamadas HTTPS.');
         }
 
         if (function_exists('curl_init')) {
-            return $this->curl($metodo, $url, $cuerpo, $cabeceras);
+            return $this->curl($metodo, $url, $cuerpo, $cabeceras, $espera);
         }
 
-        return $this->flujo($metodo, $url, $cuerpo, $cabeceras);
+        return $this->flujo($metodo, $url, $cuerpo, $cabeceras, $espera);
     }
 
-    private function curl(string $metodo, string $url, string $cuerpo, array $cabeceras): array
+    private function curl(string $metodo, string $url, string $cuerpo, array $cabeceras, int $espera): array
     {
         $conexion = curl_init($url);
         if ($conexion === false) {
@@ -28,7 +28,7 @@ class ClienteHttp
             CURLOPT_CUSTOMREQUEST  => $metodo,
             CURLOPT_HTTPHEADER     => $cabeceras,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_TIMEOUT        => $espera,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_FOLLOWLOCATION => false,
         ];
@@ -46,14 +46,14 @@ class ClienteHttp
         return ['codigo' => $codigo, 'cuerpo' => (string) $respuesta];
     }
 
-    private function flujo(string $metodo, string $url, string $cuerpo, array $cabeceras): array
+    private function flujo(string $metodo, string $url, string $cuerpo, array $cabeceras, int $espera): array
     {
         $contexto = stream_context_create([
             'http' => [
                 'method'        => $metodo,
                 'header'        => implode("\r\n", $cabeceras),
                 'content'       => $cuerpo,
-                'timeout'       => 15,
+                'timeout'       => $espera,
                 'ignore_errors' => true,
                 'follow_location' => 0,
             ],

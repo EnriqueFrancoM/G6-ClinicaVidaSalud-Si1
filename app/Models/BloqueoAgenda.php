@@ -9,6 +9,21 @@ use App\Core\Model;
 // id_medico NULL = feriado general (aplica a todos los médicos).
 class BloqueoAgenda extends Model
 {
+    // Bloqueos y feriados desde una fecha. id_medico null es un día festivo de toda la clínica.
+    public function listarDesde(string $desde): array
+    {
+        return $this->fetchAll(
+            "SELECT b.id_bloqueo, b.id_medico, b.fecha::text AS fecha, b.motivo,
+                    CASE WHEN b.id_medico IS NULL THEN 'festivo' ELSE 'medico' END AS alcance,
+                    m.codigo AS medico_codigo, m.nombres || ' ' || m.apellidos AS medico
+               FROM bloqueo_agenda b
+          LEFT JOIN medico m ON m.id_medico = b.id_medico
+              WHERE b.fecha >= CAST(:desde AS DATE)
+              ORDER BY b.fecha, b.id_medico NULLS FIRST",
+            ['desde' => $desde]
+        );
+    }
+
     // Bloqueos de hoy en adelante del médico y feriados generales.
     public function listarPorMedico(int $idMedico): array
     {

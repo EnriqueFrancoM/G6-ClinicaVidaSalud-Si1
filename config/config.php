@@ -99,6 +99,11 @@ return [
     'recordatorio' => [
         'canal' => $canalRecordatorio,
     ],
+    // Una sola clave de OpenRouter para todas las cuentas. Vacía: el asistente no responde.
+    'openrouter' => [
+        'api_key' => trim((string) $valorEntorno('OPENROUTER_API_KEY', '')),
+        'model'   => trim((string) $valorEntorno('OPENROUTER_MODEL', 'openai/gpt-4o-mini')) ?: 'openai/gpt-4o-mini',
+    ],
     'db' => [
         'host' => (string) $valorEntorno('DB_HOST', $partesDb['host'] ?? '127.0.0.1'),
         'port' => (string) $valorEntorno('DB_PORT', $partesDb['port'] ?? '5432'),

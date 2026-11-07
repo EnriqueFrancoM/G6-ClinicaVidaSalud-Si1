@@ -171,6 +171,23 @@ $destacarRecepcion = Session::hasPermission('CIT_GESTIONAR')
         </div>
     </form>
 </dialog>
+<div class="asistente" data-asistente data-url="<?= e(App::url('/asistente')) ?>" data-csrf="<?= e(Session::csrfToken()) ?>">
+    <button type="button" class="asistente-abrir" aria-expanded="false" aria-controls="asistente-panel">Asistente</button>
+    <section class="asistente-panel" id="asistente-panel" hidden>
+        <header class="asistente-cabecera">
+            <strong>Asistente</strong>
+            <button type="button" class="asistente-cerrar" aria-label="Cerrar">Cerrar</button>
+        </header>
+        <p class="asistente-nota">Puede consultar, crear, editar o dar de baja lo que su rol permite. Médicos, pacientes y horarios se desactivan. Un día festivo sí se quita.</p>
+        <div class="asistente-mensajes" role="log" aria-live="polite"></div>
+        <form class="asistente-form">
+            <label class="sr-solo" for="asistente-mensaje">Mensaje</label>
+            <textarea id="asistente-mensaje" name="mensaje" maxlength="2000" rows="2" placeholder="Por ejemplo: lista los médicos de pediatría" required></textarea>
+            <button type="submit">Enviar</button>
+        </form>
+    </section>
+</div>
 <script src="<?= App::url('/assets/js/app.js') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/js/app.js') ?>"></script>
+<script src="<?= App::url('/assets/js/asistente.js') ?>?v=<?= filemtime(BASE_PATH . '/public/assets/js/asistente.js') ?>"></script>
 </body>
 </html>

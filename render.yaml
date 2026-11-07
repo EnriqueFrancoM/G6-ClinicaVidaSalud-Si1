@@ -54,6 +54,10 @@ services:
         value: campos
       - key: WHATSAPP_PREFIJO
         value: "591"
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4o-mini
 
 databases:
   - name: clinica-vida-salud-db

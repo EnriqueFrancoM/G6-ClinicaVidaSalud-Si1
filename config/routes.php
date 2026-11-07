@@ -2,6 +2,7 @@
 // Tabla de rutas: [método, ruta, clase@operación, permiso requerido]
 // permiso: null = pública, 'auth' = solo requiere sesión, 'CODIGO' = permiso de la tabla permiso.
 
+use App\Controllers\Asistente\UI_Asistente;
 use App\Controllers\Citas\UI_AgendaMedica;
 use App\Controllers\Citas\UI_CancelarCita;
 use App\Controllers\Citas\UI_Comprobante;
@@ -35,6 +36,8 @@ return [
     // CU01 mensaje 8 / CU02 mensaje 1
     ['GET',  '/dashboard', [UI_PanelPrincipal::class, 'mostrarMenuSegunRol'], 'auth'],
     ['POST', '/logout',    [UI_PanelPrincipal::class, 'seleccionarCerrarSesion'], 'auth'],
+    // Asistente: la clave de OpenRouter es del servidor. Cada operación exige el permiso del rol.
+    ['POST', '/asistente', [UI_Asistente::class, 'conversar'], 'auth'],
 
     // CU05 mensaje 1 (desde el menú del perfil)
     ['GET',  '/cambiar-contrasena', [UI_CambiarContrasena::class, 'ingresar'], 'auth'],
