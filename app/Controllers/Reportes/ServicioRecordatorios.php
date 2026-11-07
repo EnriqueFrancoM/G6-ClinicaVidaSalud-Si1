@@ -19,6 +19,14 @@ class ServicioRecordatorios extends Controller
             if (!$control->validarAcceso()) {
                 $this->mostrarError('No tiene permiso para ejecutar los recordatorios.');
             }
+            $id = (int) $this->input('id_recordatorio', 0);
+            if ($id > 0) {
+                $ok = $control->enviarUno($id);
+                if (!$ok) {
+                    $this->mostrarError($control->mensaje);
+                }
+                $this->mostrarResultado($control->mensaje, [$control->mensaje]);
+            }
             $resumen = $control->procesarPendientes(['instante' => date('Y-m-d H:i:s')]);
             $this->mostrarResultado($control->mensaje, $resumen['detalle']);
         }

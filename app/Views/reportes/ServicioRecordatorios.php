@@ -40,11 +40,11 @@ use function App\Core\e;
     <div class="tabla-responsive">
     <table class="cuentas" id="tablaRecordatorios">
         <thead>
-            <tr><th>Cita</th><th>Paciente</th><th>Canal</th><th>Programado</th><th>Envío</th></tr>
+            <tr><th>Cita</th><th>Paciente</th><th>Correo</th><th>Canal</th><th>Programado</th><th>Envío</th></tr>
         </thead>
         <tbody>
             <?php if ($recordatorios === []): ?>
-                <tr><td colspan="5" class="vacio">No hay recordatorios.</td></tr>
+                <tr><td colspan="6" class="vacio">No hay recordatorios.</td></tr>
             <?php endif; ?>
             <?php foreach ($recordatorios as $r): ?>
                 <tr>
@@ -52,10 +52,22 @@ use function App\Core\e;
                         <strong><?= e($r['codigo']) ?></strong>
                         <span><?= e(date('d/m/Y', strtotime($r['fecha'])) . ' ' . $r['hora_inicio']) ?> · <?= e(Cita::ESTADOS[$r['estado_cita']] ?? $r['estado_cita']) ?></span>
                     </td>
-                    <td data-label="Paciente"><strong><?= e($r['paciente']) ?></strong><span><?= e($r['email'] ?: 'sin correo') ?></span></td>
+                    <td data-label="Paciente"><?= e($r['paciente']) ?></td>
+                    <td data-label="Correo"><?= e($r['email'] ?: 'sin correo') ?></td>
                     <td data-label="Canal"><?= e(Recordatorio::CANALES[$r['canal']] ?? $r['canal']) ?></td>
                     <td data-label="Programado"><?= e($r['fecha_programada']) ?></td>
-                    <td data-label="Envío"><span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span></td>
+                    <td data-label="Envío">
+                        <div class="envio-celda">
+                            <span class="estado-pill envio-<?= e(strtolower($r['estado_envio'])) ?>"><?= e(Recordatorio::ESTADOS[$r['estado_envio']]) ?></span>
+                            <?php if ($r['estado_envio'] !== 'ENVIADO'): ?>
+                                <form method="post" action="<?= App::url('/recordatorios') ?>">
+                                    <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                                    <input type="hidden" name="id_recordatorio" value="<?= e((string) $r['id_recordatorio']) ?>">
+                                    <button type="submit" class="btn-borde btn-chico" name="btnEnviar">Enviar</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

@@ -12,6 +12,7 @@ $medicos = $medicos ?? [];
 $pacientes = $pacientes ?? [];
 $filtros = $filtros ?? ['buscar' => '', 'rol' => null, 'estado' => ''];
 $campoError = $campoError ?? null;
+$errorForm = $errorForm ?? null;
 $invalido = fn (string $campo) => $campoError === $campo ? ' is-invalid' : '';
 $inicialesDe = function (string $texto): string {
     $partes = preg_split('/[.\s_-]+/', $texto) ?: [];
@@ -103,6 +104,14 @@ $vinculados = count(array_filter($usuarios, fn ($fila) => !empty($fila['id_medic
                     <td data-label="Estado"><span class="estado-pill<?= $fila['estado'] ? '' : ' bloqueada' ?>"><?= $fila['estado'] ? 'Activo' : 'Inactivo' ?></span></td>
                     <td class="acciones">
                         <a class="btn-icono" href="<?= App::url('/usuarios?editar=' . (int) $fila['id_usuario']) ?>" title="Editar" aria-label="Editar a <?= e($fila['username']) ?>"><?= vs_icono('editar') ?></a>
+                        <?php if ((int) $fila['id_usuario'] !== $idSesion): ?>
+                            <form method="post" action="<?= App::url('/usuarios') ?>">
+                                <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
+                                <input type="hidden" name="accion" value="reenviar">
+                                <input type="hidden" name="id_usuario" value="<?= e((string) $fila['id_usuario']) ?>">
+                                <button type="submit" class="btn-icono" title="Reenviar clave al correo" aria-label="Reenviar la clave temporal de <?= e($fila['username']) ?>" data-confirmar="¿Enviar una clave temporal nueva a <?= e($fila['email']) ?>?"><?= vs_icono('correo') ?></button>
+                            </form>
+                        <?php endif; ?>
                         <?php if (!($fila['estado'] && (int) $fila['id_usuario'] === $idSesion)): ?>
                             <form method="post" action="<?= App::url('/usuarios') ?>">
                                 <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
@@ -125,6 +134,9 @@ $vinculados = count(array_filter($usuarios, fn ($fila) => !empty($fila['id_medic
     <dialog class="modal" data-modal>
         <form id="formUsuario" method="post" action="<?= App::url('/usuarios') ?>">
             <h2><?= $nuevo ? 'Registrar usuario' : 'Editar usuario' ?></h2>
+            <?php if ($errorForm): ?>
+                <p class="alert error" role="alert"><?= e($errorForm) ?></p>
+            <?php endif; ?>
             <input type="hidden" name="_csrf" value="<?= Session::csrfToken() ?>">
             <input type="hidden" name="accion" value="guardar">
             <input type="hidden" name="id_usuario" value="<?= e((string) $form['id_usuario']) ?>">
@@ -182,7 +194,7 @@ $vinculados = count(array_filter($usuarios, fn ($fila) => !empty($fila['id_medic
             </label>
 
             <?php if ($nuevo): ?>
-                <p class="aviso-rango">Se generará una contraseña temporal. La persona deberá cambiarla en el primer ingreso.</p>
+                <p class="aviso-rango">Se generará una clave temporal y se enviará a este correo. La persona deberá cambiarla en el primer ingreso.</p>
             <?php endif; ?>
 
             <div class="modal-acciones">

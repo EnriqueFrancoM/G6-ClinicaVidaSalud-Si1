@@ -2757,6 +2757,10 @@ ul.sin-cupos li { margin: 4px 0; }
 .estado-espera-ofertada { background: #f8f1de; color: #7a5b16; }
 .estado-espera-asignada { background: var(--ok-bg); color: var(--ok); }
 .estado-espera-cancelada { background: var(--danger-bg); color: var(--danger); }
+.envio-celda { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.envio-celda form { margin: 0; }
+.envio-celda .btn-chico { height: 32px; padding: 0 12px; font-size: 0.8rem; }
+.modal .alert { margin: 0 0 14px; }
 .envio-pendiente { background: #f8f1de; color: #7a5b16; }
 .envio-enviado { background: var(--ok-bg); color: var(--ok); }
 .envio-fallido { background: var(--danger-bg); color: var(--danger); }
